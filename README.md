@@ -13,7 +13,9 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal.
 - SFTP browser with navigation, upload, download and confirmation before deletion.
 - Initial NodeBB discovery and CLI lifecycle actions (start, stop, restart, build).
-- Structured local diagnostic logging and ZIP report export.\n- Read-only server monitoring for uptime, load, memory, disk usage and top processes.\n- Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
+- Structured local diagnostic logging and ZIP report export.
+- Read-only server monitoring for uptime, load, memory, disk usage and top processes.
+- Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
 
 ## Diagnostic and error-reporting system
