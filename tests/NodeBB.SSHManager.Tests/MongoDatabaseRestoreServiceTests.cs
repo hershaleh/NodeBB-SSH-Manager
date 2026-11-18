@@ -1,3 +1,4 @@
+using System.IO;
 using System.IO.Compression;
 using NodeBB.SSHManager.Services;
 using Xunit;
@@ -47,7 +48,7 @@ public sealed class MongoDatabaseRestoreServiceTests
         try
         {
             await using (var file = File.Create(valid))
-            await using (var gzip = new GZipStream(file, CompressionMode.Compress))
+            await using (var gzip = new GZipStream(file, CompressionLevel.Optimal))
             {
                 var payload = System.Text.Encoding.UTF8.GetBytes("mongodump archive payload");
                 await gzip.WriteAsync(payload);
