@@ -68,8 +68,8 @@ public partial class SftpFileManagerWindow : Window
                 .OrderByDescending(x => x.IsDirectory).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(x => new RemoteFileItem
                 {
-                    Name = x.Name,
-                    FullPath = x.FullName,
+                    Name = SftpPathSafety.ValidateName(x.Name),
+                    FullPath = SftpPathSafety.NormalizeAbsolutePath(x.FullName),
                     IsDirectory = x.IsDirectory,
                     SizeDisplay = x.IsDirectory ? "—" : FormatSize(x.Length),
                     ModifiedDisplay = x.LastWriteTime.ToString("yyyy-MM-dd HH:mm")
@@ -116,7 +116,7 @@ public partial class SftpFileManagerWindow : Window
         try
         {
             var fileName = Path.GetFileName(dialog.FileName);
-            var remotePath = Combine(_currentPath, fileName);
+            var remotePath = SftpPathSafety.Combine(_currentPath, fileName);
             var replaceApproved = await WithSftpLockAsync(() => _client.Exists(remotePath));
             if (replaceApproved &&
                 MessageBox.Show(this, $"הקובץ '{fileName}' כבר קיים בשרת. להחליף אותו?",
@@ -193,13 +193,14 @@ public partial class SftpFileManagerWindow : Window
         {
             StatusText.Text = "מוריד קובץ...";
             var destination = Path.GetFullPath(dialog.FileName);
+            var remotePath = SftpPathSafety.NormalizeAbsolutePath(item.FullPath);
             var temporaryPath = destination + ".partial-" + Guid.NewGuid().ToString("N");
             try
             {
                 await WithSftpLockAsync(() =>
                 {
                     using var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-                    _client.DownloadFile(item.FullPath, output);
+                    _client.DownloadFile(remotePath, output);
                     output.Flush(true);
                     return true;
                 });
@@ -229,8 +230,9 @@ public partial class SftpFileManagerWindow : Window
         {
             await WithSftpLockAsync(() =>
             {
-                if (item.IsDirectory) _client.DeleteDirectory(item.FullPath);
-                else _client.DeleteFile(item.FullPath);
+                var remotePath = SftpPathSafety.NormalizeAbsolutePath(item.FullPath);
+                if (item.IsDirectory) _client.DeleteDirectory(remotePath);
+                else _client.DeleteFile(remotePath);
                 return true;
             });
             DiagnosticLogService.Instance.Info("SFTP", "RemoteDeleteCompleted", $"Deleted remote item {item.FullPath}.", _session.Profile.Name);
@@ -258,6 +260,4 @@ public partial class SftpFileManagerWindow : Window
         }
     }
 
-    private static string Combine(string directory, string name) =>
-        (directory.TrimEnd('/') + "/" + name).Replace("//", "/");
 }
