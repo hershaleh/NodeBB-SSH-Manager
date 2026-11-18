@@ -1,5 +1,7 @@
 using NodeBB.SSHManager.Models;
 using Renci.SshNet;
+using Renci.SshNet.Common;
+using System.Net.Sockets;
 
 namespace NodeBB.SSHManager.Services;
 
@@ -48,6 +50,7 @@ public sealed class SshConnectionService
             };
 
             using var client = new SshClient(connectionInfo);
+            client.KeepAliveInterval = TimeSpan.FromSeconds(30);
             client.HostKeyReceived += (_, eventArgs) =>
             {
                 observedFingerprint = "SHA256:" + eventArgs.FingerPrintSHA256;
@@ -97,8 +100,25 @@ public sealed class SshConnectionService
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SSH", "ConnectionTestFailed", ex, profile.Name);
-            return new SshTestResult(SshTestStatus.Failed, ex.Message, observedFingerprint);
+            return new SshTestResult(SshTestStatus.Failed, GetFriendlyErrorMessage(ex), observedFingerprint);
         }
+    }
+
+    public static string GetFriendlyErrorMessage(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        return exception switch
+        {
+            SshAuthenticationException => "האימות נדחה על ידי השרת. בדוק את שם המשתמש, הסיסמה או מפתח SSH והרשאותיו.",
+            SocketException socket when socket.SocketErrorCode == SocketError.ConnectionRefused => "השרת דחה את החיבור. בדוק שכתובת השרת ויציאת SSH נכונות וששירות SSH פועל.",
+            SocketException socket when socket.SocketErrorCode is SocketError.HostNotFound or SocketError.NoData or SocketError.TryAgain => "לא ניתן למצוא את שם המתחם. בדוק את שם המארח ואת הגדרות DNS.",
+            SocketException socket when socket.SocketErrorCode == SocketError.TimedOut => "החיבור לשרת חרג ממגבלת הזמן. בדוק זמינות רשת, חומת אש ויציאת SSH.",
+            SocketException socket when socket.SocketErrorCode is SocketError.NetworkUnreachable or SocketError.HostUnreachable => "אין נתיב רשת אל השרת. בדוק את החיבור לרשת, ניתוב וחומת אש.",
+            TimeoutException => "הפעולה מול שרת SSH חרגה ממגבלת הזמן. בדוק זמינות שרת ורשת.",
+            SshConnectionException => "חיבור SSH נותק או נכשל במהלך יצירתו. בדוק את שירות SSH, הרשת והגדרות השרת.",
+            IOException => "אירעה שגיאת תקשורת או קובץ במהלך החיבור. בדוק הרשאות וגישה לרשת.",
+            _ => string.IsNullOrWhiteSpace(exception.Message) ? "החיבור נכשל מסיבה לא ידועה." : exception.Message
+        };
     }
 
     private static AuthenticationMethod CreateAuthentication(ServerProfile profile, string secret)
