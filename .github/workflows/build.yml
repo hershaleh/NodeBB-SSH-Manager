@@ -34,7 +34,22 @@ jobs:
       - name: Run automated tests
         run: dotnet test NodeBB.SSHManager.sln --configuration Release --no-build --logger "trx;LogFileName=tests.trx"
       - name: Publish self-contained Windows x64
-        run: dotnet publish src/NodeBB.SSHManager.App/NodeBB.SSHManager.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output artifacts/win-x64
+        run: dotnet publish src/NodeBB.SSHManager.App/NodeBB.SSHManager.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PlatformTarget=x64 -p:PublishSingleFile=false --output artifacts/win-x64
+      - name: Verify WPF native runtime architecture
+        shell: pwsh
+        run: |
+          $dll = Get-ChildItem "artifacts/win-x64" -Filter "DirectWriteForwarder.dll" -Recurse | Select-Object -First 1
+          if (-not $dll) { throw "DirectWriteForwarder.dll is missing from the published WPF output." }
+          $bytes = [System.IO.File]::ReadAllBytes($dll.FullName)
+          if ($bytes.Length -lt 64) { throw "DirectWriteForwarder.dll is unexpectedly small." }
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          if ($peOffset -lt 0 -or $peOffset + 6 -gt $bytes.Length) { throw "Invalid PE header in DirectWriteForwarder.dll." }
+          $signature = [System.Text.Encoding]::ASCII.GetString($bytes, $peOffset, 4)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($signature -ne ("PE" + [char]0) -or $machine -ne 0x8664) {
+            throw ("DirectWriteForwarder.dll is not a valid x64 PE image. Signature={0}; Machine=0x{1:X4}" -f $signature, $machine)
+          }
+          Write-Host ("Verified x64 WPF native component: {0}" -f $dll.FullName)
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
