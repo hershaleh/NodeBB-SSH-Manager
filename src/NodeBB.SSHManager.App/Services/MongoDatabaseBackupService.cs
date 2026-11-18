@@ -57,17 +57,22 @@ try {
     const host = typeof m.host === 'string' && m.host.trim() ? m.host.trim() : '127.0.0.1';
     const port = Number(m.port || 27017);
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error();
-    const db = typeof m.database === 'string' ? m.database : (typeof m.db === 'string' ? m.db : '');
     const username = m.username || m.user || '';
     const password = m.password || '';
     const auth = username ? encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' : '';
     const authSource = m.authenticationDatabase || m.authSource || '';
-    uri = 'mongodb://' + auth + host + ':' + port + '/' + encodeURIComponent(db);
+    uri = 'mongodb://' + auth + host + ':' + port + '/';
     if (authSource) uri += '?authSource=' + encodeURIComponent(authSource);
   }
   if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) throw new Error();
+  const parsed = new URL(uri);
+  const uriDatabase = parsed.pathname.replace(/^\/+/, '');
+  const db = uriDatabase ? decodeURIComponent(uriDatabase) : (typeof m.database === 'string' ? m.database : (typeof m.db === 'string' ? m.db : ''));
+  if (!db || /[\r\n\0]/.test(db)) throw new Error();
+  parsed.pathname = '/' + encodeURIComponent(db);
+  uri = parsed.toString();
   fs.writeFileSync(process.argv[3], 'uri: ' + JSON.stringify(uri) + '\n', { mode: 0o600, flag: 'wx' });
-} catch { console.error('לא ניתן להכין הגדרת חיבור MongoDB מתוך config.json. פרטי החיבור לא יוצגו.'); process.exit(21); }
+  fs.writeFileSync(process.argv[3] + '.db', db + '\n', { mode: 0o600, flag: 'wx' });
 NODE
 mongodump --config="$WORK/mongo.yml" --archive="$WORK/database.archive.gz" --gzip
 [ -s "$WORK/database.archive.gz" ] || { echo 'mongodump לא יצר קובץ גיבוי.' >&2; exit 22; }

@@ -94,4 +94,4 @@ The next development milestones are broader server capability detection, safer N
 
 
 ### Database backups
-- MongoDB: encrypted remote database backup using MongoDB Database Tools and NodeBB's configured connection. Secrets are written to a protected temporary config file on the server, never command-line arguments. Redis/PostgreSQL backup and database restore are not implemented yet.
+- MongoDB: encrypted remote database backup using MongoDB Database Tools and NodeBB's configured connection. Secrets are written to a protected temporary config file on the server, never command-line arguments. Redis/PostgreSQL backup and restore are not implemented yet. MongoDB restore validates the encrypted archive locally, runs a remote dry-run, creates a pre-restore dump, scopes the restore to the configured NodeBB database, and attempts automatic rollback if import fails. If rollback itself fails, the remote rollback directory is deliberately preserved for manual recovery.

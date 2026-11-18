@@ -13,6 +13,7 @@ public sealed class MongoDatabaseRestoreServiceTests
     {
         var script = MongoDatabaseRestoreService.BuildRestoreScript("/srv/nodebb", Work);
         Assert.Contains("mongorestore --dryRun", script);
+        Assert.Contains("--nsInclude=\"$DB.*\"", script);
         Assert.Contains("mongodump --config=", script);
         Assert.Contains("rollback.archive.gz", script);
         Assert.Contains("KEEP_WORK=1", script);

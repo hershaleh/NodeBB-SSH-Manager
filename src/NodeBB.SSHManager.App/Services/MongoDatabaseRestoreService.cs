@@ -106,27 +106,33 @@ try {
     const host = typeof m.host === 'string' && m.host.trim() ? m.host.trim() : '127.0.0.1';
     const port = Number(m.port || 27017);
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error();
-    const db = typeof m.database === 'string' ? m.database : (typeof m.db === 'string' ? m.db : '');
     const username = m.username || m.user || '';
     const password = m.password || '';
     const auth = username ? encodeURIComponent(username) + ':' + encodeURIComponent(password) + '@' : '';
     const authSource = m.authenticationDatabase || m.authSource || '';
-    uri = 'mongodb://' + auth + host + ':' + port + '/' + encodeURIComponent(db);
+    uri = 'mongodb://' + auth + host + ':' + port + '/';
     if (authSource) uri += '?authSource=' + encodeURIComponent(authSource);
   }
   if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) throw new Error();
+  const parsed = new URL(uri);
+  const uriDatabase = parsed.pathname.replace(/^\/+/, '');
+  const db = uriDatabase ? decodeURIComponent(uriDatabase) : (typeof m.database === 'string' ? m.database : (typeof m.db === 'string' ? m.db : ''));
+  if (!db || /[\r\n\0]/.test(db)) throw new Error();
+  parsed.pathname = '/' + encodeURIComponent(db);
+  uri = parsed.toString();
   fs.writeFileSync(process.argv[3], 'uri: ' + JSON.stringify(uri) + '\n', { mode: 0o600, flag: 'wx' });
-} catch { console.error('לא ניתן להכין הגדרת חיבור MongoDB מתוך config.json. פרטי החיבור לא יוצגו.'); process.exit(21); }
+  fs.writeFileSync(process.argv[3] + '.db', db + '\n', { mode: 0o600, flag: 'wx' });
 NODE
+DB="$(cat "$WORK/mongo.yml.db")"
 [ -s "$WORK/incoming.archive.gz" ] || { echo 'קובץ הגיבוי שהועלה ריק.' >&2; exit 22; }
-mongorestore --dryRun --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip
+mongorestore --dryRun --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --nsInclude="$DB.*"
 mongodump --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip
 [ -s "$WORK/rollback.archive.gz" ] || { echo 'לא נוצר גיבוי מקדים; השחזור בוטל.' >&2; exit 23; }
-if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --drop; then
+if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --drop --nsInclude="$DB.*"; then
   echo 'MongoDB restore completed.'
 else
   echo 'Restore failed; attempting rollback from the pre-restore dump.' >&2
-  if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip --drop; then
+  if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip --drop --nsInclude="$DB.*"; then
     echo 'Rollback completed.' >&2
     exit 41
   else
