@@ -7,10 +7,24 @@ namespace NodeBB.SSHManager.Views;
 public partial class AddServerWindow : Window
 {
     public ServerProfile? Profile { get; private set; }
+    private readonly ServerProfile? _original;
 
     public AddServerWindow()
     {
         InitializeComponent();
+    }
+
+    public AddServerWindow(ServerProfile profile) : this()
+    {
+        _original = profile;
+        Title = "עריכת שרת";
+        DialogTitle.Text = "עריכת פרופיל שרת";
+        NameBox.Text = profile.Name;
+        HostBox.Text = profile.Host;
+        PortBox.Text = profile.Port.ToString();
+        UsernameBox.Text = profile.Username;
+        AuthTypeBox.SelectedIndex = profile.AuthenticationType == SshAuthenticationType.Password ? 1 : 0;
+        KeyPathBox.Text = profile.PrivateKeyPath;
     }
 
     private void BrowseKey_Click(object sender, RoutedEventArgs e)
@@ -59,6 +73,11 @@ public partial class AddServerWindow : Window
 
         Profile = new ServerProfile
         {
+            Id = _original?.Id ?? Guid.NewGuid(),
+            KnownHostFingerprint = _original is not null
+                && string.Equals(_original.Host, host, StringComparison.OrdinalIgnoreCase)
+                && _original.Port == port
+                    ? _original.KnownHostFingerprint : null,
             Name = name,
             Host = host,
             Port = port,
