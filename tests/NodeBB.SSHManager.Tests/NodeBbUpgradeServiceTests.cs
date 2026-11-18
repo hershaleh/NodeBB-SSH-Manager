@@ -92,7 +92,7 @@ public sealed class NodeBbUpgradeServiceTests
     public void HealthCheckScript_RejectsInvalidInstallationPath()
     {
         Assert.Throws<ArgumentException>(() => NodeBbUpgradeService.BuildHealthCheckScript(" "));
-        Assert.Throws<ArgumentException>(() => NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb\\0bad"));
+        Assert.Throws<ArgumentException>(() => NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb" + '\0' + "bad"));
     }
 
 }

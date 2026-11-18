@@ -124,12 +124,12 @@ public sealed class NodeBbUpgradeService
 
     internal static string BuildHealthCheckScript(string installationPath, int timeoutSeconds = 45)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\\0') >= 0)
+        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
             throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
         if (timeoutSeconds is < 10 or > 120)
             throw new ArgumentOutOfRangeException(nameof(timeoutSeconds), "זמן בדיקת הבריאות חייב להיות בין 10 ל-120 שניות.");
 
-        return $"""
+        return $$"""
 set -eu
 cd {{ShellQuote(installationPath)}}
 command -v node >/dev/null 2>&1 || { echo 'Node.js is unavailable for the HTTP health check.' >&2; exit 70; }
@@ -153,7 +153,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 
 let host = String(config.bind_address || '127.0.0.1').trim();
-if (!host || host === '0.0.0.0' || host === '::' || host === '*') host = host === '::' ? '::1' : '127.0.0.1';
+if (!host || host === '0.0.0.0' || host === '*' || host === '::') host = host === '::' ? '::1' : '127.0.0.1';
 const timeoutAt = Date.now() + ({{timeoutSeconds}} * 1000);
 
 function probe() {
