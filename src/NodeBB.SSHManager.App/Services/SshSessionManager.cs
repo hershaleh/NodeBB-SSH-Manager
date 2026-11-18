@@ -113,6 +113,7 @@ public sealed class SshSessionManager : IDisposable
                 {
                     client.Connect();
                     cancellationToken.ThrowIfCancellationRequested();
+                    ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
                     var session = new SshServerSession(profile, secret, info, client);
                     _sessions[profile.Id] = session;
                     DiagnosticLogService.Instance.Info("SSH", "SessionConnected", "Persistent SSH session established.", profile.Name);
@@ -179,6 +180,6 @@ public sealed class SshSessionManager : IDisposable
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        foreach (var id in _sessions.Keys) Disconnect(id);
+        foreach (var id in _profileLocks.Keys) Disconnect(id);
     }
 }
