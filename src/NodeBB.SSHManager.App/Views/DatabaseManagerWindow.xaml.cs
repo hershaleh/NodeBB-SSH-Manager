@@ -71,6 +71,41 @@ public partial class DatabaseManagerWindow : Window
         }
     }
 
+    private async void DatabaseRestore_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Title = "בחירת גיבוי MongoDB מוצפן", Filter = "גיבוי NodeBB מוצפן|*.nbbbackup|כל הקבצים|*.*", CheckFileExists = true, Multiselect = false };
+        if (dialog.ShowDialog(this) != true) return;
+        var password = RestorePasswordBox.Password;
+        if (password.Length < 12) { MessageBox.Show(this, "יש להזין סיסמה בת 12 תווים לפחות.", "סיסמת גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        var confirmation = MessageBox.Show(this, "השחזור ישנה את נתוני MongoDB. לפני השינוי ייווצר גיבוי חירום של המצב הקיים. האם להמשיך?", "אישור שחזור", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirmation != MessageBoxResult.Yes) return;
+        DatabaseRestoreButton.IsEnabled = false; DatabaseBackupButton.IsEnabled = false; RefreshButton.IsEnabled = false;
+        StatusText.Text = "מפענח ובודק את קובץ הגיבוי...";
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var decrypted = Path.Combine(tempRoot, "restore-" + Guid.NewGuid().ToString("N") + ".archive.gz");
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            await BackupEncryptionService.DecryptFileAsync(dialog.FileName, decrypted, password);
+            await MongoDatabaseRestoreService.ValidateArchiveAsync(decrypted);
+            StatusText.Text = "הקובץ תקין. יוצר גיבוי חירום ומבצע שחזור...";
+            await new MongoDatabaseRestoreService(_session).RestoreAsync(_installation, decrypted);
+            StatusText.Text = "השחזור הושלם בהצלחה.";
+            MessageBox.Show(this, "מסד MongoDB שוחזר בהצלחה.", "השחזור הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("DatabaseUI", "MongoRestoreFailed", ex, _session.Profile.Name);
+            StatusText.Text = "השחזור נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור מסד הנתונים", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(decrypted)) File.Delete(decrypted); } catch { }
+            RestorePasswordBox.Clear(); DatabaseRestoreButton.IsEnabled = true; DatabaseBackupButton.IsEnabled = true; RefreshButton.IsEnabled = true;
+        }
+    }
+
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
