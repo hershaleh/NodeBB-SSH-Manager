@@ -131,8 +131,8 @@ public partial class SftpFileManagerWindow : Window
                     throw new IOException("קובץ באותו שם נוצר בשרת לאחר בדיקת ההחלפה. לא בוצעה דריסה.");
 
                 var token = Guid.NewGuid().ToString("N");
-                var temporaryPath = Combine(_currentPath, $".{fileName}.upload-{token}");
-                var backupPath = Combine(_currentPath, $".{fileName}.previous-{token}");
+                var temporaryPath = SftpPathSafety.Combine(_currentPath, $".{fileName}.upload-{token}");
+                var backupPath = SftpPathSafety.Combine(_currentPath, $".{fileName}.previous-{token}");
                 var movedOriginal = false;
                 try
                 {
