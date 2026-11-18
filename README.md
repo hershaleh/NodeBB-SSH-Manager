@@ -24,7 +24,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
 
-## Database backup scope\n\nMongoDB backup is scoped to the NodeBB database. Redis `redis-cli --rdb` produces a snapshot of the entire Redis server, including every logical database and any other applications sharing that Redis instance. The UI requires an explicit warning confirmation before creating this full-server snapshot. Redis backup files are encrypted locally using the same authenticated backup format. Redis restore is intentionally not offered yet because safely replacing a shared Redis instance requires an isolated maintenance plan and explicit impact analysis.\n\n## Diagnostic and error-reporting system
+## NodeBB upgrades\n\nThe upgrade workflow supports Git-based installations with a clean working tree and an `origin` remote. It fetches tags, checks out an explicitly entered version tag, and runs `./nodebb upgrade` while NodeBB is stopped. Before starting, the operator must confirm that database and files/config/uploads backups exist. If the upgrade command fails, the application deliberately leaves NodeBB stopped; it does not claim automatic database rollback because schema migrations may already have run. See the [official NodeBB upgrade guide](https://docs.nodebb.org/configuring/upgrade/).\n\n## Database backup scope\n\nMongoDB backup is scoped to the NodeBB database. Redis `redis-cli --rdb` produces a snapshot of the entire Redis server, including every logical database and any other applications sharing that Redis instance. The UI requires an explicit warning confirmation before creating this full-server snapshot. Redis backup files are encrypted locally using the same authenticated backup format. Redis restore is intentionally not offered yet because safely replacing a shared Redis instance requires an isolated maintenance plan and explicit impact analysis.\n\n## Diagnostic and error-reporting system
 
 Application logs are stored locally under:
 
@@ -41,7 +41,7 @@ Do not share diagnostic reports publicly without reviewing them first. A report 
 The application is being developed toward a comprehensive multi-server management suite:
 
 - Server inventory, capability detection and connection health.
-- NodeBB installation discovery, configuration inspection, lifecycle and upgrades.
+- NodeBB installation discovery, configuration inspection, lifecycle and guarded Git-tag upgrades.
 - Plugin and theme installation, update, removal and compatibility checks.
 - Remote file management, safe editing, permissions and transfers.
 - MongoDB encrypted backup and guarded restore with preflight, pre-restore dump and rollback.\n- Redis encrypted full-server RDB backup (all logical databases on the configured Redis server; restore is not yet implemented).
