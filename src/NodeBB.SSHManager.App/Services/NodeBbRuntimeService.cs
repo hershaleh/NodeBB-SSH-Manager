@@ -25,7 +25,7 @@ public sealed class NodeBbRuntimeService
         NodeBbInstallation installation, CancellationToken cancellationToken = default)
     {
         var script = $$"""
-INSTALL_PATH={{ShellQuote(installation.Path)}}
+INSTALL_PATH={{{ShellQuote(installation.Path)}}}
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
   for f in /etc/systemd/system/*.service /lib/systemd/system/*.service /usr/lib/systemd/system/*.service; do
     [ -f "$f" ] || continue
