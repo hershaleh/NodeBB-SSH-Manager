@@ -4,6 +4,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NodeBB.SSHManager.App", "src\NodeBB.SSHManager.App\NodeBB.SSHManager.App.csproj", "{7A8C9E01-54B3-4D4A-9C4F-110A5C92B001}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NodeBB.SSHManager.Tests", "tests\NodeBB.SSHManager.Tests\NodeBB.SSHManager.Tests.csproj", "{8B9D0F12-65C4-4E5B-AD5F-221B6D03C002}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -14,5 +16,9 @@ Global
 		{7A8C9E01-54B3-4D4A-9C4F-110A5C92B001}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A8C9E01-54B3-4D4A-9C4F-110A5C92B001}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A8C9E01-54B3-4D4A-9C4F-110A5C92B001}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B9D0F12-65C4-4E5B-AD5F-221B6D03C002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B9D0F12-65C4-4E5B-AD5F-221B6D03C002}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B9D0F12-65C4-4E5B-AD5F-221B6D03C002}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B9D0F12-65C4-4E5B-AD5F-221B6D03C002}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

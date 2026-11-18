@@ -1,0 +1,36 @@
+using NodeBB.SSHManager.Services;
+using Xunit;
+
+namespace NodeBB.SSHManager.Tests;
+
+public sealed class DiagnosticLogServiceTests
+{
+    [Theory]
+    [InlineData("password=TopSecret123", "password=[REDACTED]")]
+    [InlineData("API_KEY:abc123", "API_KEY:[REDACTED]")]
+    [InlineData("{\"password\":\"TopSecret123\"}", "{\"password\":[REDACTED]}")]
+    [InlineData("Authorization: Bearer eyJhbGciOiJIUzI1NiJ9", "Authorization: Bearer [REDACTED]")]
+    public void Redact_RemovesCredentialValues(string input, string expected)
+    {
+        var actual = DiagnosticLogService.Redact(input);
+        Assert.Equal(expected, actual);
+        Assert.DoesNotContain("TopSecret123", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("abc123", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("eyJhbGciOiJIUzI1NiJ9", actual, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Redact_PreservesOrdinaryText()
+    {
+        const string input = "SSH connection failed with timeout after 15 seconds.";
+        Assert.Equal(input, DiagnosticLogService.Redact(input));
+    }
+
+    [Fact]
+    public void Redact_RemovesPrivateKeyBody()
+    {
+        const string input = "-----BEGIN OPENSSH PRIVATE KEY-----\nprivate-material\n-----END OPENSSH PRIVATE KEY-----";
+        var actual = DiagnosticLogService.Redact(input);
+        Assert.DoesNotContain("private-material", actual, StringComparison.Ordinal);
+    }
+}

@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text;
 using System.Windows;
 using System.Windows.Input;
@@ -19,7 +18,13 @@ public partial class SshTerminalWindow : Window
         _session = session;
         ServerLabel.Text = $"SSH · {session.Profile.Name} ({session.Profile.Host})";
         Loaded += StartTerminal;
-        Closed += (_, _) => { _readCts?.Cancel(); _shell?.Dispose(); };
+        Closed += (_, _) =>
+        {
+            DiagnosticLogService.Instance.Info("Terminal", "TerminalClosed", "SSH terminal window closed.", _session.Profile.Name);
+            _readCts?.Cancel();
+            _shell?.Dispose();
+            _readCts?.Dispose();
+        };
     }
 
     private async void StartTerminal(object sender, RoutedEventArgs e)
@@ -28,10 +33,15 @@ public partial class SshTerminalWindow : Window
         {
             _shell = await Task.Run(() => _session.Client.CreateShellStream("xterm", 120, 40, 1000, 700, 4096));
             _readCts = new CancellationTokenSource();
+            DiagnosticLogService.Instance.Info("Terminal", "TerminalOpened", "Interactive SSH terminal opened.", _session.Profile.Name);
             InputBox.Focus();
             _ = ReadOutputAsync(_readCts.Token);
         }
-        catch (Exception ex) { Append($"\\r\\n[שגיאה בפתיחת מסוף] {ex.Message}\\r\\n"); }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Terminal", "TerminalOpenFailed", ex, _session.Profile.Name);
+            Append($"\r\n[שגיאה בפתיחת מסוף] {ex.Message}\r\n");
+        }
     }
 
     private async Task ReadOutputAsync(CancellationToken token)
@@ -43,13 +53,17 @@ public partial class SshTerminalWindow : Window
             {
                 var count = await _shell.ReadAsync(buffer.AsMemory(0, buffer.Length), token);
                 if (count <= 0) break;
-                var text = Encoding.UTF8.GetString(buffer, 0, count);
-                await Dispatcher.InvokeAsync(() => Append(text));
+                var output = Encoding.UTF8.GetString(buffer, 0, count);
+                await Dispatcher.InvokeAsync(() => Append(output));
             }
         }
         catch (OperationCanceledException) { }
         catch (ObjectDisposedException) { }
-        catch (Exception ex) { await Dispatcher.InvokeAsync(() => Append($"\\r\\n[חיבור המסוף הסתיים] {ex.Message}\\r\\n")); }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Terminal", "TerminalReadFailed", ex, _session.Profile.Name);
+            await Dispatcher.InvokeAsync(() => Append($"\r\n[חיבור המסוף הסתיים] {ex.Message}\r\n"));
+        }
     }
 
     private void InputBox_KeyDown(object sender, KeyEventArgs e)
@@ -60,7 +74,11 @@ public partial class SshTerminalWindow : Window
         InputBox.Clear();
         if (_shell is null || !_shell.CanWrite) return;
         try { _shell.WriteLine(command); _shell.Flush(); }
-        catch (Exception ex) { Append($"\\r\\n[שגיאת שליחה] {ex.Message}\\r\\n"); }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Terminal", "TerminalWriteFailed", ex, _session.Profile.Name);
+            Append($"\r\n[שגיאת שליחה] {ex.Message}\r\n");
+        }
     }
 
     private void Append(string value)

@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   build:
-    name: Build WPF application
+    name: Build, test and publish WPF application
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -31,6 +31,8 @@ jobs:
         run: dotnet restore NodeBB.SSHManager.sln
       - name: Build
         run: dotnet build NodeBB.SSHManager.sln --configuration Release --no-restore
+      - name: Run automated tests
+        run: dotnet test NodeBB.SSHManager.sln --configuration Release --no-build --logger "trx;LogFileName=tests.trx"
       - name: Publish self-contained Windows x64
         run: dotnet publish src/NodeBB.SSHManager.App/NodeBB.SSHManager.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output artifacts/win-x64
       - name: Upload build artifact
@@ -39,4 +41,12 @@ jobs:
           name: NodeBB-SSH-Manager-win-x64
           path: artifacts/win-x64/
           if-no-files-found: error
+          retention-days: 14
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NodeBB-SSH-Manager-test-results
+          path: '**/TestResults/*.trx'
+          if-no-files-found: ignore
           retention-days: 14
