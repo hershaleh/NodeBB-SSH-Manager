@@ -16,7 +16,7 @@ public sealed class NodeBbRuntimeService
     {
         "SYSTEMD" or "OPENRC" or "SYSV" => ServiceIdentifier.IsMatch(identifier),
         "DOCKER" => ContainerIdentifier.IsMatch(identifier),
-        "PM2" => !string.IsNullOrWhiteSpace(identifier) && identifier.Length <= 256 && !identifier.Any(char.IsControl),
+        "PM2" => Regex.IsMatch(identifier, @"^\\d{1,8}$"),
         "MANUAL" => identifier == "CLI",
         _ => false
     };
@@ -46,7 +46,7 @@ for f in /etc/init.d/*; do
   fi
 done
 if command -v pm2 >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
-  pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const p=JSON.parse(s);const x=p.find(v=>v.pm2_env&&v.pm2_env.pm_cwd===process.argv[1]);if(x)console.log("PM2|"+x.name)}catch(e){}})' "$INSTALL_PATH"
+  pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const p=JSON.parse(s);const x=p.find(v=>v.pm2_env&&v.pm2_env.pm_cwd===process.argv[1]);if(x)console.log("PM2|"+x.pm_id)}catch(e){}})' "$INSTALL_PATH"
 fi
 if command -v docker >/dev/null 2>&1; then
   for id in $(docker ps -q 2>/dev/null); do
