@@ -18,7 +18,12 @@ public partial class MainWindow : Window
         InitializeComponent();
         ServersList.ItemsSource = _profiles;
         LoadProfiles();
-        Closed += (_, _) => _sessionManager.Dispose();
+        DiagnosticLogService.Instance.Info("MainWindow", "DashboardLoaded", "Main dashboard loaded.");
+        Closed += (_, _) =>
+        {
+            DiagnosticLogService.Instance.Info("MainWindow", "ApplicationClosing", "Main window closed.");
+            _sessionManager.Dispose();
+        };
     }
 
     private void LoadProfiles()
@@ -30,6 +35,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
+            DiagnosticLogService.Instance.Error("Profiles", "LoadFailed", ex);
             MessageBox.Show(this, ex.Message, "שגיאה בטעינת שרתים", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
@@ -47,6 +53,7 @@ public partial class MainWindow : Window
             return;
         }
         _profiles.Add(dialog.Profile);
+        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileAdded", "A server profile was added.", dialog.Profile.Name);
         SaveProfiles();
         ServersList.SelectedItem = dialog.Profile;
         RefreshDashboard();
@@ -62,6 +69,7 @@ public partial class MainWindow : Window
         if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו.",
                 "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _sessionManager.Disconnect(selected.Id);
+        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         _profiles.Remove(selected);
         SaveProfiles();
         RefreshDashboard();
@@ -89,7 +97,11 @@ public partial class MainWindow : Window
             }
             ShowConnectionResult(result);
         }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "שגיאת חיבור", MessageBoxButton.OK, MessageBoxImage.Error); }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SSH", "ConnectionTestFailed", ex, selected.Name);
+            MessageBox.Show(this, ex.Message, "שגיאת חיבור", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
         finally { SetBusy(false); }
     }
 
@@ -172,12 +184,14 @@ public partial class MainWindow : Window
         }
         catch (SshHostKeyException ex)
         {
+            DiagnosticLogService.Instance.Warning("SSH", "HostKeyRejected", ex.Message, ex, profile.Name);
             MessageBox.Show(this, $"טביעת האצבע לא אומתה: {ex.Fingerprint}", "אימות שרת נכשל",
                 MessageBoxButton.OK, MessageBoxImage.Error);
             return null;
         }
         catch (Exception ex)
         {
+            DiagnosticLogService.Instance.Error("SSH", "PersistentConnectionFailed", ex, profile.Name);
             MessageBox.Show(this, ex.Message, "שגיאת חיבור", MessageBoxButton.OK, MessageBoxImage.Error);
             return null;
         }
@@ -205,11 +219,17 @@ public partial class MainWindow : Window
             MessageBox.Show(this, result.Message, "בדיקת SSH נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
+    private void Diagnostics_Click(object sender, RoutedEventArgs e)
+    {
+        new DiagnosticsWindow { Owner = this }.ShowDialog();
+    }
+
     private void SaveProfiles()
     {
         try { _profileStore.Save(_profiles); }
         catch (Exception ex)
         {
+            DiagnosticLogService.Instance.Error("Profiles", "SaveFailed", ex);
             MessageBox.Show(this, $"לא ניתן לשמור את פרופילי השרתים.\n{ex.Message}", "שגיאת שמירה",
                 MessageBoxButton.OK, MessageBoxImage.Error);
         }
