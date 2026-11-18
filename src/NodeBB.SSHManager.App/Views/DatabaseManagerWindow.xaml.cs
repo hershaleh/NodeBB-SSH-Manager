@@ -172,6 +172,12 @@ public partial class DatabaseManagerWindow : Window
             UsernameText.Text = info.UsernameConfigured ? "כן" : "לא";
             PasswordText.Text = info.PasswordConfigured ? "כן" : "לא";
             UriText.Text = info.UriConfigured ? "כן (הערך עצמו מוסתר)" : "לא";
+            var isMongo = string.Equals(info.Type, "mongo", StringComparison.OrdinalIgnoreCase);
+            var isRedis = string.Equals(info.Type, "redis", StringComparison.OrdinalIgnoreCase);
+            DatabaseBackupButton.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
+            MongoRestorePanel.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
+            RedisBackupButton.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
+            RedisBackupNote.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
             StatusText.Text = "התצורה נקראה בהצלחה.";
         }
         catch (Exception ex)
