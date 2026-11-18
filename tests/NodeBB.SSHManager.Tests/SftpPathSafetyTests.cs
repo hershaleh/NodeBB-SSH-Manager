@@ -10,6 +10,7 @@ public sealed class SftpPathSafetyTests
     [InlineData("/var//www/", "with spaces.txt", "/var/www/with spaces.txt")]
     [InlineData("/srv/nodebb", "file'name.txt", "/srv/nodebb/file'name.txt")]
     [InlineData("/srv/nodebb", "literal\\backslash.txt", "/srv/nodebb/literal\\backslash.txt")]
+    [InlineData("/srv/nodebb", "   ", "/srv/nodebb/   ")]
     public void Combine_ReturnsNormalizedRemotePath(string directory, string name, string expected)
     {
         Assert.Equal(expected, SftpPathSafety.Combine(directory, name));
