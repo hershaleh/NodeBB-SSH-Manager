@@ -73,6 +73,7 @@ try {
   uri = parsed.toString();
   fs.writeFileSync(process.argv[3], 'uri: ' + JSON.stringify(uri) + '\n', { mode: 0o600, flag: 'wx' });
   fs.writeFileSync(process.argv[3] + '.db', db + '\n', { mode: 0o600, flag: 'wx' });
+  fs.writeFileSync(process.argv[3] + '.uri', uri + '\n', { mode: 0o600, flag: 'wx' });
 NODE
 mongodump --config="$WORK/mongo.yml" --archive="$WORK/database.archive.gz" --gzip
 [ -s "$WORK/database.archive.gz" ] || { echo 'mongodump לא יצר קובץ גיבוי.' >&2; exit 22; }

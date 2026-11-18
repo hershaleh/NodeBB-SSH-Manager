@@ -18,6 +18,9 @@ public sealed class MongoDatabaseRestoreServiceTests
         Assert.Contains("mongodump --config=", script);
         Assert.Contains("rollback.archive.gz", script);
         Assert.Contains("KEEP_WORK=1", script);
+        Assert.Contains("dropDatabase()", script);
+        Assert.Contains("--stopOnError", script);
+        Assert.Contains("preflight.log", script);
         Assert.DoesNotContain("--password", script);
     }
 

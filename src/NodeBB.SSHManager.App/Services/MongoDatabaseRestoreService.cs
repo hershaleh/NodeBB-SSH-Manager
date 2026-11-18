@@ -122,21 +122,40 @@ try {
   uri = parsed.toString();
   fs.writeFileSync(process.argv[3], 'uri: ' + JSON.stringify(uri) + '\n', { mode: 0o600, flag: 'wx' });
   fs.writeFileSync(process.argv[3] + '.db', db + '\n', { mode: 0o600, flag: 'wx' });
+  fs.writeFileSync(process.argv[3] + '.uri', uri + '\n', { mode: 0o600, flag: 'wx' });
 NODE
 DB="$(cat "$WORK/mongo.yml.db")"
 [ -s "$WORK/incoming.archive.gz" ] || { echo 'קובץ הגיבוי שהועלה ריק.' >&2; exit 22; }
-mongorestore --dryRun --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --nsInclude="$DB.*"
+[ -n "$DB" ] || { echo 'שם מסד הנתונים חסר; השחזור בוטל.' >&2; exit 23; }
+node -e "require(require('path').join(process.argv[1], 'node_modules', 'mongodb'))" "$INSTALLATION" || { echo 'חבילת MongoDB Node.js אינה זמינה בהתקנת NodeBB.' >&2; exit 24; }
+mongorestore --dryRun --verbose --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --nsInclude="$DB.*" > "$WORK/preflight.log" 2>&1 || { cat "$WORK/preflight.log" >&2; exit 25; }
+grep -qi 'preparing collections to restore from' "$WORK/preflight.log" || { echo 'הארכיון אינו מכיל אוספים עבור מסד הנתונים המוגדר ב-NodeBB.' >&2; exit 26; }
 mongodump --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip
-[ -s "$WORK/rollback.archive.gz" ] || { echo 'לא נוצר גיבוי מקדים; השחזור בוטל.' >&2; exit 23; }
-if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --drop --nsInclude="$DB.*"; then
+[ -s "$WORK/rollback.archive.gz" ] || { echo 'לא נוצר גיבוי מקדים; השחזור בוטל.' >&2; exit 27; }
+KEEP_WORK=1
+drop_target_database() {
+  node - "$INSTALLATION" "$WORK/mongo.yml.uri" "$DB" <<'NODE'
+const fs = require('fs');
+const path = require('path');
+(async () => {
+  const { MongoClient } = require(path.join(process.argv[2], 'node_modules', 'mongodb'));
+  const uri = fs.readFileSync(process.argv[3], 'utf8').trim();
+  const client = new MongoClient(uri);
+  try { await client.connect(); await client.db(process.argv[4]).dropDatabase(); }
+  finally { await client.close(); }
+})().catch(() => { console.error('Could not safely reset the configured NodeBB database.'); process.exit(1); });
+NODE
+}
+if drop_target_database && mongorestore --config="$WORK/mongo.yml" --archive="$WORK/incoming.archive.gz" --gzip --nsInclude="$DB.*" --stopOnError; then
+  KEEP_WORK=0
   echo 'MongoDB restore completed.'
 else
-  echo 'Restore failed; attempting rollback from the pre-restore dump.' >&2
-  if mongorestore --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip --drop --nsInclude="$DB.*"; then
+  echo 'Restore failed; replacing the target database with the pre-restore dump.' >&2
+  if drop_target_database && mongorestore --config="$WORK/mongo.yml" --archive="$WORK/rollback.archive.gz" --gzip --nsInclude="$DB.*" --stopOnError; then
+    KEEP_WORK=0
     echo 'Rollback completed.' >&2
     exit 41
   else
-    KEEP_WORK=1
     echo 'CRITICAL: rollback failed; preserve this directory and its rollback archive:' "$WORK" >&2
     exit 42
   fi

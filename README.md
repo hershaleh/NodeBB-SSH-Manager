@@ -90,7 +90,7 @@ dotnet publish .\src\NodeBB.SSHManager.App\NodeBB.SSHManager.App.csproj -c Relea
 
 Development preview. The current remote-management functions have not yet completed comprehensive live testing against different SSH servers, Linux distributions, service managers and NodeBB deployment methods. Do not use this preview for production administration or unverified destructive operations.
 
-The next development milestones are broader server capability detection, safer NodeBB lifecycle handling, backup/database/plugin modules, and automated tests for the service layer.
+The remaining roadmap includes Redis/PostgreSQL database support, NodeBB upgrade workflows, scheduled operations, bilingual language switching, and broader live compatibility testing.
 
 
 ### Database backups
