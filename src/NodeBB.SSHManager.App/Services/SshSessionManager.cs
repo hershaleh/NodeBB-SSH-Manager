@@ -59,7 +59,7 @@ public sealed class SshServerSession : IDisposable
         {
             Timeout = TimeSpan.FromSeconds(20)
         };
-        var client = new SftpClient(info);
+        var client = new SftpClient(info) { KeepAliveInterval = TimeSpan.FromSeconds(30) };
         client.HostKeyReceived += (_, e) =>
         {
             var actual = "SHA256:" + e.FingerPrintSHA256;
@@ -105,10 +105,18 @@ public sealed class SshSessionManager : IDisposable
         try
         {
             ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-            if (_sessions.TryGetValue(profile.Id, out var existing) && existing.IsConnected)
+            if (_sessions.TryGetValue(profile.Id, out var existing))
             {
-                DiagnosticLogService.Instance.Info("SSH", "SessionReused", "An existing SSH session was reused.", profile.Name);
-                return existing;
+                if (existing.IsConnected)
+                {
+                    DiagnosticLogService.Instance.Info("SSH", "SessionReused", "An existing SSH session was reused.", profile.Name);
+                    return existing;
+                }
+                if (_sessions.TryRemove(profile.Id, out var stale))
+                {
+                    stale.Dispose();
+                    DiagnosticLogService.Instance.Warning("SSH", "StaleSessionReplaced", "A disconnected SSH session was cleaned up before reconnecting.", profile.Name);
+                }
             }
 
             return await Task.Run(() =>
@@ -120,7 +128,7 @@ public sealed class SshSessionManager : IDisposable
                     Timeout = TimeSpan.FromSeconds(20)
                 };
                 string? fingerprint = null;
-                var client = new SshClient(info);
+                var client = new SshClient(info) { KeepAliveInterval = TimeSpan.FromSeconds(30) };
                 client.HostKeyReceived += (_, e) =>
                 {
                     fingerprint = "SHA256:" + e.FingerPrintSHA256;
