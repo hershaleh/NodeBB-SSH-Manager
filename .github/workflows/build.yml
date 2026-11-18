@@ -1,0 +1,38 @@
+name: Windows Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build WPF application
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup .NET 11
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 11.0.x
+      - name: Show SDK
+        run: dotnet --info
+      - name: Restore
+        run: dotnet restore NodeBB.SSHManager.sln
+      - name: Build
+        run: dotnet build NodeBB.SSHManager.sln --configuration Release --no-restore
+      - name: Publish self-contained Windows x64
+        run: dotnet publish src/NodeBB.SSHManager.App/NodeBB.SSHManager.App.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output artifacts/win-x64
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NodeBB-SSH-Manager-win-x64
+          path: artifacts/win-x64/
+          if-no-files-found: error
+          retention-days: 14
