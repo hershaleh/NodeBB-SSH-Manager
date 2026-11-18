@@ -111,9 +111,7 @@ public partial class NodeBbManagerWindow : Window
             var result = await _service.RunLifecycleAsync(installation, action);
             var details = string.IsNullOrWhiteSpace(result.Output) ? result.Error : result.Output;
             StatusText.Text = result.ExitCode == 0 ? $"הפעולה {action} הסתיימה בהצלחה." : $"הפעולה נכשלה (קוד {result.ExitCode}).";
-            MessageBox.Show(this, $"{StatusText.Text}
-
-{details}", "תוצאת פעולה",
+            MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
         }
         catch (Exception ex) { StatusText.Text = "שגיאה: " + ex.Message; }
