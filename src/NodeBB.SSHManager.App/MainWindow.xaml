@@ -8,111 +8,131 @@
         FlowDirection="RightToLeft"
         FontFamily="Segoe UI">
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="264" />
-        </Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="264"/></Grid.ColumnDefinitions>
 
         <Grid Grid.Column="0" Margin="34,28,34,28">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
 
             <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,26">
                 <StackPanel DockPanel.Dock="Right">
-                    <TextBlock Text="סקירה כללית" FontSize="28" FontWeight="Bold" />
-                    <TextBlock Text="תמונת מצב של שרתי NodeBB שלך" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0" />
+                    <TextBlock Text="סקירה כללית" FontSize="28" FontWeight="Bold"/>
+                    <TextBlock Text="תמונת מצב של שרתי NodeBB שלך" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,5,0,0"/>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                     <Border Background="#E9F7EF" CornerRadius="20" Padding="11,7" Margin="0,0,12,0">
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="7" Height="7" Fill="#20A464" VerticalAlignment="Center" Margin="0,0,7,0" />
-                            <TextBlock Text="האפליקציה מוכנה" Foreground="#167647" FontSize="12" FontWeight="SemiBold" />
+                            <Ellipse Width="7" Height="7" Fill="#20A464" VerticalAlignment="Center" Margin="0,0,7,0"/>
+                            <TextBlock Text="האפליקציה מוכנה" Foreground="#167647" FontSize="12" FontWeight="SemiBold"/>
                         </StackPanel>
                     </Border>
-                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ הוסף שרת" />
+                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ הוסף שרת" Click="AddServer_Click"/>
                 </StackPanel>
             </DockPanel>
 
             <Grid Grid.Row="1" Margin="0,0,0,22">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" /><ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" /><ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" /><ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/><ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Border Grid.Column="0" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="שרתים מוגדרים" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                        <TextBlock Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2" />
-                        <TextBlock Text="עדיין לא נוספו שרתים" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="שרתים מוגדרים" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock x:Name="ServerCountText" Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
+                        <TextBlock Text="פרופילים שמורים במחשב" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="2" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="שרתים מחוברים" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                        <TextBlock Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2" />
-                        <TextBlock Text="אין חיבורים פעילים" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="חיבורים פעילים" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock x:Name="ConnectedCountText" Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
+                        <TextBlock Text="חיבורי SSH מתמשכים" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="פורומים פעילים" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                        <TextBlock Text="—" FontSize="30" FontWeight="Bold" Margin="0,9,0,2" />
-                        <TextBlock Text="יתעדכן לאחר חיבור" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="פורומים פעילים" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock Text="—" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
+                        <TextBlock Text="יתעדכן לאחר גילוי NodeBB" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="התראות" Foreground="{StaticResource MutedBrush}" FontSize="12" />
-                        <TextBlock Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2" />
-                        <TextBlock Text="אין התראות חדשות" Foreground="{StaticResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="התראות" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
+                        <TextBlock Text="אין התראות חדשות" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
             </Grid>
 
             <Grid Grid.Row="2" Margin="0,0,0,14">
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="השרתים שלי" FontSize="19" FontWeight="Bold" />
-                    <TextBlock Text="ניהול וחיבור לכל שרתי NodeBB במקום אחד" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0" />
+                    <TextBlock Text="השרתים שלי" FontSize="19" FontWeight="Bold"/>
+                    <TextBlock Text="ניהול וחיבור לכל שרתי NodeBB במקום אחד" FontSize="12" Foreground="{StaticResource MutedBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="0 שרתים" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12" />
+                <TextBlock x:Name="ServerTotalText" Grid.Column="1" Text="0 שרתים" Foreground="{StaticResource MutedBrush}" VerticalAlignment="Center" FontSize="12"/>
             </Grid>
 
-            <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Padding="30">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
-                    <Border Width="74" Height="74" Background="#EEF2FF" CornerRadius="22" HorizontalAlignment="Center" Margin="0,0,0,18">
-                        <TextBlock Text="⌁" FontSize="42" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <TextBlock Text="עדיין לא הוספת שרתים" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" />
-                    <TextBlock Text="הוסף את שרת NodeBB הראשון שלך כדי להתחיל לנהל תוספים, גיבויים, שירותים וקבצים מרחוק." TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,10,0,22" />
-                    <Button Style="{StaticResource PrimaryButtonStyle}" Content="הוספת שרת ראשון" />
-                    <TextBlock Text="החיבור יתבצע באמצעות SSH מאובטח" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,15,0,0" />
-                </StackPanel>
+            <Border Grid.Row="3" Style="{StaticResource CardBorderStyle}" Padding="22">
+                <Grid>
+                    <StackPanel x:Name="EmptyState" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="440">
+                        <Border Width="74" Height="74" Background="#EEF2FF" CornerRadius="22" HorizontalAlignment="Center" Margin="0,0,0,18">
+                            <TextBlock Text="⌁" FontSize="42" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="עדיין לא הוספת שרתים" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                        <TextBlock Text="הוסף את שרת NodeBB הראשון שלך כדי להתחיל לנהל תוספים, גיבויים, שירותים וקבצים מרחוק." TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource MutedBrush}" FontSize="13" Margin="0,10,0,22"/>
+                        <Button Style="{StaticResource PrimaryButtonStyle}" Content="הוספת שרת ראשון" Click="AddServer_Click"/>
+                        <TextBlock Text="החיבור יתבצע באמצעות SSH מאובטח" Foreground="{StaticResource MutedBrush}" FontSize="11" Margin="0,15,0,0"/>
+                    </StackPanel>
+
+                    <DockPanel x:Name="ServerListPanel" Visibility="Collapsed">
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,14">
+                            <Button Content="בדיקת חיבור SSH" Click="TestConnection_Click" Padding="14,8" Margin="0,0,8,0" Background="#4263EB" Foreground="White" BorderThickness="0"/>
+                            <Button Content="הסר שרת" Click="RemoveServer_Click" Padding="14,8" Background="#FFF0F0" Foreground="#B42318" BorderThickness="0"/>
+                        </StackPanel>
+                        <ListBox x:Name="ServersList" BorderThickness="0" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,9" Background="White">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold"/>
+                                                <TextBlock Text="{Binding HostDisplay}" Foreground="#778399" FontSize="12" Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding Username}" Foreground="#778399" FontSize="11" Margin="0,3,0,0"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="#EEF2FF" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding AuthenticationLabel}" Foreground="#3654C5" FontSize="11"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Grid>
             </Border>
         </Grid>
 
         <Border Grid.Column="1" Background="{StaticResource SidebarBrush}">
             <Grid Margin="18,25,18,20">
-                <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                 <StackPanel Grid.Row="0" Margin="8,4,8,30">
                     <StackPanel Orientation="Horizontal">
                         <Border Width="36" Height="36" Background="#4263EB" CornerRadius="11">
-                            <TextBlock Text="N" Foreground="White" FontSize="21" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock Text="N" Foreground="White" FontSize="21" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="NodeBB" Foreground="White" FontSize="16" FontWeight="Bold" />
-                            <TextBlock Text="SSH MANAGER" Foreground="#9AAAC0" FontSize="9" FontWeight="SemiBold" />
+                            <TextBlock Text="NodeBB" Foreground="White" FontSize="16" FontWeight="Bold"/>
+                            <TextBlock Text="SSH MANAGER" Foreground="#9AAAC0" FontSize="9" FontWeight="SemiBold"/>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
-                <TextBlock Grid.Row="1" Text="ניהול" Foreground="#8292AA" FontSize="10" FontWeight="Bold" Margin="12,0,0,10" />
+                <TextBlock Grid.Row="1" Text="ניהול" Foreground="#8292AA" FontSize="10" FontWeight="Bold" Margin="12,0,0,10"/>
                 <StackPanel Grid.Row="2">
-                    <Button Style="{StaticResource NavButtonStyle}" Background="#2B3D5A"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" FontSize="17" Width="30" Foreground="White" /><TextBlock Text="סקירה כללית" Foreground="White" /></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Background="#2B3D5A"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" FontSize="17" Width="30" Foreground="White"/><TextBlock Text="סקירה כללית" Foreground="White"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="▣" FontSize="17" Width="30"/><TextBlock Text="השרתים שלי"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◈" FontSize="17" Width="30"/><TextBlock Text="ניהול NodeBB"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⌘" FontSize="17" Width="30"/><TextBlock Text="תוספים ועיצובים"/></StackPanel></Button>
@@ -127,9 +147,9 @@
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◴" FontSize="17" Width="30"/><TextBlock Text="משימות אוטומטיות"/></StackPanel></Button>
                 </StackPanel>
                 <StackPanel Grid.Row="3">
-                    <Border Height="1" Background="#34435A" Margin="5,0,5,13" />
+                    <Border Height="1" Background="#34435A" Margin="5,0,5,13"/>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="הגדרות"/></StackPanel></Button>
-                    <TextBlock Text="גרסה 0.1.0 · Preview" Foreground="#8190A6" FontSize="10" Margin="12,12,0,0" />
+                    <TextBlock Text="גרסה 0.1.0 · Preview" Foreground="#8190A6" FontSize="10" Margin="12,12,0,0"/>
                 </StackPanel>
             </Grid>
         </Border>
