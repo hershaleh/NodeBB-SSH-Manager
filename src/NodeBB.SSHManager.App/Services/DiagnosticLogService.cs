@@ -131,7 +131,7 @@ public sealed class DiagnosticLogService
     {
         var result = value;
         foreach (var pattern in SecretPatterns)
-            result = pattern.Replace(result, "$1$2[REDACTED]");
+            result = pattern.Replace(result, "$1[REDACTED]");
         return result;
     }
 }
