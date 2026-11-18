@@ -90,12 +90,12 @@ public partial class MainWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         try
         {
+            var fileInfo = new FileInfo(dialog.FileName);
+            if (fileInfo.Length > 2 * 1024 * 1024) throw new InvalidDataException("קובץ הפרופילים גדול מהמותר (2MB).");
             var json = File.ReadAllText(dialog.FileName);
             var imported = _profileTransfer.Import(json);
-            var additions = imported.Where(candidate => !_profiles.Any(existing =>
-                string.Equals(existing.Host, candidate.Host, StringComparison.OrdinalIgnoreCase)
-                && existing.Port == candidate.Port
-                && string.Equals(existing.Username, candidate.Username, StringComparison.Ordinal))).ToList();
+            var knownEndpoints = _profiles.Select(p => (Host: p.Host.ToUpperInvariant(), p.Port, p.Username)).ToHashSet();
+            var additions = imported.Where(candidate => knownEndpoints.Add((candidate.Host.ToUpperInvariant(), candidate.Port, candidate.Username))).ToList();
             var skipped = imported.Count - additions.Count;
             if (additions.Count == 0)
             {
@@ -104,7 +104,12 @@ public partial class MainWindow : Window
             }
             if (MessageBox.Show(this, $"נמצאו {imported.Count} פרופילים תקינים. להוסיף {additions.Count}?\nפרופילים קיימים ידולגו. סיסמאות וטביעות אצבע SSH לא מיובאות, ולכן תידרש בדיקת אמון מחדש בשרת.", "אישור ייבוא", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             foreach (var profile in additions) _profiles.Add(profile);
-            SaveProfiles();
+            if (!SaveProfiles())
+            {
+                foreach (var profile in additions) _profiles.Remove(profile);
+                RefreshDashboard();
+                return;
+            }
             RefreshDashboard();
             MessageBox.Show(this, $"נוספו {additions.Count} פרופילים. דולגו {skipped} כפילויות.", "הייבוא הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -387,14 +392,15 @@ public partial class MainWindow : Window
         new DiagnosticsWindow { Owner = this }.ShowDialog();
     }
 
-    private void SaveProfiles()
+    private bool SaveProfiles()
     {
-        try { _profileStore.Save(_profiles); }
+        try { _profileStore.Save(_profiles); return true; }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("Profiles", "SaveFailed", ex);
             MessageBox.Show(this, $"לא ניתן לשמור את פרופילי השרתים.\n{ex.Message}", "שגיאת שמירה",
                 MessageBoxButton.OK, MessageBoxImage.Error);
+            return false;
         }
     }
 
