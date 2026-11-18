@@ -107,9 +107,16 @@ public partial class SftpFileManagerWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         try
         {
+            var remotePath = Combine(_currentPath, Path.GetFileName(dialog.FileName));
+            if (await Task.Run(() => _client.Exists(remotePath)))
+            {
+                if (MessageBox.Show(this, $"הקובץ '{Path.GetFileName(dialog.FileName)}' כבר קיים בשרת. להחליף אותו?",
+                        "אישור החלפה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                    return;
+            }
             StatusText.Text = "מעלה קובץ...";
             await using var input = File.OpenRead(dialog.FileName);
-            await Task.Run(() => _client.UploadFile(input, Combine(_currentPath, Path.GetFileName(dialog.FileName)), true));
+            await Task.Run(() => _client.UploadFile(input, remotePath, true));
             await LoadDirectoryAsync(_currentPath);
             DiagnosticLogService.Instance.Info("SFTP", "UploadCompleted", $"Uploaded a file to {_currentPath}.", _session.Profile.Name);
             StatusText.Text = "ההעלאה הושלמה";

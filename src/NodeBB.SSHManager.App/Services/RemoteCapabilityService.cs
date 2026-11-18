@@ -38,7 +38,7 @@ version_of() {
     printf 'לא מותקן'
   fi
 }
-OS_NAME=לא ידועה
+OS_NAME="לא ידועה"
 if [ -r /etc/os-release ]; then
   . /etc/os-release
   OS_NAME="${PRETTY_NAME:-${NAME:-Linux}}"
@@ -50,7 +50,7 @@ USER_NAME="$(id -un 2>/dev/null)"
 ROOT_FLAG=לא
 [ "$(id -u 2>/dev/null)" = "0" ] && ROOT_FLAG=כן
 PID1="$(ps -p 1 -o comm= 2>/dev/null | tr -d ' ')"
-INIT=לא ידוע
+INIT="לא ידוע"
 case "$PID1" in
   systemd) INIT=systemd ;;
   init) if command -v rc-service >/dev/null 2>&1; then INIT=OpenRC; else INIT=SysV-init; fi ;;
