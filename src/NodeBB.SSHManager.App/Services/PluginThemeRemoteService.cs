@@ -34,7 +34,7 @@ public sealed class PluginThemeRemoteService
 cd {path} || exit 1
 for d in node_modules/nodebb-plugin-* node_modules/nodebb-theme-*; do
   [ -d "$d" ] || continue
-  name="${{d##*/}}"
+  name="$(basename "$d")"
   version=לא-ידועה
   if [ -r "$d/package.json" ]; then
     found="$(grep -m 1 '"version"' "$d/package.json" | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
