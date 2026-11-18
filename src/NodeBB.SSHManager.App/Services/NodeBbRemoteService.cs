@@ -20,16 +20,19 @@ done | while IFS= read -r f; do
   printf '%s|%s\n' "$d" "$v"
 done | sort -u | head -n 40
 """;
+        DiagnosticLogService.Instance.Info("NodeBB", "DiscoveryStarted", "NodeBB discovery started.", _session.Profile.Name);
         var result = await _session.ExecuteAsync(script, cancellationToken);
         if (result.ExitCode != 0 && string.IsNullOrWhiteSpace(result.Output))
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(result.Error) ? "סריקת NodeBB נכשלה." : result.Error);
 
-        return result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        var installations = result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Select(line => line.Split('|', 2))
             .Where(parts => parts.Length > 0 && parts[0].StartsWith('/'))
             .Select(parts => new NodeBbInstallation(parts[0], parts.Length > 1 ? parts[1] : "לא ידועה"))
             .DistinctBy(x => x.Path)
             .ToArray();
+        DiagnosticLogService.Instance.Info("NodeBB", "DiscoveryCompleted", $"NodeBB discovery completed; {installations.Length} installation(s) found.", _session.Profile.Name);
+        return installations;
     }
 
     public async Task<(int ExitCode, string Output, string Error)> RunLifecycleAsync(
@@ -38,7 +41,13 @@ done | sort -u | head -n 40
         if (action is not ("start" or "stop" or "restart" or "build"))
             throw new ArgumentOutOfRangeException(nameof(action));
         var path = ShellQuote(installation.Path);
-        return await _session.ExecuteAsync($"cd {path} && ./nodebb {action}", cancellationToken);
+        DiagnosticLogService.Instance.Info("NodeBB", "LifecycleStarted", $"NodeBB {action} requested for {installation.Path}.", _session.Profile.Name);
+        var result = await _session.ExecuteAsync($"cd {path} && ./nodebb {action}", cancellationToken);
+        if (result.ExitCode == 0)
+            DiagnosticLogService.Instance.Info("NodeBB", "LifecycleCompleted", $"NodeBB {action} completed for {installation.Path}.", _session.Profile.Name);
+        else
+            DiagnosticLogService.Instance.Error("NodeBB", "LifecycleFailed", $"NodeBB {action} failed with exit code {result.ExitCode}: {result.Error}", _session.Profile.Name);
+        return result;
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";
