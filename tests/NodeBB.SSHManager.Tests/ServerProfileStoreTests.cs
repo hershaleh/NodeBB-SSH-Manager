@@ -128,3 +128,47 @@ public sealed class ServerProfileStoreTests : IDisposable
         }
     }
 }
+
+
+public sealed class CredentialVaultServiceTests : IDisposable
+{
+    private readonly string _directory = Path.Combine(Path.GetTempPath(), "NodeBB-SSH-Manager-Vault-Tests", Guid.NewGuid().ToString("N"));
+    private string VaultPath => Path.Combine(_directory, "vault.dat");
+
+    [Fact]
+    public void SetGetAndRemove_StoresOnlyForCurrentWindowsUser()
+    {
+        var vault = new CredentialVaultService(VaultPath);
+        var id = Guid.NewGuid();
+        vault.Set(id, "test-secret-value");
+        Assert.True(vault.Has(id));
+        Assert.Equal("test-secret-value", vault.Get(id));
+        Assert.DoesNotContain("test-secret-value", File.ReadAllText(VaultPath));
+        vault.Remove(id);
+        Assert.False(vault.Has(id));
+        Assert.Null(vault.Get(id));
+        Assert.False(File.Exists(VaultPath));
+    }
+
+    [Fact]
+    public void Get_WhenVaultIsMissing_ReturnsNull()
+        => Assert.Null(new CredentialVaultService(VaultPath).Get(Guid.NewGuid()));
+
+    [Fact]
+    public void Set_RejectsEmptySecret()
+        => Assert.Throws<ArgumentException>(() => new CredentialVaultService(VaultPath).Set(Guid.NewGuid(), ""));
+
+    [Fact]
+    public void Get_WhenVaultIsOversized_FailsClosed()
+    {
+        Directory.CreateDirectory(_directory);
+        File.WriteAllBytes(VaultPath, new byte[1024 * 1024 + 1]);
+        Assert.Null(new CredentialVaultService(VaultPath).Get(Guid.NewGuid()));
+    }
+
+    public void Dispose()
+    {
+        try { if (Directory.Exists(_directory)) Directory.Delete(_directory, true); }
+        catch { }
+    }
+}
