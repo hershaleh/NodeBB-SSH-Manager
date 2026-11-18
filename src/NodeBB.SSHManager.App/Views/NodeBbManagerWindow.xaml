@@ -27,7 +27,8 @@
    <Button Content="תוספים ועיצובים" Click="Packages_Click" Padding="18,9" Margin="0,0,8,0"/>
    <Button Content="גיבויים" Click="Backups_Click" Padding="18,9" Margin="0,0,8,0"/>
    <Button Content="מסד נתונים" Click="Database_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="לוגים" Click="Logs_Click" Padding="18,9" Margin="0,0,8,0"/>\n   <Button Content="אבטחה" Click="Security_Click" Padding="18,9"/>
+   <Button Content="לוגים" Click="Logs_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button Content="אבטחה" Click="Security_Click" Padding="18,9"/>
   </WrapPanel>
  </Grid>
 </Window>
