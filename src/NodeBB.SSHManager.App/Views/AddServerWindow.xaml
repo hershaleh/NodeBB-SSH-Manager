@@ -32,7 +32,7 @@
                     </StackPanel>
                 </Grid>
                 <TextBlock Text="שיטת אימות" FontWeight="SemiBold"/>
-                <ComboBox x:Name="AuthTypeBox" SelectedIndex="1" Padding="8" Margin="0,6,0,14">
+                <ComboBox x:Name="AuthTypeBox" SelectedIndex="0" Padding="8" Margin="0,6,0,14">
                     <ComboBoxItem Content="מפתח SSH" Tag="PrivateKey"/>
                     <ComboBoxItem Content="סיסמה" Tag="Password"/>
                 </ComboBox>
