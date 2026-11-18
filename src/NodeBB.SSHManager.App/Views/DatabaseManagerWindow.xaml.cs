@@ -207,6 +207,59 @@ public partial class DatabaseManagerWindow : Window
         }
     }
 
+
+    private async void PostgresRestore_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "בחירת גיבוי PostgreSQL מוצפן",
+            Filter = "גיבוי NodeBB מוצפן|*.nbbbackup|כל הקבצים|*.*",
+            CheckFileExists = true, Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        var password = RestorePasswordBox.Password;
+        if (password.Length < 12)
+        {
+            MessageBox.Show(this, "יש להזין סיסמה בת 12 תווים לפחות.", "סיסמת גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var confirmation = MessageBox.Show(this,
+            "השחזור יחליף את האובייקטים הכלולים בארכיון בתוך מסד PostgreSQL שהוגדר ב-NodeBB. אובייקטים שאינם כלולים בארכיון עשויים להישאר. לפני השינוי ייווצר גיבוי חירום של מסד היעד; אם השחזור ייכשל, המערכת תנסה להחזיר את המצב הקודם. להמשיך?",
+            "אישור שחזור PostgreSQL", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirmation != MessageBoxResult.Yes) return;
+
+        PostgresRestoreButton.IsEnabled = false;
+        PostgresBackupButton.IsEnabled = false;
+        RefreshButton.IsEnabled = false;
+        StatusText.Text = "מפענח ובודק את קובץ הגיבוי...";
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var decrypted = Path.Combine(tempRoot, "restore-" + Guid.NewGuid().ToString("N") + ".dump");
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            await BackupEncryptionService.DecryptFileAsync(dialog.FileName, decrypted, password);
+            await PostgresDatabaseRestoreService.ValidateDumpAsync(decrypted);
+            StatusText.Text = "קובץ הגיבוי תקין. יוצר גיבוי חירום ומבצע שחזור...";
+            await new PostgresDatabaseRestoreService(_session).RestoreAsync(_installation, decrypted);
+            StatusText.Text = "שחזור PostgreSQL הושלם בהצלחה.";
+            MessageBox.Show(this, "אובייקטי מסד PostgreSQL שוחזרו בהצלחה.", "השחזור הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("DatabaseUI", "PostgresRestoreFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שחזור PostgreSQL נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור PostgreSQL", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(decrypted)) File.Delete(decrypted); } catch { }
+            RestorePasswordBox.Clear();
+            PostgresRestoreButton.IsEnabled = true;
+            PostgresBackupButton.IsEnabled = true;
+            RefreshButton.IsEnabled = true;
+        }
+    }
+
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
@@ -225,7 +278,9 @@ public partial class DatabaseManagerWindow : Window
             var isRedis = string.Equals(info.Type, "redis", StringComparison.OrdinalIgnoreCase);
             var isPostgres = string.Equals(info.Type, "postgres", StringComparison.OrdinalIgnoreCase);
             DatabaseBackupButton.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
-            MongoRestorePanel.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
+            MongoRestorePanel.Visibility = isMongo || isPostgres ? Visibility.Visible : Visibility.Collapsed;
+            DatabaseRestoreButton.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
+            PostgresRestoreButton.Visibility = isPostgres ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupButton.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
             PostgresBackupButton.Visibility = isPostgres ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupNote.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;

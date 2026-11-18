@@ -15,6 +15,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance.
 - PostgreSQL custom-format database backup available from the database management window, using a protected temporary pgpass file; credentials are not passed as command-line arguments.
 - MongoDB restore with archive validation, dry-run, pre-restore dump, database scoping and rollback attempt.
+- PostgreSQL custom-dump restore with archive TOC validation, database-name matching, pre-restore dump, transactional object replacement and rollback attempt.
 - Read-only database configuration inspector with masked credentials.
 - NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring.
 - System service inventory and controlled start/stop/restart with confirmation and privilege checks.
@@ -30,7 +31,8 @@ The upgrade workflow supports Git-based installations with a clean working tree 
 - MongoDB: dump is scoped to the database configured by NodeBB.
 - Redis: redis-cli --rdb snapshots the entire Redis server, including all logical databases and any other applications sharing that instance. The application warns about this; Redis restore is not offered.
 - PostgreSQL: custom-format pg_dump of the database configured by NodeBB. Credentials are read from config.json remotely into a mode-600 pgpass file and are not placed in process arguments.
-- PostgreSQL restore and automated cross-database restore workflows are not implemented yet.
+- PostgreSQL restore replaces objects represented in the selected archive using pg_restore --clean in a single transaction; objects not represented in the archive may remain. It creates a pre-restore dump and attempts rollback if restoration fails.
+- Redis restore and automated cross-database restore workflows are not implemented yet.
 - Backup files can contain sensitive configuration and must be encrypted before being shared or stored in an untrusted location.
 
 ## Security principles

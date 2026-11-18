@@ -38,6 +38,7 @@ public sealed class MongoDatabaseRestoreService
         var work = "/tmp/nodebb-mongo-restore-" + Guid.NewGuid().ToString("N");
         var remoteArchive = work + "/incoming.archive.gz";
         var preserveRollback = false;
+        var restoreScriptStarted = false;
         try
         {
             var init = await _session.ExecuteAsync($"umask 077 && mkdir -m 700 -- {ShellQuote(work)}", cancellationToken);
@@ -51,6 +52,7 @@ public sealed class MongoDatabaseRestoreService
 
             DiagnosticLogService.Instance.Warning("MongoRestore", "RestoreStarted",
                 "MongoDB restore started. A remote rollback dump is created before modifying collections.", null, _session.Profile.Name);
+            restoreScriptStarted = true;
             var result = await _session.ExecuteAsync(BuildRestoreScript(installation.Path, work), cancellationToken);
             if (result.ExitCode == 42)
             {
@@ -71,7 +73,7 @@ public sealed class MongoDatabaseRestoreService
         }
         finally
         {
-            if (!preserveRollback)
+            if (!preserveRollback && !restoreScriptStarted)
             {
                 try { await _session.ExecuteAsync($"rm -rf -- {ShellQuote(work)}", CancellationToken.None); }
                 catch { DiagnosticLogService.Instance.Warning("MongoRestore", "RemoteCleanupFailed", "Could not remove temporary MongoDB restore directory.", null, _session.Profile.Name); }
