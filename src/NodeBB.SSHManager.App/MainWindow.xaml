@@ -92,15 +92,16 @@
 
                     <DockPanel x:Name="ServerListPanel" Visibility="Collapsed">
                         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,14">
-                            <Button Content="התחבר" Click="Connect_Click" Padding="14,8" Margin="0,0,7,7" Background="#4263EB" Foreground="White" BorderThickness="0"/>
-                            <Button Content="התנתק" Click="Disconnect_Click" Padding="14,8" Margin="0,0,7,7"/>
-                            <Button Content="מסוף SSH" Click="OpenTerminal_Click" Padding="14,8" Margin="0,0,7,7"/>
-                            <Button Content="קבצים SFTP" Click="OpenFiles_Click" Padding="14,8" Margin="0,0,7,7"/>
-                            <Button Content="ניהול NodeBB" Click="ManageNodeBb_Click" Padding="14,8" Margin="0,0,7,7"/>
-                            <Button Content="בדיקת חיבור" Click="TestConnection_Click" Padding="14,8" Margin="0,0,7,7"/>
-                            <Button Content="הסר שרת" Click="RemoveServer_Click" Padding="14,8" Margin="0,0,7,7" Background="#FFF0F0" Foreground="#B42318" BorderThickness="0"/>
+                            <Button x:Name="ConnectButton" Content="התחבר" Click="Connect_Click" Padding="14,8" Margin="0,0,7,7" Background="#4263EB" Foreground="White" BorderThickness="0"/>
+                            <Button x:Name="DisconnectButton" Content="התנתק" Click="Disconnect_Click" Padding="14,8" Margin="0,0,7,7"/>
+                            <Button x:Name="TerminalButton" Content="מסוף SSH" Click="OpenTerminal_Click" Padding="14,8" Margin="0,0,7,7"/>
+                            <Button x:Name="FilesButton" Content="קבצים SFTP" Click="OpenFiles_Click" Padding="14,8" Margin="0,0,7,7"/>
+                            <Button x:Name="ManageButton" Content="ניהול NodeBB" Click="ManageNodeBb_Click" Padding="14,8" Margin="0,0,7,7"/>
+                            <Button x:Name="TestButton" Content="בדיקת חיבור" Click="TestConnection_Click" Padding="14,8" Margin="0,0,7,7"/>
+                            <Button x:Name="RemoveButton" Content="הסר שרת" Click="RemoveServer_Click" Padding="14,8" Margin="0,0,7,7" Background="#FFF0F0" Foreground="#B42318" BorderThickness="0"/>
+                            <Button x:Name="EditButton" Content="ערוך פרופיל" Click="EditServer_Click" Padding="14,8" Margin="0,0,7,7"/>
                         </WrapPanel>
-                        <ListBox x:Name="ServersList" BorderThickness="0" Background="Transparent" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                        <ListBox x:Name="ServersList" BorderThickness="0" Background="Transparent" SelectionChanged="ServersList_SelectionChanged" ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Border BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="10" Padding="15" Margin="0,0,0,9" Background="White">
