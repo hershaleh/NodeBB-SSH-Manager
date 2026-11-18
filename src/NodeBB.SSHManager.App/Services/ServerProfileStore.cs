@@ -5,6 +5,7 @@ namespace NodeBB.SSHManager.Services;
 
 public sealed class ServerProfileStore
 {
+    private const int MaximumProfiles = 500;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true
@@ -106,6 +107,8 @@ public sealed class ServerProfileStore
 
     private static void ValidateProfiles(IReadOnlyCollection<ServerProfile> profiles)
     {
+        if (profiles.Count > MaximumProfiles)
+            throw new InvalidDataException($"ניתן לשמור עד {MaximumProfiles} פרופילים.");
         var ids = new HashSet<Guid>();
         foreach (var profile in profiles)
         {
@@ -113,9 +116,9 @@ public sealed class ServerProfileStore
                 throw new InvalidDataException("רשימת השרתים מכילה רשומה ריקה.");
             if (profile.Id == Guid.Empty || !ids.Add(profile.Id))
                 throw new InvalidDataException("לכל שרת חייב להיות מזהה ייחודי ותקין.");
-            if (string.IsNullOrWhiteSpace(profile.Name)
-                || string.IsNullOrWhiteSpace(profile.Host)
-                || string.IsNullOrWhiteSpace(profile.Username))
+            if (string.IsNullOrWhiteSpace(profile.Name) || profile.Name.Length > 120
+                || string.IsNullOrWhiteSpace(profile.Host) || profile.Host.Length > 253
+                || string.IsNullOrWhiteSpace(profile.Username) || profile.Username.Length > 128)
                 throw new InvalidDataException("שם השרת, כתובת השרת ושם המשתמש הם שדות חובה.");
             if (profile.Host.Any(char.IsWhiteSpace) || profile.Host.Contains(';') || profile.Host.Contains('|'))
                 throw new InvalidDataException("כתובת השרת מכילה תווים שאינם מותרים.");
@@ -124,7 +127,7 @@ public sealed class ServerProfileStore
             if (!Enum.IsDefined(profile.AuthenticationType))
                 throw new InvalidDataException("סוג האימות בפרופיל אינו מוכר.");
             if (profile.AuthenticationType == SshAuthenticationType.PrivateKey
-                && string.IsNullOrWhiteSpace(profile.PrivateKeyPath))
+                && (string.IsNullOrWhiteSpace(profile.PrivateKeyPath) || profile.PrivateKeyPath.Length > 2048))
                 throw new InvalidDataException("בפרופיל המבוסס על מפתח SSH חסר נתיב למפתח הפרטי.");
         }
     }
