@@ -152,7 +152,7 @@ public partial class SftpFileManagerWindow : Window
                         catch (Exception cleanupError)
                         {
                             DiagnosticLogService.Instance.Warning("SFTP", "UploadBackupCleanupFailed",
-                                $"The new file is in place, but the previous-file backup remains at {backupPath}.", _session.Profile.Name);
+                                $"The new file is in place, but the previous-file backup remains at {backupPath}.", null, _session.Profile.Name);
                             DiagnosticLogService.Instance.Error("SFTP", "UploadBackupCleanupError", cleanupError, _session.Profile.Name);
                         }
                     }
@@ -201,6 +201,7 @@ public partial class SftpFileManagerWindow : Window
                     using var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
                     _client.DownloadFile(item.FullPath, output);
                     output.Flush(true);
+                    return true;
                 });
                 File.Move(temporaryPath, destination, true);
             }
