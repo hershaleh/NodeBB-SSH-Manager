@@ -9,6 +9,7 @@ public partial class NodeBbManagerWindow : Window
     private readonly NodeBbRemoteService _service;
     private readonly SshServerSession _session;
     private readonly ObservableCollection<NodeBbInstallation> _installations = [];
+    private bool _isBusy;
 
     public NodeBbManagerWindow(SshServerSession session)
     {
@@ -17,6 +18,26 @@ public partial class NodeBbManagerWindow : Window
         _service = new NodeBbRemoteService(session);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         InstallationsList.ItemsSource = _installations;
+        UpdateActionAvailability();
+    }
+
+    private void InstallationsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        => UpdateActionAvailability();
+
+    private void UpdateActionAvailability()
+    {
+        var enabled = !_isBusy && InstallationsList.SelectedItem is NodeBbInstallation;
+        StartButton.IsEnabled = enabled;
+        StopButton.IsEnabled = enabled;
+        RestartButton.IsEnabled = enabled;
+        BuildButton.IsEnabled = enabled;
+        UpgradeButton.IsEnabled = enabled;
+        PackagesButton.IsEnabled = enabled;
+        BackupsButton.IsEnabled = enabled;
+        DatabaseButton.IsEnabled = enabled;
+        LogsButton.IsEnabled = enabled;
+        SecurityButton.IsEnabled = enabled;
+        DiscoverButton.IsEnabled = !_isBusy;
     }
 
     private async void Discover_Click(object sender, RoutedEventArgs e)
@@ -120,7 +141,8 @@ public partial class NodeBbManagerWindow : Window
 
     private void SetBusy(bool busy, string message)
     {
-        DiscoverButton.IsEnabled = !busy;
+        _isBusy = busy;
+        UpdateActionAvailability();
         StatusText.Text = message;
     }
 }
