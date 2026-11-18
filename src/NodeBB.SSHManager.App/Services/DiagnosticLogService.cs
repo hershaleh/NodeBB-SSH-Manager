@@ -23,7 +23,7 @@ public sealed class DiagnosticLogService
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
     private static readonly Regex[] SecretPatterns =
     [
-        new(@"(?i)(password|passwd|passphrase|token|api[_-]?key|secret)(\s*[=:]\s*)([""']?)[^\s,;""']+\3", RegexOptions.Compiled),
+        new(@"([""']?(?:password|passwd|passphrase|token|api[_-]?key|secret)[""']?\s*[=:]\s*)[""']?[^,\s;""']+[""']?", RegexOptions.Compiled),
         new(@"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._~+/-]+=*", RegexOptions.Compiled),
         new(@"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)", RegexOptions.Compiled)
     ];
