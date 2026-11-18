@@ -15,7 +15,7 @@ public sealed class NodeBbRuntimeService
     public static bool IsSafeIdentifier(string manager, string identifier) => manager switch
     {
         "SYSTEMD" or "OPENRC" or "SYSV" => ServiceIdentifier.IsMatch(identifier),
-        "DOCKER" => ContainerIdentifier.IsMatch(identifier),
+        "DOCKER" or "PODMAN" => ContainerIdentifier.IsMatch(identifier),
         "PM2" => Regex.IsMatch(identifier, @"^\d{1,8}$"),
         "MANUAL" => identifier == "CLI",
         _ => false
@@ -49,9 +49,17 @@ if command -v pm2 >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
   pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const p=JSON.parse(s);const x=p.find(v=>v.pm2_env&&v.pm2_env.pm_cwd===process.argv[1]);if(x)console.log("PM2|"+x.pm_id)}catch(e){}})' "$INSTALL_PATH"
 fi
 if command -v docker >/dev/null 2>&1; then
-  for id in $(docker ps -q 2>/dev/null); do
+  for id in $(docker ps -aq 2>/dev/null); do
     if docker inspect "$id" 2>/dev/null | grep -Fq -- "$INSTALL_PATH"; then
-      printf 'DOCKER|%s\n' "$id"
+      printf 'DOCKER|%s\\n' "$id"
+      exit 0
+    fi
+  done
+fi
+if command -v podman >/dev/null 2>&1; then
+  for id in $(podman ps -aq 2>/dev/null); do
+    if podman inspect "$id" 2>/dev/null | grep -Fq -- "$INSTALL_PATH"; then
+      printf 'PODMAN|%s\\n' "$id"
       exit 0
     fi
   done
@@ -94,6 +102,7 @@ printf 'MANUAL|CLI\n'
             "SYSV" => PrivilegedCommand($"if command -v service >/dev/null 2>&1; then service {identifier} {action}; else /etc/init.d/{identifier} {action}; fi"),
             "PM2" => $"pm2 {(action == "start" ? "restart" : action)} {identifier}",
             "DOCKER" => $"docker {action} {identifier}",
+            "PODMAN" => $"podman {action} {identifier}",
             "MANUAL" => $"cd {path} && ./nodebb {action}",
             _ => throw new InvalidOperationException("מנהל ההפעלה אינו נתמך.")
         };
