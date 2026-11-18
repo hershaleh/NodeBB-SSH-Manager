@@ -1,0 +1,36 @@
+<Window x:Class="NodeBB.SSHManager.Views.SftpFileManagerWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ Title="מנהל קבצים SFTP" Width="1000" Height="680" MinWidth="760" MinHeight="480"
+ WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
+ <Grid Margin="18">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <DockPanel Grid.Row="0" Margin="0,0,0,14">
+   <StackPanel>
+    <TextBlock Text="מנהל קבצים מרוחק" FontSize="22" FontWeight="Bold" Foreground="#182338"/>
+    <TextBlock x:Name="ServerLabel" Foreground="#778399" Margin="0,4,0,0"/>
+   </StackPanel>
+   <Button DockPanel.Dock="Left" Content="רענון" Click="Refresh_Click" Padding="16,8"/>
+  </DockPanel>
+  <DockPanel Grid.Row="1" Margin="0,0,0,10">
+   <TextBox x:Name="PathBox" Height="36" VerticalContentAlignment="Center" FlowDirection="LeftToRight" IsReadOnly="True"/>
+   <Button Content="למעלה" Click="Up_Click" Margin="8,0,0,0" Padding="14,5"/>
+  </DockPanel>
+  <ListView x:Name="FilesList" Grid.Row="2" MouseDoubleClick="FilesList_MouseDoubleClick">
+   <ListView.View><GridView>
+    <GridViewColumn Header="שם" Width="520" DisplayMemberBinding="{Binding Name}"/>
+    <GridViewColumn Header="סוג" Width="100" DisplayMemberBinding="{Binding Kind}"/>
+    <GridViewColumn Header="גודל" Width="120" DisplayMemberBinding="{Binding SizeDisplay}"/>
+    <GridViewColumn Header="עודכן" Width="180" DisplayMemberBinding="{Binding ModifiedDisplay}"/>
+   </GridView></ListView.View>
+  </ListView>
+  <DockPanel Grid.Row="3" Margin="0,12,0,0">
+   <StackPanel Orientation="Horizontal">
+    <Button Content="העלאת קובץ" Click="Upload_Click" Padding="14,8" Margin="0,0,8,0"/>
+    <Button Content="הורדת קובץ" Click="Download_Click" Padding="14,8" Margin="0,0,8,0"/>
+    <Button Content="מחיקה" Click="Delete_Click" Padding="14,8" Background="#FFF0F0" Foreground="#B42318"/>
+   </StackPanel>
+   <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
+  </DockPanel>
+ </Grid>
+</Window>

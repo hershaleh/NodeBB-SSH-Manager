@@ -66,3 +66,19 @@ The Windows Build workflow restores and builds the solution, then publishes a se
 ## Project status
 
 Early development preview. Do not use it yet for production server administration.
+
+
+## Remote management milestone
+
+The current implementation now includes the first operational remote-management layer:
+
+- Persistent SSH sessions for multiple saved server profiles (session secrets remain in process memory and are not written to the profile file).
+- Interactive SSH terminal window using an SSH shell stream.
+- SFTP file browser with directory navigation, upload, download, and explicit-confirmation deletion.
+- NodeBB discovery in common Linux locations (`/var/www`, `/opt`, `/srv`, and `/home`, up to five directory levels).
+- NodeBB CLI actions: start, stop, restart, and build, each with an explicit confirmation.
+- SSH host-key pinning is applied to persistent SSH and SFTP connections.
+
+Discovery is intentionally bounded to common paths to avoid an unbounded full-filesystem scan. It does not assume systemd or root access; NodeBB lifecycle actions use the installation's `./nodebb` CLI and therefore require the SSH account to have the necessary permissions.
+
+The SFTP and terminal windows require an active SSH session. Passwords and key passphrases are held only in memory for the active session and are not persisted to disk. This milestone still needs a successful CI build and live testing against representative Linux/NodeBB servers before being considered production-ready.
