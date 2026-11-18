@@ -49,16 +49,16 @@ if command -v supervisorctl >/dev/null 2>&1; then
   for f in /etc/supervisor/supervisord.conf /etc/supervisor/conf.d/*.conf /etc/supervisord.conf /etc/supervisord.d/*.ini; do
     [ -f "$f" ] || continue
     PROGRAM="$(awk -v path="$INSTALL_PATH" '
-      /^\\[program:/ { section=$0 }
-      index($0,path)>0 && section ~ /^\\[program:/ {
+      /^\[program:/ { section=$0 }
+      index($0,path)>0 && section ~ /^\[program:/ {
         name=section
-        sub(/^\\[program:/,"",name)
-        sub(/\\].*/,"",name)
+        sub(/^\[program:/,"",name)
+        sub(/\].*/,"",name)
         print name
         exit
       }' "$f")"
     if [ -n "$PROGRAM" ]; then
-      printf 'SUPERVISOR|%s\\n' "$PROGRAM"
+      printf 'SUPERVISOR|%s\n' "$PROGRAM"
       exit 0
     fi
   done
