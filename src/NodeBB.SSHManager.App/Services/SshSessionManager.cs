@@ -38,7 +38,7 @@ public sealed class SshServerSession : IDisposable
             return await Task.Run(() =>
             {
                 using var cmd = Client.RunCommand(command);
-                return (cmd.ExitStatus, cmd.Result, cmd.Error);
+                return (cmd.ExitStatus ?? -1, cmd.Result, cmd.Error);
             }, cancellationToken);
         }
         finally { _commandLock.Release(); }
