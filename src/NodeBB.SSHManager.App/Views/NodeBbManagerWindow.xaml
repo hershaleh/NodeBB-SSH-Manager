@@ -13,22 +13,22 @@
    <Button x:Name="DiscoverButton" Content="סרוק שרת לאיתור NodeBB" Click="Discover_Click" Padding="16,9"/>
    <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
   </DockPanel>
-  <ListView x:Name="InstallationsList" Grid.Row="2">
+  <ListView x:Name="InstallationsList" Grid.Row="2" SelectionChanged="InstallationsList_SelectionChanged">
    <ListView.View><GridView>
     <GridViewColumn Header="נתיב התקנה" Width="530" DisplayMemberBinding="{Binding Path}"/>
     <GridViewColumn Header="גרסה" Width="120" DisplayMemberBinding="{Binding Version}"/>
    </GridView></ListView.View>
   </ListView>
   <WrapPanel Grid.Row="3" Margin="0,14,0,0">
-   <Button Content="הפעל" Click="Start_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="עצור" Click="Stop_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="הפעל מחדש" Click="Restart_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="בנייה מחדש" Click="Build_Click" Padding="18,9" Background="#FFF4E5" Foreground="#9A5700" Margin="0,0,8,0"/><Button Content="שדרוג NodeBB" Click="Upgrade_Click" Padding="18,9" Background="#E8EEFF" Foreground="#294A9B" Margin="0,0,8,0"/>
-   <Button Content="תוספים ועיצובים" Click="Packages_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="גיבויים" Click="Backups_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="מסד נתונים" Click="Database_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="לוגים" Click="Logs_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="אבטחה" Click="Security_Click" Padding="18,9"/>
+   <Button x:Name="StartButton" Content="הפעל" Click="Start_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="StopButton" Content="עצור" Click="Stop_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="RestartButton" Content="הפעל מחדש" Click="Restart_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="BuildButton" Content="בנייה מחדש" Click="Build_Click" Padding="18,9" Background="#FFF4E5" Foreground="#9A5700" Margin="0,0,8,0"/><Button x:Name="UpgradeButton" Content="שדרוג NodeBB" Click="Upgrade_Click" Padding="18,9" Background="#E8EEFF" Foreground="#294A9B" Margin="0,0,8,0"/>
+   <Button x:Name="PackagesButton" Content="תוספים ועיצובים" Click="Packages_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="BackupsButton" Content="גיבויים" Click="Backups_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="DatabaseButton" Content="מסד נתונים" Click="Database_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="LogsButton" Content="לוגים" Click="Logs_Click" Padding="18,9" Margin="0,0,8,0"/>
+   <Button x:Name="SecurityButton" Content="אבטחה" Click="Security_Click" Padding="18,9"/>
   </WrapPanel>
  </Grid>
 </Window>
