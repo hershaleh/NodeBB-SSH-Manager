@@ -1,0 +1,28 @@
+# Build output
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.idea/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Test and coverage output
+TestResults/
+coverage/
+
+# Local configuration and secrets
+appsettings.Local.json
+*.pfx
+*.pem
+*.key
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
