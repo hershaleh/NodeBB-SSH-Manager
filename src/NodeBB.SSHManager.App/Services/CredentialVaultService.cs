@@ -24,7 +24,7 @@ public sealed class CredentialVaultService
                 var info = new FileInfo(StoragePath);
                 if (info.Length is <= 0 or > 1024 * 1024) throw new InvalidDataException("Credential vault size is invalid.");
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException)
             {
                 DiagnosticLogService.Instance.Warning("CredentialVault", "VaultMetadataReadFailed", "Encrypted credential vault metadata could not be read.");
                 return null;
@@ -39,7 +39,7 @@ public sealed class CredentialVaultService
                 }
                 finally { CryptographicOperations.ZeroMemory(clear); }
             }
-            catch (Exception ex) when (ex is CryptographicException or JsonException or IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (ex is CryptographicException or JsonException or IOException or InvalidDataException or UnauthorizedAccessException)
             {
                 DiagnosticLogService.Instance.Warning("CredentialVault", "VaultReadFailed", "Encrypted credential vault could not be read.");
                 return null;
@@ -49,6 +49,7 @@ public sealed class CredentialVaultService
 
     public void Set(Guid profileId, string secret)
     {
+        if (profileId == Guid.Empty) throw new ArgumentException("A valid profile ID is required.", nameof(profileId));
         ArgumentException.ThrowIfNullOrWhiteSpace(secret);
         lock (Sync) { var entries = ReadAll(); entries[profileId] = secret; WriteAll(entries); }
     }
