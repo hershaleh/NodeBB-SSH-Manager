@@ -98,21 +98,29 @@ done | sort
 
     private static string BuildPackageManagerCommand(string path, string package, PackageAction action)
     {
-        var operation = action switch
-        {
-            PackageAction.Install => "add",
-            PackageAction.Update => "add",
-            PackageAction.Remove => "remove",
-            _ => throw new ArgumentOutOfRangeException(nameof(action))
-        };
+        var operation = action == PackageAction.Remove ? "remove" : "add";
         return $"""
 cd {path} || exit 1
-if [ -f pnpm-lock.yaml ] && command -v pnpm >/dev/null 2>&1; then PM=pnpm
-elif [ -f yarn.lock ] && command -v yarn >/dev/null 2>&1; then PM=yarn
-elif command -v npm >/dev/null 2>&1; then PM=npm
-elif command -v yarn >/dev/null 2>&1; then PM=yarn
-elif command -v pnpm >/dev/null 2>&1; then PM=pnpm
-else echo 'לא נמצא מנהל חבילות נתמך (npm/yarn/pnpm).' >&2; exit 127
+CONFIG_PM=""
+if [ -r config.json ]; then
+  CONFIG_PM="$(sed -n 's/.*"package_manager"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' config.json | head -n 1)"
+fi
+case "$CONFIG_PM" in
+  npm|yarn|pnpm) PM="$CONFIG_PM" ;;
+  *)
+    if [ -f pnpm-lock.yaml ]; then PM=pnpm
+    elif [ -f yarn.lock ]; then PM=yarn
+    elif [ -f package-lock.json ] || [ -f npm-shrinkwrap.json ]; then PM=npm
+    elif command -v npm >/dev/null 2>&1; then PM=npm
+    elif command -v yarn >/dev/null 2>&1; then PM=yarn
+    elif command -v pnpm >/dev/null 2>&1; then PM=pnpm
+    else echo 'לא נמצא מנהל חבילות נתמך (npm/yarn/pnpm).' >&2; exit 127
+    fi
+    ;;
+esac
+if ! command -v "$PM" >/dev/null 2>&1; then
+  echo "מנהל החבילות שהוגדר ($PM) אינו מותקן או אינו זמין למשתמש SSH." >&2
+  exit 127
 fi
 case "$PM" in
   npm)

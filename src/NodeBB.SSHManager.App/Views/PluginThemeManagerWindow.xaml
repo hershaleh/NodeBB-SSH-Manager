@@ -36,7 +36,7 @@
                     <Button Content="התקנה" Click="Install_Click" Padding="14,8" Margin="0,0,8,0" Background="#4263EB" Foreground="White" BorderThickness="0"/>
                     <Button Content="עדכון לגרסה האחרונה" Click="Update_Click" Padding="14,8" Margin="0,0,8,0"/>
                     <Button Content="הפעלה" Click="Activate_Click" Padding="14,8" Margin="0,0,8,0"/>
-                    <Button Content="השבתה" Click="Deactivate_Click" Padding="14,8" Margin="0,0,8,0"/>
+                    <Button Content="השבתה / איפוס" Click="Deactivate_Click" Padding="14,8" Margin="0,0,8,0"/>
                     <Button Content="הסרה" Click="Remove_Click" Padding="14,8" Background="#FFF0F0" Foreground="#B42318" BorderThickness="0"/>
                 </WrapPanel>
                 <TextBlock Text="הערה: שינוי חבילות אינו מפעיל בנייה או אתחול אוטומטיים. לאחר התקנה/עדכון/הסרה, בדוק את הפורום ובצע בנייה ואתחול לפי הצורך. השבתת תוסף משתמשת בפקודת NodeBB reset -p." TextWrapping="Wrap" Foreground="#778399" FontSize="11" Margin="0,12,0,0"/>

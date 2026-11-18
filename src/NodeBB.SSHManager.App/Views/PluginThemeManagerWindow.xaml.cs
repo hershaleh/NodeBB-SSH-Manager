@@ -78,7 +78,7 @@ public partial class PluginThemeManagerWindow : Window
             PackageAction.Update => $"לעדכן את {packageName} לגרסה האחרונה",
             PackageAction.Remove => $"להסיר את {packageName}",
             PackageAction.Activate => $"להפעיל את התוסף {packageName}",
-            PackageAction.Deactivate => $"להשבית את התוסף {packageName}",
+            PackageAction.Deactivate => $"להשבית ולאפס את התוסף {packageName}",
             _ => "לבצע פעולה"
         };
         var warning = action is PackageAction.Remove or PackageAction.Update
