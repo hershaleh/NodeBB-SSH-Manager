@@ -147,7 +147,15 @@ public partial class SftpFileManagerWindow : Window
 
                     _client.RenameFile(temporaryPath, remotePath);
                     if (movedOriginal && _client.Exists(backupPath))
-                        _client.DeleteFile(backupPath);
+                    {
+                        try { _client.DeleteFile(backupPath); }
+                        catch (Exception cleanupError)
+                        {
+                            DiagnosticLogService.Instance.Warning("SFTP", "UploadBackupCleanupFailed",
+                                $"The new file is in place, but the previous-file backup remains at {backupPath}.", _session.Profile.Name);
+                            DiagnosticLogService.Instance.Error("SFTP", "UploadBackupCleanupError", cleanupError, _session.Profile.Name);
+                        }
+                    }
                 }
                 catch
                 {
