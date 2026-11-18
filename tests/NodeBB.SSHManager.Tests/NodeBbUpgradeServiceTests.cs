@@ -35,7 +35,7 @@ public sealed class NodeBbUpgradeServiceTests
     {
         var script = NodeBbUpgradeService.BuildUpgradeScript("/srv/nodebb", "v4.19.1",
             "0123456789abcdef0123456789abcdef01234567");
-        Assert.Contains("git fetch --tags origin", script);
+        Assert.DoesNotContain("git fetch --tags origin", script);
         Assert.Contains("refs/tags/$TARGET^{commit}", script);
         Assert.Contains("git checkout --detach", script);
         Assert.Contains("./nodebb upgrade", script);
