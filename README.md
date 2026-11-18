@@ -6,6 +6,10 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 
 - .NET 11 / WPF application and Hebrew RTL dashboard.
 - Multiple saved server profiles and persistent SSH sessions.
+- Edit, import and export up to 500 server profiles; imports assign new local IDs and always discard trusted host-key fingerprints. Profile exports never include passwords or saved credentials.
+- Profile changes use rollback in memory when persistence fails; changing connection identity disconnects the old session and removes its saved credential only after the edited profile is safely stored.
+- Explicit removal of saved SSH credentials from the local encrypted vault without deleting the server profile or disconnecting an active session.
+- Credential vault file-size bounds and tests for DPAPI save/read/remove behavior.
 - SSH password and private-key authentication; optional credential remembering uses Windows DPAPI per-user encryption.
 - SSH host-key SHA-256 pinning with explicit first-use approval and rejection of changed fingerprints.
 - Interactive SSH terminal and SFTP browser with navigation, upload, download and confirmation before deletion.
