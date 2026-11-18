@@ -28,6 +28,21 @@ public sealed class CredentialVaultServiceTests
         finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
+
+    [Fact]
+    public void Get_WhenVaultExceedsMaximumSize_FailsClosed()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBVaultTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var path = Path.Combine(directory, "vault.dat");
+        try
+        {
+            File.WriteAllBytes(path, new byte[1024 * 1024 + 1]);
+            Assert.Null(new CredentialVaultService(path).Get(Guid.NewGuid()));
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
+    }
+
     [Fact]
     public void Set_RejectsEmptySecrets()
     {
