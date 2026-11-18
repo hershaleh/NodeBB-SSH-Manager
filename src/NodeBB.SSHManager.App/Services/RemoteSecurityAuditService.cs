@@ -27,7 +27,8 @@ public static class UnixPermissionAssessment
 {
     public static PermissionAssessment Assess(string mode, bool isDirectory)
     {
-        var digits = mode.Trim().TrimStart('0');
+        var digits = mode.Trim();
+        if (digits.Length > 3) digits = digits[^3..];
         if (digits.Length != 3 || digits.Any(ch => ch < '0' || ch > '7'))
             return new("בדיקה נדרשת", "לא ניתן לפענח את הרשאות הקובץ; בדוק אותן ידנית.");
         var group = digits[1] - '0';
