@@ -24,7 +24,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
 
-## Diagnostic and error-reporting system
+## Database backup scope\n\nMongoDB backup is scoped to the NodeBB database. Redis `redis-cli --rdb` produces a snapshot of the entire Redis server, including every logical database and any other applications sharing that Redis instance. The UI requires an explicit warning confirmation before creating this full-server snapshot. Redis backup files are encrypted locally using the same authenticated backup format. Redis restore is intentionally not offered yet because safely replacing a shared Redis instance requires an isolated maintenance plan and explicit impact analysis.\n\n## Diagnostic and error-reporting system
 
 Application logs are stored locally under:
 
@@ -44,7 +44,7 @@ The application is being developed toward a comprehensive multi-server managemen
 - NodeBB installation discovery, configuration inspection, lifecycle and upgrades.
 - Plugin and theme installation, update, removal and compatibility checks.
 - Remote file management, safe editing, permissions and transfers.
-- MongoDB / Redis discovery and database maintenance workflows.
+- MongoDB encrypted backup and guarded restore with preflight, pre-restore dump and rollback.\n- Redis encrypted full-server RDB backup (all logical databases on the configured Redis server; restore is not yet implemented).
 - Full and component backups, restore validation, retention and scheduling.
 - Server monitoring, process inspection, resource usage and diagnostics.
 - Service manager detection (systemd, OpenRC, SysV, containers, PM2 and manual processes) with safe fallbacks.

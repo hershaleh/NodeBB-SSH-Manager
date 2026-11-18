@@ -71,6 +71,58 @@ public partial class DatabaseManagerWindow : Window
         }
     }
 
+    private async void RedisBackup_Click(object sender, RoutedEventArgs e)
+    {
+        var password = BackupPasswordBox.Password;
+        if (password.Length < 12)
+        {
+            MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (!string.Equals(password, BackupPasswordConfirmBox.Password, StringComparison.Ordinal))
+        {
+            MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var confirm = MessageBox.Show(this,
+            "Redis יוצר קובץ RDB של כל שרת Redis, כולל כל מסדי הנתונים הלוגיים והמידע של שירותים נוספים המשתמשים באותו שרת. אין כאן סינון למסד NodeBB בלבד. האם להמשיך?",
+            "אישור גיבוי Redis מלא", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirm != MessageBoxResult.Yes) return;
+        var dialog = new SaveFileDialog
+        {
+            Title = "שמירת גיבוי Redis",
+            FileName = $"NodeBB-Redis-Full-{DateTime.Now:yyyyMMdd-HHmm}.nbbbackup",
+            Filter = "גיבוי Redis מוצפן|*.nbbbackup", DefaultExt = ".nbbbackup", AddExtension = true, OverwritePrompt = true
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        RedisBackupButton.IsEnabled = false; DatabaseBackupButton.IsEnabled = false; RefreshButton.IsEnabled = false;
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var plain = Path.Combine(tempRoot, $"redis-{Guid.NewGuid():N}.rdb");
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            StatusText.Text = "יוצר תמונת RDB של שרת Redis...";
+            await new RedisDatabaseBackupService(_session).DownloadBackupAsync(_installation, plain);
+            StatusText.Text = "קובץ RDB התקבל. מצפין במחשב...";
+            await BackupEncryptionService.EncryptFileAsync(plain, dialog.FileName, password);
+            StatusText.Text = "גיבוי Redis הוצפן ונשמר.";
+            MessageBox.Show(this, $"גיבוי Redis מלא נשמר כשהוא מוצפן:\n{dialog.FileName}\n\nהגיבוי כולל את כל מסדי Redis בשרת. שמור את הסיסמה במקום בטוח.",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("DatabaseUI", "RedisBackupFailed", ex, _session.Profile.Name);
+            StatusText.Text = "גיבוי Redis נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בגיבוי Redis", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(plain)) File.Delete(plain); } catch { }
+            BackupPasswordBox.Clear(); BackupPasswordConfirmBox.Clear();
+            RedisBackupButton.IsEnabled = true; DatabaseBackupButton.IsEnabled = true; RefreshButton.IsEnabled = true;
+        }
+    }
+
     private async void DatabaseRestore_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog { Title = "בחירת גיבוי MongoDB מוצפן", Filter = "גיבוי NodeBB מוצפן|*.nbbbackup|כל הקבצים|*.*", CheckFileExists = true, Multiselect = false };
