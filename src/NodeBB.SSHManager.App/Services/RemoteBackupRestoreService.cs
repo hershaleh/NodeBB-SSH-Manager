@@ -53,7 +53,7 @@ public sealed class RemoteBackupRestoreService
             if (++entryCount > 250_000)
                 throw new InvalidDataException("הארכיון מכיל יותר מדי פריטים.");
             var path = NormalizeArchivePath(entry.Name);
-            if ((entry.Mode & 0xE00) != 0)
+            if ((entry.Mode & (UnixFileMode.SetUser | UnixFileMode.SetGroup | UnixFileMode.StickyBit)) != UnixFileMode.None)
                 throw new InvalidDataException("הארכיון מכיל הרשאות setuid/setgid/sticky שאינן מותרות.");
             if (!IsAllowedEntry(path, entry.EntryType))
                 throw new InvalidDataException($"הארכיון מכיל פריט שאינו נתמך: {path}");
