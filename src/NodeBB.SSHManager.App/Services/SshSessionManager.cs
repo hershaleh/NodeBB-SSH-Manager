@@ -71,6 +71,8 @@ public sealed class SshServerSession : IDisposable
 public sealed class SshSessionManager : IDisposable
 {
     private readonly ConcurrentDictionary<Guid, SshServerSession> _sessions = new();
+    private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _profileLocks = new();
+    private int _disposed;
 
     public IReadOnlyCollection<SshServerSession> Sessions => _sessions.Values.ToArray();
     public int ConnectedCount => _sessions.Values.Count(s => s.IsConnected);
@@ -78,49 +80,59 @@ public sealed class SshSessionManager : IDisposable
     public async Task<SshServerSession> ConnectAsync(ServerProfile profile, string secret,
         CancellationToken cancellationToken = default)
     {
-        if (_sessions.TryGetValue(profile.Id, out var existing) && existing.IsConnected)
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        var profileLock = _profileLocks.GetOrAdd(profile.Id, static _ => new SemaphoreSlim(1, 1));
+        await profileLock.WaitAsync(cancellationToken);
+        try
         {
-            DiagnosticLogService.Instance.Info("SSH", "SessionReused", "An existing SSH session was reused.", profile.Name);
-            return existing;
-        }
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            if (_sessions.TryGetValue(profile.Id, out var existing) && existing.IsConnected)
+            {
+                DiagnosticLogService.Instance.Info("SSH", "SessionReused", "An existing SSH session was reused.", profile.Name);
+                return existing;
+            }
 
-        return await Task.Run(() =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            var auth = CreateAuthentication(profile, secret);
-            var info = new ConnectionInfo(profile.Host, profile.Port, profile.Username, auth)
+            return await Task.Run(() =>
             {
-                Timeout = TimeSpan.FromSeconds(20)
-            };
-            string? fingerprint = null;
-            var client = new SshClient(info);
-            client.HostKeyReceived += (_, e) =>
-            {
-                fingerprint = "SHA256:" + e.FingerPrintSHA256;
-                e.CanTrust = !string.IsNullOrWhiteSpace(profile.KnownHostFingerprint)
-                    && string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal);
-            };
-
-            try
-            {
-                client.Connect();
                 cancellationToken.ThrowIfCancellationRequested();
-                var session = new SshServerSession(profile, secret, info, client);
-                if (_sessions.TryGetValue(profile.Id, out var old)) old.Dispose();
-                _sessions[profile.Id] = session;
-                DiagnosticLogService.Instance.Info("SSH", "SessionConnected", "Persistent SSH session established.", profile.Name);
-                return session;
-            }
-            catch (Exception ex)
-            {
-                DiagnosticLogService.Instance.Error("SSH", "SessionConnectFailed", ex, profile.Name);
-                client.Dispose();
-                if (fingerprint is not null &&
-                    !string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal))
-                    throw new SshHostKeyException(fingerprint);
-                throw;
-            }
-        }, cancellationToken);
+                var auth = CreateAuthentication(profile, secret);
+                var info = new ConnectionInfo(profile.Host, profile.Port, profile.Username, auth)
+                {
+                    Timeout = TimeSpan.FromSeconds(20)
+                };
+                string? fingerprint = null;
+                var client = new SshClient(info);
+                client.HostKeyReceived += (_, e) =>
+                {
+                    fingerprint = "SHA256:" + e.FingerPrintSHA256;
+                    e.CanTrust = !string.IsNullOrWhiteSpace(profile.KnownHostFingerprint)
+                        && string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal);
+                };
+
+                try
+                {
+                    client.Connect();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    var session = new SshServerSession(profile, secret, info, client);
+                    _sessions[profile.Id] = session;
+                    DiagnosticLogService.Instance.Info("SSH", "SessionConnected", "Persistent SSH session established.", profile.Name);
+                    return session;
+                }
+                catch (Exception ex)
+                {
+                    DiagnosticLogService.Instance.Error("SSH", "SessionConnectFailed", ex, profile.Name);
+                    client.Dispose();
+                    if (fingerprint is not null &&
+                        !string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal))
+                        throw new SshHostKeyException(fingerprint);
+                    throw;
+                }
+            }, cancellationToken);
+        }
+        finally
+        {
+            profileLock.Release();
+        }
     }
 
     public bool TryGet(Guid profileId, out SshServerSession? session)
@@ -136,10 +148,19 @@ public sealed class SshSessionManager : IDisposable
 
     public void Disconnect(Guid profileId)
     {
-        if (_sessions.TryRemove(profileId, out var session))
+        var profileLock = _profileLocks.GetOrAdd(profileId, static _ => new SemaphoreSlim(1, 1));
+        profileLock.Wait();
+        try
         {
-            session.Dispose();
-            DiagnosticLogService.Instance.Info("SSH", "SessionDisconnected", "SSH session disconnected.", session.Profile.Name);
+            if (_sessions.TryRemove(profileId, out var session))
+            {
+                session.Dispose();
+                DiagnosticLogService.Instance.Info("SSH", "SessionDisconnected", "SSH session disconnected.", session.Profile.Name);
+            }
+        }
+        finally
+        {
+            profileLock.Release();
         }
     }
 
@@ -157,6 +178,7 @@ public sealed class SshSessionManager : IDisposable
 
     public void Dispose()
     {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
         foreach (var id in _sessions.Keys) Disconnect(id);
     }
 }
