@@ -219,6 +219,13 @@ public partial class MainWindow : Window
             MessageBox.Show(this, result.Message, "בדיקת SSH נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
+    private async void ServerMonitoring_Click(object sender, RoutedEventArgs e)
+    {
+        var session = await GetSelectedSessionAsync();
+        if (session is null) return;
+        new ServerMonitoringWindow(session) { Owner = this }.ShowDialog();
+    }
+
     private async void ServerDiagnostics_Click(object sender, RoutedEventArgs e)
     {
         var session = await GetSelectedSessionAsync();
