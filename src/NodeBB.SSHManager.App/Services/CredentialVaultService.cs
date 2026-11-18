@@ -12,11 +12,23 @@ public sealed class CredentialVaultService
     public CredentialVaultService(string? storagePath = null) => StoragePath = storagePath ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Credentials", "vault.dat");
 
+    public bool Has(Guid profileId) => !string.IsNullOrEmpty(Get(profileId));
+
     public string? Get(Guid profileId)
     {
         lock (Sync)
         {
             if (!File.Exists(StoragePath)) return null;
+            try
+            {
+                var info = new FileInfo(StoragePath);
+                if (info.Length is <= 0 or > 1024 * 1024) throw new InvalidDataException("Credential vault size is invalid.");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                DiagnosticLogService.Instance.Warning("CredentialVault", "VaultMetadataReadFailed", "Encrypted credential vault metadata could not be read.");
+                return null;
+            }
             try
             {
                 var clear = ProtectedData.Unprotect(File.ReadAllBytes(StoragePath), Entropy, DataProtectionScope.CurrentUser);
@@ -56,6 +68,8 @@ public sealed class CredentialVaultService
     private Dictionary<Guid, string> ReadAll()
     {
         if (!File.Exists(StoragePath)) return [];
+        var info = new FileInfo(StoragePath);
+        if (info.Length is <= 0 or > 1024 * 1024) throw new InvalidDataException("Credential vault size is invalid.");
         var clear = ProtectedData.Unprotect(File.ReadAllBytes(StoragePath), Entropy, DataProtectionScope.CurrentUser);
         try { return JsonSerializer.Deserialize<Dictionary<Guid, string>>(clear) ?? []; }
         finally { CryptographicOperations.ZeroMemory(clear); }
