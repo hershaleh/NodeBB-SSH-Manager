@@ -28,6 +28,8 @@
                     <Button Content="ניטור" Click="ServerMonitoring_Click" Padding="14,10" Margin="0,0,8,0"/>
                     <Button Content="אבחון שרת" Click="ServerDiagnostics_Click" Padding="14,10" Margin="0,0,8,0"/>
                     <Button Content="דוח אבחון" Click="Diagnostics_Click" Padding="14,10" Margin="0,0,10,0"/>
+                    <Button Content="ייבוא פרופילים" Click="ImportProfiles_Click" Padding="14,10" Margin="0,0,8,0"/>
+                    <Button Content="ייצוא פרופילים" Click="ExportProfiles_Click" Padding="14,10" Margin="0,0,8,0"/>
                     <Button Style="{StaticResource PrimaryButtonStyle}" Content="+ הוסף שרת" Click="AddServer_Click"/>
                 </StackPanel>
             </DockPanel>
