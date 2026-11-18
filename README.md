@@ -2,6 +2,21 @@
 
 A modern Windows desktop application for securely managing multiple NodeBB servers over SSH.
 
+## Current implementation
+
+The first development milestone is in place:
+
+- .NET 11 WPF desktop application shell with a Hebrew RTL dashboard.
+- Multiple server profiles stored locally under the current Windows user's Local Application Data folder.
+- Add and remove server profiles.
+- SSH password authentication and private-key authentication.
+- Passwords and key passphrases are requested when connecting and are not written to the server profile file.
+- SSH host-key SHA-256 fingerprint verification, including explicit first-use approval and a warning when a pinned fingerprint changes.
+- SSH connection test that reports the remote username and operating-system family.
+- GitHub Actions build and self-contained Windows x64 publish artifact.
+
+The connection test currently opens a temporary SSH session and closes it after verification. Persistent sessions, SFTP browsing, the full management modules, secure credential vault integration, and the optional Server Helper are subsequent milestones.
+
 ## Goals
 
 - Manage multiple independent NodeBB server profiles.
@@ -15,9 +30,9 @@ A modern Windows desktop application for securely managing multiple NodeBB serve
 
 - C# / .NET 11
 - WPF desktop UI
-- SSH and SFTP transport (implementation milestone in progress)
-- Windows Credential Manager / DPAPI for local secrets (planned)
-- SQLite for local application data (planned)
+- SSH and SFTP transport via SSH.NET
+- Windows Credential Manager / DPAPI for future persistent secret storage
+- SQLite for future local application data
 
 ## Repository layout
 
@@ -37,13 +52,17 @@ dotnet build .\NodeBB.SSHManager.sln -c Release
 ## Security principles
 
 - Verify and persist SSH host fingerprints; never silently trust changed host keys.
-- Do not store credentials in plaintext configuration files.
+- Do not store passwords or key passphrases in plaintext configuration files.
 - Do not expose secrets in logs, diagnostics, or exception messages.
 - Use least privilege. Never assume root access.
 - Validate inputs and avoid constructing shell commands from untrusted strings.
 - Require explicit confirmation for destructive or service-impacting actions.
 - Report unavailable capabilities honestly; never simulate a successful operation.
 
+## CI artifact
+
+The Windows Build workflow restores and builds the solution, then publishes a self-contained Windows x64 artifact. Open the repository's **Actions** tab and download the artifact from a successful run.
+
 ## Project status
 
-Initial repository scaffold. The UI shell and CI are being established before implementing the SSH transport and management modules.
+Early development preview. Do not use it yet for production server administration.
