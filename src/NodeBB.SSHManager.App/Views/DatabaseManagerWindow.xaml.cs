@@ -54,10 +54,7 @@ public partial class DatabaseManagerWindow : Window
             StatusText.Text = "הגיבוי התקבל. מצפין אותו במחשב...";
             await BackupEncryptionService.EncryptFileAsync(plainBackup, dialog.FileName, password);
             StatusText.Text = "גיבוי MongoDB הוצפן ונשמר בהצלחה.";
-            MessageBox.Show(this, $"גיבוי מסד הנתונים נשמר כשהוא מוצפן:
-{dialog.FileName}
-
-שמור את סיסמת ההצפנה במקום בטוח.",
+            MessageBox.Show(this, $"גיבוי מסד הנתונים נשמר כשהוא מוצפן:\n{dialog.FileName}\n\nשמור את סיסמת ההצפנה במקום בטוח.",
                 "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)

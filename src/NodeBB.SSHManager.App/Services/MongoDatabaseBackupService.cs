@@ -31,7 +31,7 @@ public sealed class MongoDatabaseBackupService
         {
             try { if (File.Exists(partial)) File.Delete(partial); } catch { }
             try { await _session.ExecuteAsync($"rm -rf -- {ShellQuote(work)}", CancellationToken.None); }
-            catch { DiagnosticLogService.Instance.Warning("MongoBackup", "RemoteCleanupFailed", "Could not remove temporary MongoDB backup directory.", _session.Profile.Name); }
+            catch { DiagnosticLogService.Instance.Warning("MongoBackup", "RemoteCleanupFailed", "Could not remove temporary MongoDB backup directory.", null, _session.Profile.Name); }
         }
     }
     internal static string BuildBackupScript(string installationPath, string workDirectory)
