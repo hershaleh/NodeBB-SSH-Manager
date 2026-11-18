@@ -80,7 +80,7 @@ public sealed class RemoteBackupService
 cd {path} || exit 1
 command -v tar >/dev/null 2>&1 || exit 127
 umask 077
-[ -f config.json ] || { echo 'config.json לא נמצא בהתקנת NodeBB.' >&2; exit 3; }
+[ -f config.json ] || (echo 'config.json לא נמצא בהתקנת NodeBB.' >&2; exit 3)
 set -- config.json
 for item in package.json package-lock.json npm-shrinkwrap.json yarn.lock pnpm-lock.yaml public/uploads; do
   [ -e "$item" ] && set -- "$@" "$item"
