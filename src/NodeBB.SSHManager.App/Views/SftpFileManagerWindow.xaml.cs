@@ -44,7 +44,11 @@ public partial class SftpFileManagerWindow : Window
             await Task.Run(_client.Connect);
             await LoadDirectoryAsync(_currentPath);
         }
-        catch (Exception ex) { StatusText.Text = "שגיאה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "ConnectOrListFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שגיאה: " + ex.Message;
+        }
     }
 
     private async Task LoadDirectoryAsync(string path)
@@ -68,7 +72,11 @@ public partial class SftpFileManagerWindow : Window
             foreach (var item in list) _items.Add(item);
             StatusText.Text = $"{_items.Count} פריטים";
         }
-        catch (Exception ex) { StatusText.Text = "שגיאה בטעינת התיקייה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "DirectoryListingFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שגיאה בטעינת התיקייה: " + ex.Message;
+        }
     }
 
     private static string FormatSize(long bytes)
@@ -103,9 +111,14 @@ public partial class SftpFileManagerWindow : Window
             await using var input = File.OpenRead(dialog.FileName);
             await Task.Run(() => _client.UploadFile(input, Combine(_currentPath, Path.GetFileName(dialog.FileName)), true));
             await LoadDirectoryAsync(_currentPath);
+            DiagnosticLogService.Instance.Info("SFTP", "UploadCompleted", $"Uploaded a file to {_currentPath}.", _session.Profile.Name);
             StatusText.Text = "ההעלאה הושלמה";
         }
-        catch (Exception ex) { StatusText.Text = "ההעלאה נכשלה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "UploadFailed", ex, _session.Profile.Name);
+            StatusText.Text = "ההעלאה נכשלה: " + ex.Message;
+        }
     }
 
     private async void Download_Click(object sender, RoutedEventArgs e)
@@ -118,9 +131,14 @@ public partial class SftpFileManagerWindow : Window
             StatusText.Text = "מוריד קובץ...";
             await using var output = File.Create(dialog.FileName);
             await Task.Run(() => _client.DownloadFile(item.FullPath, output));
+            DiagnosticLogService.Instance.Info("SFTP", "DownloadCompleted", $"Downloaded remote file {item.FullPath}.", _session.Profile.Name);
             StatusText.Text = "ההורדה הושלמה";
         }
-        catch (Exception ex) { StatusText.Text = "ההורדה נכשלה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "DownloadFailed", ex, _session.Profile.Name);
+            StatusText.Text = "ההורדה נכשלה: " + ex.Message;
+        }
     }
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
@@ -131,9 +149,14 @@ public partial class SftpFileManagerWindow : Window
         try
         {
             await Task.Run(() => { if (item.IsDirectory) _client.DeleteDirectory(item.FullPath); else _client.DeleteFile(item.FullPath); });
+            DiagnosticLogService.Instance.Info("SFTP", "RemoteDeleteCompleted", $"Deleted remote item {item.FullPath}.", _session.Profile.Name);
             await LoadDirectoryAsync(_currentPath);
         }
-        catch (Exception ex) { StatusText.Text = "המחיקה נכשלה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "RemoteDeleteFailed", ex, _session.Profile.Name);
+            StatusText.Text = "המחיקה נכשלה: " + ex.Message;
+        }
     }
 
     private static string Combine(string directory, string name) =>
