@@ -25,7 +25,7 @@
                 </StackPanel>
             </Border>
             <Border Background="#FFF4E5" CornerRadius="8" Padding="12" Margin="0,14,0,0">
-                <TextBlock Text="חשוב: אלה גיבויי קבצים בלבד. הם אינם כוללים MongoDB או Redis. שחזור עדיין אינו זמין; אין למחוק את הגיבוי המקורי עד לבדיקת תקינותו." TextWrapping="Wrap" Foreground="#8A4B08"/>
+                <TextBlock Text="חשוב: אלה גיבויי קבצים בלבד ואינם כוללים את תוכן MongoDB או Redis. config.json עשוי להכיל סיסמאות ופרטי גישה; קובצי הגיבוי אינם מוצפנים, ולכן שמור אותם במקום פרטי ואל תשתף אותם. שחזור עדיין אינו זמין; אין למחוק את הגיבוי המקורי עד לבדיקת תקינותו." TextWrapping="Wrap" Foreground="#8A4B08"/>
             </Border>
             <TextBlock x:Name="StatusText" Foreground="#778399" Margin="0,14,0,0"/>
         </StackPanel>
