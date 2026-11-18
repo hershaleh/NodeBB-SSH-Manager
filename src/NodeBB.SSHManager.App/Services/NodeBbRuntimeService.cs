@@ -14,7 +14,7 @@ public sealed class NodeBbRuntimeService
 
     public static bool IsSafeIdentifier(string manager, string identifier) => manager switch
     {
-        "SYSTEMD" or "OPENRC" or "SYSV" => ServiceIdentifier.IsMatch(identifier),
+        "SYSTEMD" or "OPENRC" or "SYSV" or "SUPERVISOR" => ServiceIdentifier.IsMatch(identifier),
         "DOCKER" or "PODMAN" => ContainerIdentifier.IsMatch(identifier),
         "PM2" => Regex.IsMatch(identifier, @"^\d{1,8}$"),
         "MANUAL" => identifier == "CLI",
@@ -45,6 +45,24 @@ for f in /etc/init.d/*; do
     exit 0
   fi
 done
+if command -v supervisorctl >/dev/null 2>&1; then
+  for f in /etc/supervisor/supervisord.conf /etc/supervisor/conf.d/*.conf /etc/supervisord.conf /etc/supervisord.d/*.ini; do
+    [ -f "$f" ] || continue
+    PROGRAM="$(awk -v path="$INSTALL_PATH" '
+      /^\\[program:/ { section=$0 }
+      index($0,path)>0 && section ~ /^\\[program:/ {
+        name=section
+        sub(/^\\[program:/,"",name)
+        sub(/\\].*/,"",name)
+        print name
+        exit
+      }' "$f")"
+    if [ -n "$PROGRAM" ]; then
+      printf 'SUPERVISOR|%s\\n' "$PROGRAM"
+      exit 0
+    fi
+  done
+fi
 if command -v pm2 >/dev/null 2>&1 && command -v node >/dev/null 2>&1; then
   pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const p=JSON.parse(s);const x=p.find(v=>v.pm2_env&&v.pm2_env.pm_cwd===process.argv[1]);if(x)console.log("PM2|"+x.pm_id)}catch(e){}})' "$INSTALL_PATH"
 fi
@@ -100,6 +118,7 @@ printf 'MANUAL|CLI\n'
             "SYSTEMD" => PrivilegedCommand($"systemctl {action} {identifier}"),
             "OPENRC" => PrivilegedCommand($"rc-service {identifier} {action}"),
             "SYSV" => PrivilegedCommand($"if command -v service >/dev/null 2>&1; then service {identifier} {action}; else /etc/init.d/{identifier} {action}; fi"),
+            "SUPERVISOR" => PrivilegedCommand($"supervisorctl {action} {identifier}"),
             "PM2" => $"pm2 {(action == "start" ? "restart" : action)} {identifier}",
             "DOCKER" => $"docker {action} {identifier}",
             "PODMAN" => $"podman {action} {identifier}",
