@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using NodeBB.SSHManager.Models;
 using Renci.SshNet;
 
@@ -51,19 +50,18 @@ public sealed class SshConnectionService
             using var client = new SshClient(connectionInfo);
             client.HostKeyReceived += (_, eventArgs) =>
             {
-                var hash = SHA256.HashData(eventArgs.HostKey);
-                observedFingerprint = "SHA256:" + Convert.ToBase64String(hash).TrimEnd('=');
-
+                observedFingerprint = "SHA256:" + eventArgs.FingerPrintSHA256;
                 eventArgs.CanTrust = !string.IsNullOrWhiteSpace(profile.KnownHostFingerprint)
-                    && CryptographicOperations.FixedTimeEquals(
-                        System.Text.Encoding.UTF8.GetBytes(observedFingerprint),
-                        System.Text.Encoding.UTF8.GetBytes(profile.KnownHostFingerprint));
+                    && string.Equals(
+                        observedFingerprint,
+                        profile.KnownHostFingerprint,
+                        StringComparison.Ordinal);
             };
 
             client.Connect();
 
             cancellationToken.ThrowIfCancellationRequested();
-            var command = client.RunCommand("id -un; uname -s");
+            using var command = client.RunCommand("id -un; uname -s");
             if (command.ExitStatus != 0)
             {
                 return new SshTestResult(
@@ -80,11 +78,11 @@ public sealed class SshConnectionService
                 observedFingerprint,
                 command.Result.Trim());
         }
-        catch (Exception ex) when (observedFingerprint is not null
-                                   && !string.Equals(
-                                       observedFingerprint,
-                                       profile.KnownHostFingerprint,
-                                       StringComparison.Ordinal))
+        catch (Exception) when (observedFingerprint is not null
+                                && !string.Equals(
+                                    observedFingerprint,
+                                    profile.KnownHostFingerprint,
+                                    StringComparison.Ordinal))
         {
             return new SshTestResult(
                 SshTestStatus.HostKeyVerificationRequired,
