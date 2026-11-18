@@ -28,23 +28,37 @@ public static class UnixPermissionAssessment
     public static PermissionAssessment Assess(string mode, bool isDirectory)
     {
         var digits = mode.Trim();
-        if (digits.Length > 3) digits = digits[^3..];
-        if (digits.Length != 3 || digits.Any(ch => ch < '0' || ch > '7'))
+        if (digits.Length is not (3 or 4) || digits.Any(ch => ch < '0' || ch > '7'))
             return new("בדיקה נדרשת", "לא ניתן לפענח את הרשאות הקובץ; בדוק אותן ידנית.");
-        var group = digits[1] - '0';
-        var other = digits[2] - '0';
+
+        var special = digits.Length == 4 ? digits[0] - '0' : 0;
+        var owner = digits[^3] - '0';
+        var group = digits[^2] - '0';
+        var other = digits[^1] - '0';
         var groupWrite = (group & 2) != 0;
         var otherWrite = (other & 2) != 0;
         var groupRead = (group & 4) != 0;
         var otherRead = (other & 4) != 0;
+        var setuidOrSetgid = (special & 6) != 0;
+
+        if (!isDirectory && setuidOrSetgid)
+            return new("קריטי", "הוגדרו ביטי setuid או setgid על config.json; הסר אותם ובדוק כיצד הוגדרו.");
+
         if (isDirectory)
-            return groupWrite || otherWrite
-                ? new("אזהרה", "תיקיית ההתקנה ניתנת לכתיבה לקבוצה או למשתמשים אחרים; צמצם הרשאות לאחר בדיקת תהליכי הפריסה.")
-                : new("תקין", "לא זוהתה הרשאת כתיבה לקבוצה או למשתמשים אחרים.");
+        {
+            if (groupWrite || otherWrite)
+                return new("אזהרה", "תיקיית ההתקנה ניתנת לכתיבה לקבוצה או למשתמשים אחרים; צמצם הרשאות לאחר בדיקת תהליכי הפריסה.");
+            if ((owner & 7) == 0)
+                return new("בדיקה נדרשת", "לבעלים אין הרשאות גישה לתיקיית ההתקנה; ודא שהשירות עדיין יכול לפעול ולתחזק אותה.");
+            return new("תקין", "לא זוהתה הרשאת כתיבה לקבוצה או למשתמשים אחרים.");
+        }
+
         if (groupWrite || otherWrite)
             return new("קריטי", "config.json ניתן לכתיבה לקבוצה או למשתמשים אחרים; הגבל את ההרשאות מיד.");
         if (groupRead || otherRead)
             return new("אזהרה", "config.json קריא לקבוצה או למשתמשים אחרים ועלול לחשוף פרטי גישה; שקול הרשאות 600.");
+        if ((owner & 4) == 0)
+            return new("בדיקה נדרשת", "לבעלים אין הרשאת קריאה ל-config.json; ודא שהיישום יכול לקרוא את התצורה.");
         return new("תקין", "הרשאות הקריאה והכתיבה מוגבלות לבעלים.");
     }
 }
