@@ -14,9 +14,10 @@ public sealed class SshServerSession : IDisposable
 {
     private readonly string _secret;
     private readonly SemaphoreSlim _commandLock = new(1, 1);
+    private int _disposed;
     public ServerProfile Profile { get; }
     public SshClient Client { get; }
-    public bool IsConnected => Client.IsConnected;
+    public bool IsConnected => Volatile.Read(ref _disposed) == 0 && Client.IsConnected;
 
     internal SshServerSession(ServerProfile profile, string secret, ConnectionInfo info, SshClient client)
     {
@@ -31,15 +32,22 @@ public sealed class SshServerSession : IDisposable
     public async Task<(int ExitCode, string Output, string Error)> ExecuteAsync(
         string command, CancellationToken cancellationToken = default)
     {
-        if (!Client.IsConnected) throw new InvalidOperationException("אין חיבור SSH פעיל.");
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         await _commandLock.WaitAsync(cancellationToken);
         try
         {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            if (!Client.IsConnected) throw new InvalidOperationException("אין חיבור SSH פעיל.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // Once an SSH command starts, keep the session lock until SSH.NET has finished
+            // reading its result. Cancelling Task.Run itself would not stop the remote command
+            // and could otherwise allow Dispose to disconnect the client underneath it.
             return await Task.Run(() =>
             {
                 using var cmd = Client.RunCommand(command);
                 return (cmd.ExitStatus ?? -1, cmd.Result, cmd.Error);
-            }, cancellationToken);
+            });
         }
         finally { _commandLock.Release(); }
     }
@@ -62,9 +70,20 @@ public sealed class SshServerSession : IDisposable
 
     public void Dispose()
     {
-        try { if (Client.IsConnected) Client.Disconnect(); } catch { }
-        Client.Dispose();
-        _commandLock.Dispose();
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+
+        // Wait for any in-flight command before disconnecting. Do not dispose the semaphore:
+        // callers already waiting on it must be able to wake up and observe _disposed safely.
+        _commandLock.Wait();
+        try
+        {
+            try { if (Client.IsConnected) Client.Disconnect(); } catch { }
+            Client.Dispose();
+        }
+        finally
+        {
+            _commandLock.Release();
+        }
     }
 }
 
