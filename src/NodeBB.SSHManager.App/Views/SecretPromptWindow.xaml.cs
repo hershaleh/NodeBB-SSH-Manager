@@ -6,19 +6,19 @@ namespace NodeBB.SSHManager.Views;
 public partial class SecretPromptWindow : Window
 {
     public string Secret => SecretBox.Password;
+    public bool RememberSecret => RememberCheckBox.IsChecked == true;
 
-    public SecretPromptWindow(ServerProfile profile)
+    public SecretPromptWindow(ServerProfile profile, string? savedSecret = null)
     {
         InitializeComponent();
         PromptTitle.Text = $"התחברות אל {profile.Name}";
         PromptDescription.Text = profile.AuthenticationType == SshAuthenticationType.Password
-            ? "הזן את סיסמת משתמש ה-SSH. הסיסמה משמשת לחיבור הנוכחי בלבד ואינה נשמרת בפרופיל."
+            ? "הזן את סיסמת משתמש ה-SSH."
             : "אם המפתח הפרטי מוגן ב-Passphrase, הזן אותו כאן. השדה יכול להישאר ריק עבור מפתח שאינו מוצפן.";
+        SecretBox.Password = savedSecret ?? "";
+        RememberCheckBox.IsChecked = !string.IsNullOrEmpty(savedSecret);
         Loaded += (_, _) => SecretBox.Focus();
     }
 
-    private void Continue_Click(object sender, RoutedEventArgs e)
-    {
-        DialogResult = true;
-    }
+    private void Continue_Click(object sender, RoutedEventArgs e) => DialogResult = true;
 }
