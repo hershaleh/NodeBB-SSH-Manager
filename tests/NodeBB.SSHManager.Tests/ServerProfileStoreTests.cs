@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text.Json;
 using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
