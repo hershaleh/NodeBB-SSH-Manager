@@ -114,6 +114,7 @@
                                                 <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold"/>
                                                 <TextBlock Text="{Binding HostDisplay}" Foreground="#778399" FontSize="12" Margin="0,4,0,0"/>
                                                 <TextBlock Text="{Binding Username}" Foreground="#778399" FontSize="11" Margin="0,3,0,0"/>
+                                                <TextBlock Text="{Binding SavedCredentialLabel}" Foreground="#778399" FontSize="10" Margin="0,3,0,0"/>
                                             </StackPanel>
                                             <Border Grid.Column="1" Background="#EEF2FF" CornerRadius="12" Padding="10,5" VerticalAlignment="Center">
                                                 <TextBlock Text="{Binding AuthenticationLabel}" Foreground="#3654C5" FontSize="11"/>
