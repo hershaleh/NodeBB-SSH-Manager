@@ -40,14 +40,23 @@ done | sort -u | head -n 40
     {
         if (action is not ("start" or "stop" or "restart" or "build"))
             throw new ArgumentOutOfRangeException(nameof(action));
-        var path = ShellQuote(installation.Path);
+
         DiagnosticLogService.Instance.Info("NodeBB", "LifecycleStarted", $"NodeBB {action} requested for {installation.Path}.", _session.Profile.Name);
-        var result = await _session.ExecuteAsync($"cd {path} && ./nodebb {action}", cancellationToken);
-        if (result.ExitCode == 0)
-            DiagnosticLogService.Instance.Info("NodeBB", "LifecycleCompleted", $"NodeBB {action} completed for {installation.Path}.", _session.Profile.Name);
-        else
-            DiagnosticLogService.Instance.Error("NodeBB", "LifecycleFailed", $"NodeBB {action} failed with exit code {result.ExitCode}: {result.Error}", _session.Profile.Name);
-        return result;
+        if (action == "build")
+        {
+            var buildPath = ShellQuote(installation.Path);
+            var buildResult = await _session.ExecuteAsync($"cd {buildPath} && ./nodebb build", cancellationToken);
+            if (buildResult.ExitCode == 0)
+                DiagnosticLogService.Instance.Info("NodeBB", "LifecycleCompleted", "NodeBB build completed.", _session.Profile.Name);
+            else
+                DiagnosticLogService.Instance.Error("NodeBB", "LifecycleFailed", $"NodeBB build failed with exit code {buildResult.ExitCode}: {buildResult.Error}", _session.Profile.Name);
+            return buildResult;
+        }
+
+        var runtimeService = new NodeBbRuntimeService(_session);
+        var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
+        var result = await runtimeService.ExecuteLifecycleAsync(installation, runtime, action, cancellationToken);
+        return (result.ExitCode, $"מנהל הפעלה שזוהה: {runtime.Manager} ({runtime.Identifier}){Environment.NewLine}{result.Output}", result.Error);
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";

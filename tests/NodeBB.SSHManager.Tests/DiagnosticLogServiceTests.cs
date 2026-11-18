@@ -31,6 +31,20 @@ public sealed class DiagnosticLogServiceTests
         Assert.Equal(expected, PluginThemeRemoteService.IsValidPackageName(packageName));
     }
 
+    [Theory]
+    [InlineData("SYSTEMD", "nodebb.service", true)]
+    [InlineData("OPENRC", "nodebb", true)]
+    [InlineData("SYSV", "nodebb.service", true)]
+    [InlineData("DOCKER", "0123456789abcdef", true)]
+    [InlineData("DOCKER", "nodebb; rm -rf /", false)]
+    [InlineData("SYSTEMD", "nodebb;id", false)]
+    [InlineData("MANUAL", "CLI", true)]
+    [InlineData("MANUAL", "anything", false)]
+    public void RuntimeIdentifierValidation_RejectsUnsafeIdentifiers(string manager, string identifier, bool expected)
+    {
+        Assert.Equal(expected, NodeBbRuntimeService.IsSafeIdentifier(manager, identifier));
+    }
+
     [Fact]
     public void Redact_PreservesOrdinaryText()
     {
