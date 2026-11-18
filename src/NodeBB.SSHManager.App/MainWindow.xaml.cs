@@ -56,8 +56,8 @@ public partial class MainWindow : Window
             return;
         }
         _profiles.Add(dialog.Profile);
+        if (!SaveProfiles()) { _profiles.Remove(dialog.Profile); RefreshDashboard(); return; }
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileAdded", "A server profile was added.", dialog.Profile.Name);
-        SaveProfiles();
         ServersList.SelectedItem = dialog.Profile;
         RefreshDashboard();
     }
@@ -138,6 +138,7 @@ public partial class MainWindow : Window
         TestButton.IsEnabled = selected;
         RemoveButton.IsEnabled = selected;
         EditButton.IsEnabled = selected;
+        ForgetCredentialButton.IsEnabled = selected && _credentialVault.Has(((ServerProfile)ServersList.SelectedItem).Id);
     }
 
     private void EditServer_Click(object sender, RoutedEventArgs e)
@@ -146,10 +147,8 @@ public partial class MainWindow : Window
         var dialog = new AddServerWindow(current) { Owner = this };
         if (dialog.ShowDialog() != true || dialog.Profile is null) return;
         var updated = dialog.Profile;
-        if (_profiles.Any(p => p.Id != current.Id
-            && string.Equals(p.Host, updated.Host, StringComparison.OrdinalIgnoreCase)
-            && p.Port == updated.Port
-            && string.Equals(p.Username, updated.Username, StringComparison.Ordinal)))
+        if (_profiles.Any(p => p.Id != current.Id && string.Equals(p.Host, updated.Host, StringComparison.OrdinalIgnoreCase)
+            && p.Port == updated.Port && string.Equals(p.Username, updated.Username, StringComparison.Ordinal)))
         {
             MessageBox.Show(this, "שרת עם אותה כתובת, יציאה ומשתמש כבר קיים.", "שרת קיים", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
@@ -158,24 +157,30 @@ public partial class MainWindow : Window
             || current.Port != updated.Port || !string.Equals(current.Username, updated.Username, StringComparison.Ordinal)
             || current.AuthenticationType != updated.AuthenticationType
             || !string.Equals(current.PrivateKeyPath, updated.PrivateKeyPath, StringComparison.Ordinal);
+        var previous = new ServerProfile
+        {
+            Id = current.Id, Name = current.Name, Host = current.Host, Port = current.Port,
+            Username = current.Username, AuthenticationType = current.AuthenticationType,
+            PrivateKeyPath = current.PrivateKeyPath, KnownHostFingerprint = current.KnownHostFingerprint
+        };
+        current.Name = updated.Name; current.Host = updated.Host; current.Port = updated.Port;
+        current.Username = updated.Username; current.AuthenticationType = updated.AuthenticationType;
+        current.PrivateKeyPath = updated.PrivateKeyPath; current.KnownHostFingerprint = updated.KnownHostFingerprint;
+        if (!SaveProfiles())
+        {
+            current.Name = previous.Name; current.Host = previous.Host; current.Port = previous.Port;
+            current.Username = previous.Username; current.AuthenticationType = previous.AuthenticationType;
+            current.PrivateKeyPath = previous.PrivateKeyPath; current.KnownHostFingerprint = previous.KnownHostFingerprint;
+            ServersList.Items.Refresh(); RefreshDashboard(); return;
+        }
         if (connectionChanged)
         {
             _sessionManager.Disconnect(current.Id);
             try { _credentialVault.Remove(current.Id); }
             catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove an outdated saved credential.", ex, current.Name); }
         }
-        current.Name = updated.Name;
-        current.Host = updated.Host;
-        current.Port = updated.Port;
-        current.Username = updated.Username;
-        current.AuthenticationType = updated.AuthenticationType;
-        current.PrivateKeyPath = updated.PrivateKeyPath;
-        current.KnownHostFingerprint = updated.KnownHostFingerprint;
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileUpdated", "A server profile was updated.", current.Name);
-        SaveProfiles();
-        ServersList.Items.Refresh();
-        UpdateServerActions();
-        RefreshDashboard();
+        ServersList.Items.Refresh(); UpdateServerActions(); RefreshDashboard();
     }
 
     private void RemoveServer_Click(object sender, RoutedEventArgs e)
@@ -187,13 +192,38 @@ public partial class MainWindow : Window
         }
         if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו.",
                 "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        var savedCredential = _credentialVault.Get(selected.Id);
         _sessionManager.Disconnect(selected.Id);
         try { _credentialVault.Remove(selected.Id); }
         catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         _profiles.Remove(selected);
-        SaveProfiles();
+        if (!SaveProfiles())
+        {
+            _profiles.Add(selected);
+            if (!string.IsNullOrEmpty(savedCredential)) { try { _credentialVault.Set(selected.Id, savedCredential); } catch { } }
+            RefreshDashboard(); return;
+        }
         RefreshDashboard();
+    }
+
+    private void ForgetCredential_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is not ServerProfile selected) return;
+        if (!_credentialVault.Has(selected.Id)) { UpdateServerActions(); return; }
+        if (MessageBox.Show(this, $"למחוק מהמחשב את פרטי ההתחברות השמורים עבור '{selected.Name}'? החיבור הפעיל, אם קיים, לא ינותק.", "מחיקת פרטי התחברות", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        try
+        {
+            _credentialVault.Remove(selected.Id);
+            DiagnosticLogService.Instance.Info("CredentialVault", "CredentialForgotten", "Saved credential was explicitly removed.", selected.Name);
+            UpdateServerActions();
+            MessageBox.Show(this, "פרטי ההתחברות השמורים נמחקו מהמחשב.", "המחיקה הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("CredentialVault", "CredentialForgetFailed", ex, selected.Name);
+            MessageBox.Show(this, "לא ניתן היה למחוק את פרטי ההתחברות השמורים. " + ex.Message, "מחיקה נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private async void TestConnection_Click(object sender, RoutedEventArgs e)
