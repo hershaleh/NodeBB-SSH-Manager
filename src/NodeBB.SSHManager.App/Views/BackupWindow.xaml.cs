@@ -17,6 +17,7 @@ public partial class BackupWindow : Window
         _installation = installation;
         _service = new RemoteBackupService(session);
         InstallationLabel.Text = $"{session.Profile.Name} · {_installation.Path}";
+        EncryptionFields.Visibility = EncryptBackupCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void FullBackup_Click(object sender, RoutedEventArgs e) =>
@@ -25,15 +26,39 @@ public partial class BackupWindow : Window
     private async void EssentialBackup_Click(object sender, RoutedEventArgs e) =>
         await CreateBackupAsync(RemoteBackupKind.ConfigurationAndUploads);
 
-    private void EncryptionOption_Changed(object sender, RoutedEventArgs e)\n    {\n        if (EncryptionFields is not null) EncryptionFields.Visibility = EncryptBackupCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;\n    }\n\n    private async Task CreateBackupAsync(RemoteBackupKind kind)
+    private void EncryptionOption_Changed(object sender, RoutedEventArgs e)
     {
+        EncryptionFields.Visibility = EncryptBackupCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private async Task CreateBackupAsync(RemoteBackupKind kind)
+    {
+        var encrypted = EncryptBackupCheckBox.IsChecked == true;
+        var password = EncryptionPasswordBox.Password;
+        if (encrypted)
+        {
+            if (password.Length < 12)
+            {
+                MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+            if (!string.Equals(password, EncryptionConfirmBox.Password, StringComparison.Ordinal))
+            {
+                MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה",
+                    MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+        }
+
         var suffix = kind == RemoteBackupKind.FullInstallation ? "full" : "config-uploads";
+        var extension = encrypted ? ".nbbbackup" : ".tar.gz";
         var dialog = new SaveFileDialog
         {
             Title = "שמירת גיבוי NodeBB",
-            FileName = $"NodeBB-{suffix}-{DateTime.Now:yyyyMMdd-HHmm}.tar.gz",
-            Filter = "ארכיון GZip TAR|*.tar.gz",
-            DefaultExt = ".tar.gz",
+            FileName = $"NodeBB-{suffix}-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
+            Filter = encrypted ? "גיבוי NodeBB מוצפן|*.nbbbackup" : "ארכיון GZip TAR|*.tar.gz",
+            DefaultExt = extension,
             AddExtension = true,
             OverwritePrompt = true
         };
@@ -43,10 +68,25 @@ public partial class BackupWindow : Window
         StatusText.Text = "יוצר גיבוי בשרת ומוריד אותו למחשב...";
         try
         {
-            await _service.DownloadBackupAsync(_installation, kind, dialog.FileName);
-            StatusText.Text = "הגיבוי נשמר בהצלחה.";
-            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}", "הגיבוי הושלם",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            if (encrypted)
+            {
+                var temporaryPlain = Path.Combine(Path.GetTempPath(), $"nodebb-backup-{Guid.NewGuid():N}.tar.gz");
+                try
+                {
+                    await _service.DownloadBackupAsync(_installation, kind, temporaryPlain);
+                    StatusText.Text = "מצפין את הגיבוי...";
+                    await BackupEncryptionService.EncryptFileAsync(temporaryPlain, dialog.FileName, password);
+                }
+                finally { try { if (File.Exists(temporaryPlain)) File.Delete(temporaryPlain); } catch { } }
+            }
+            else
+            {
+                await _service.DownloadBackupAsync(_installation, kind, dialog.FileName);
+            }
+
+            StatusText.Text = encrypted ? "הגיבוי הוצפן ונשמר בהצלחה." : "הגיבוי נשמר בהצלחה.";
+            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? "מוצפן" : "ללא הצפנה")}",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
@@ -54,7 +94,12 @@ public partial class BackupWindow : Window
             StatusText.Text = "יצירת הגיבוי נכשלה: " + ex.Message;
             MessageBox.Show(this, ex.Message, "שגיאה ביצירת גיבוי", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        finally { EncryptionPasswordBox.Clear(); EncryptionConfirmBox.Clear(); IsEnabled = true; }
+        finally
+        {
+            EncryptionPasswordBox.Clear();
+            EncryptionConfirmBox.Clear();
+            IsEnabled = true;
+        }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

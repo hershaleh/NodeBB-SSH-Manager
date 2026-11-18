@@ -13,13 +13,14 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal.
 - SFTP browser with navigation, upload, download and confirmation before deletion.
 - NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, PM2, Docker or the NodeBB CLI, with privilege checks and safe fallbacks.
-- Downloadable file backups (full installation or configuration + uploads), with archive verification and optional-by-default authenticated AES-256 encryption; database contents are explicitly excluded.
+- Downloadable file backups (full installation or configuration + uploads), with archive verification and authenticated AES-256 encryption enabled by default; database contents are explicitly excluded.
 - Read-only NodeBB database configuration inspector that masks credentials and connection URIs.
 - NodeBB log viewer with refresh, local text filtering and copy.
 - Read-only remote security audit for SSH policy, account privileges, firewall status, listening ports and NodeBB file permissions.
 - Plugin/theme package inventory and controlled install, update and removal; plugin activate/deactivate actions with package-name validation and confirmation.
 - Structured local diagnostic logging and ZIP report export.
-- Read-only server monitoring for uptime, load, memory, disk usage and top processes.\n- System service inventory and controlled start/stop/restart for systemd, OpenRC and SysV, with explicit confirmation and non-interactive privilege checks.
+- Read-only server monitoring for uptime, load, memory, disk usage and top processes.
+- System service inventory and controlled start/stop/restart for systemd, OpenRC and SysV, with explicit confirmation and non-interactive privilege checks.
 - Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
 
@@ -58,7 +59,9 @@ The planned list is a product roadmap, not a claim that every module is already 
 ## Security principles
 
 - Never silently trust an unknown or changed SSH host key.
-- Never store credentials in plaintext profile files or diagnostic logs.\n- Encrypt exported backups by default because NodeBB configuration files can contain database credentials.
+- Never store credentials in plaintext profile files or diagnostic logs.
+- Encrypt exported backups by default because NodeBB configuration files can contain database credentials.
+- Encrypt exported backups by default because NodeBB configuration files can contain database credentials.
 - Use least privilege; do not assume root or sudo.
 - Detect the remote operating system and service manager instead of assuming a particular Linux distribution.
 - Quote and validate remote paths; never interpolate untrusted input into shell commands.

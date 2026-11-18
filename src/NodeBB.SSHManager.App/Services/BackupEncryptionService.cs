@@ -124,11 +124,13 @@ public static class BackupEncryptionService
             aes.Padding = PaddingMode.PKCS7;
             aes.Key = key.AsSpan(0, 32).ToArray();
             aes.IV = iv;
-            await using var limited = new LimitedReadStream(input, cipherLength);
-            await using var crypto = new CryptoStream(limited, aes.CreateDecryptor(), CryptoStreamMode.Read);
-            await using var output = new FileStream(outputTemp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize, true);
-            await crypto.CopyToAsync(output, BufferSize, cancellationToken);
-            await output.FlushAsync(cancellationToken);
+            await using (var limited = new LimitedReadStream(input, cipherLength))
+            await using (var crypto = new CryptoStream(limited, aes.CreateDecryptor(), CryptoStreamMode.Read))
+            await using (var output = new FileStream(outputTemp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize, true))
+            {
+                await crypto.CopyToAsync(output, BufferSize, cancellationToken);
+                await output.FlushAsync(cancellationToken);
+            }
             File.Move(outputTemp, fullDestination, true);
             CryptographicOperations.ZeroMemory(expectedTag);
             CryptographicOperations.ZeroMemory(storedTag);
