@@ -9,7 +9,7 @@ public static class SftpPathSafety
 {
     public static string ValidateName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) ||
+        if (string.IsNullOrEmpty(name) ||
             name is "." or ".." ||
             name.Contains('/') ||
             name.Contains('\0') ||
