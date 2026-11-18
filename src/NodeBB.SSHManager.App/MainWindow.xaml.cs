@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using Microsoft.Win32;
 using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
 using NodeBB.SSHManager.Views;
@@ -12,6 +13,7 @@ public partial class MainWindow : Window
     private readonly SshConnectionService _sshService = new();
     private readonly SshSessionManager _sessionManager = new();
     private readonly CredentialVaultService _credentialVault = new();
+    private readonly ServerProfileTransferService _profileTransfer = new();
     private readonly ObservableCollection<ServerProfile> _profiles = [];
 
     public MainWindow()
@@ -58,6 +60,59 @@ public partial class MainWindow : Window
         SaveProfiles();
         ServersList.SelectedItem = dialog.Profile;
         RefreshDashboard();
+    }
+
+    private void ExportProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count == 0)
+        {
+            MessageBox.Show(this, "אין פרופילים לייצוא.", "ייצוא פרופילים", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var dialog = new SaveFileDialog { Title = "ייצוא פרופילי שרתים", Filter = "NodeBB SSH profiles (*.nbbprofiles.json)|*.nbbprofiles.json|JSON (*.json)|*.json", FileName = "nodebb-ssh-profiles.nbbprofiles.json", AddExtension = true, DefaultExt = ".json" };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            var json = _profileTransfer.Export(_profiles);
+            File.WriteAllText(dialog.FileName, json, new System.Text.UTF8Encoding(false));
+            MessageBox.Show(this, $"יוצאו {_profiles.Count} פרופילים. סיסמאות וטביעות אצבע SSH אינן כלולות בקובץ.", "הייצוא הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Profiles", "ExportFailed", ex);
+            MessageBox.Show(this, ex.Message, "ייצוא נכשל", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ImportProfiles_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog { Title = "ייבוא פרופילי שרתים", Filter = "NodeBB SSH profiles (*.json)|*.json|All files (*.*)|*.*", CheckFileExists = true };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            var json = File.ReadAllText(dialog.FileName);
+            var imported = _profileTransfer.Import(json);
+            var additions = imported.Where(candidate => !_profiles.Any(existing =>
+                string.Equals(existing.Host, candidate.Host, StringComparison.OrdinalIgnoreCase)
+                && existing.Port == candidate.Port
+                && string.Equals(existing.Username, candidate.Username, StringComparison.Ordinal))).ToList();
+            var skipped = imported.Count - additions.Count;
+            if (additions.Count == 0)
+            {
+                MessageBox.Show(this, $"לא נוספו פרופילים. {skipped} פרופילים כבר קיימים.", "ייבוא פרופילים", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            if (MessageBox.Show(this, $"נמצאו {imported.Count} פרופילים תקינים. להוסיף {additions.Count}?\nפרופילים קיימים ידולגו. סיסמאות וטביעות אצבע SSH לא מיובאות, ולכן תידרש בדיקת אמון מחדש בשרת.", "אישור ייבוא", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+            foreach (var profile in additions) _profiles.Add(profile);
+            SaveProfiles();
+            RefreshDashboard();
+            MessageBox.Show(this, $"נוספו {additions.Count} פרופילים. דולגו {skipped} כפילויות.", "הייבוא הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Profiles", "ImportFailed", ex);
+            MessageBox.Show(this, ex.Message, "ייבוא נכשל", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ServersList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
