@@ -13,7 +13,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption.
 - MongoDB database backup scoped to the NodeBB database.
 - Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance.
-- PostgreSQL custom-format database backup using a protected temporary pgpass file; credentials are not passed as command-line arguments.
+- PostgreSQL custom-format database backup available from the database management window, using a protected temporary pgpass file; credentials are not passed as command-line arguments.
 - MongoDB restore with archive validation, dry-run, pre-restore dump, database scoping and rollback attempt.
 - Read-only database configuration inspector with masked credentials.
 - NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring.
@@ -23,7 +23,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 
 ## NodeBB upgrades
 
-The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before starting, the operator currently confirms that database and files/config/uploads backups exist. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. The next development step is to make the upgrade window create and verify these backups itself, rather than relying on checkboxes.
+The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before starting, the operator currently confirms that database and files/config/uploads backups exist. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. The upgrade window still relies on operator confirmation that database and files/config/uploads backups exist; automatic creation and verification is the next safety milestone.
 
 ## Database backup scope and limitations
 

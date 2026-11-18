@@ -71,6 +71,55 @@ public partial class DatabaseManagerWindow : Window
         }
     }
 
+    private async void PostgresBackup_Click(object sender, RoutedEventArgs e)
+    {
+        var password = BackupPasswordBox.Password;
+        if (password.Length < 12)
+        {
+            MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (!string.Equals(password, BackupPasswordConfirmBox.Password, StringComparison.Ordinal))
+        {
+            MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var dialog = new SaveFileDialog
+        {
+            Title = "שמירת גיבוי PostgreSQL",
+            FileName = $"NodeBB-PostgreSQL-{DateTime.Now:yyyyMMdd-HHmm}.nbbbackup",
+            Filter = "גיבוי PostgreSQL מוצפן|*.nbbbackup", DefaultExt = ".nbbbackup",
+            AddExtension = true, OverwritePrompt = true
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        PostgresBackupButton.IsEnabled = false; RefreshButton.IsEnabled = false;
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var plain = Path.Combine(tempRoot, $"postgres-{Guid.NewGuid():N}.dump");
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            StatusText.Text = "יוצר גיבוי PostgreSQL בשרת...";
+            await new PostgresDatabaseBackupService(_session).DownloadBackupAsync(_installation, plain);
+            StatusText.Text = "קובץ הגיבוי התקבל. מצפין במחשב...";
+            await BackupEncryptionService.EncryptFileAsync(plain, dialog.FileName, password);
+            StatusText.Text = "גיבוי PostgreSQL הוצפן ונשמר בהצלחה.";
+            MessageBox.Show(this, $"גיבוי PostgreSQL נשמר כשהוא מוצפן:\n{dialog.FileName}\n\nשמור את סיסמת ההצפנה במקום בטוח.",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("DatabaseUI", "PostgresBackupFailed", ex, _session.Profile.Name);
+            StatusText.Text = "גיבוי PostgreSQL נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בגיבוי מסד הנתונים", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(plain)) File.Delete(plain); } catch { }
+            BackupPasswordBox.Clear(); BackupPasswordConfirmBox.Clear();
+            PostgresBackupButton.IsEnabled = true; RefreshButton.IsEnabled = true;
+        }
+    }
+
     private async void RedisBackup_Click(object sender, RoutedEventArgs e)
     {
         var password = BackupPasswordBox.Password;
@@ -174,9 +223,11 @@ public partial class DatabaseManagerWindow : Window
             UriText.Text = info.UriConfigured ? "כן (הערך עצמו מוסתר)" : "לא";
             var isMongo = string.Equals(info.Type, "mongo", StringComparison.OrdinalIgnoreCase);
             var isRedis = string.Equals(info.Type, "redis", StringComparison.OrdinalIgnoreCase);
+            var isPostgres = string.Equals(info.Type, "postgres", StringComparison.OrdinalIgnoreCase);
             DatabaseBackupButton.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
             MongoRestorePanel.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupButton.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
+            PostgresBackupButton.Visibility = isPostgres ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupNote.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
             StatusText.Text = "התצורה נקראה בהצלחה.";
         }
