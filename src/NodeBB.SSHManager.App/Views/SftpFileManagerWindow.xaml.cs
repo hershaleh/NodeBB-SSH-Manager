@@ -163,6 +163,7 @@ public partial class SftpFileManagerWindow : Window
                     }
                     throw;
                 }
+                return true;
             });
             await LoadDirectoryAsync(_currentPath);
             DiagnosticLogService.Instance.Info("SFTP", "UploadCompleted", $"Uploaded a file to {_currentPath}.", _session.Profile.Name);
