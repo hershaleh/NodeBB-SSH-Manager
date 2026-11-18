@@ -217,7 +217,7 @@ public partial class MainWindow : Window
         {
             _credentialVault.Remove(selected.Id);
             DiagnosticLogService.Instance.Info("CredentialVault", "CredentialForgotten", "Saved credential was explicitly removed.", selected.Name);
-            UpdateServerActions();
+            RefreshDashboard();
             MessageBox.Show(this, "פרטי ההתחברות השמורים נמחקו מהמחשב.", "המחיקה הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -360,11 +360,13 @@ public partial class MainWindow : Window
             if (prompt.RememberSecret && !string.IsNullOrEmpty(prompt.Secret))
             {
                 _credentialVault.Set(profile.Id, prompt.Secret);
+                profile.HasSavedCredential = true;
                 DiagnosticLogService.Instance.Info("CredentialVault", "CredentialSaved", "A credential was saved using Windows DPAPI.", profile.Name);
             }
             else
             {
                 _credentialVault.Remove(profile.Id);
+                profile.HasSavedCredential = false;
                 DiagnosticLogService.Instance.Info("CredentialVault", "CredentialNotRetained", "No saved credential is retained for this server.", profile.Name);
             }
         }
@@ -437,6 +439,9 @@ public partial class MainWindow : Window
 
     private void RefreshDashboard()
     {
+        foreach (var profile in _profiles)
+            profile.HasSavedCredential = _credentialVault.Has(profile.Id);
+        ServersList.Items.Refresh();
         ServerCountText.Text = _profiles.Count.ToString();
         ServerTotalText.Text = $"{_profiles.Count} שרתים";
         ConnectedCountText.Text = _sessionManager.ConnectedCount.ToString();
