@@ -25,7 +25,7 @@ public sealed class UnixPermissionAssessmentTests
     [InlineData("4755", true, "תקין")]
     [InlineData("invalid", false, "בדיקה נדרשת")]
     [InlineData("88", false, "בדיקה נדרשת")]
-    [InlineData("7555", false, "בדיקה נדרשת")]
+    [InlineData("7555", false, "קריטי")]
     [InlineData("0755", true, "תקין")]
     public void Assess_ClassifiesUnixPermissions(string mode, bool isDirectory, string expectedSeverity)
     {
