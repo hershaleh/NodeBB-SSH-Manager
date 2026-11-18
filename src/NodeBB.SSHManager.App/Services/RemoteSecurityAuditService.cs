@@ -60,12 +60,11 @@ CONFIG_READABLE=לא
 CONFIG_WRITABLE=לא
 [ -w config.json ] && CONFIG_WRITABLE=כן
 FIREWALL=לא-זוהה
-if command -v ufw >/dev/null 2>&1; then if ufw status 2>/dev/null | grep -qi '^Status: active'; then FIREWALL=active; else FIREWALL=inactive; fi
-elif command -v firewall-cmd >/dev/null 2>&1; then FIREWALL="$(firewall-cmd --state 2>/dev/null)"
-elif command -v nft >/dev/null 2>&1; then
-  if nft list ruleset 2>/dev/null | grep -q "chain"; then FIREWALL=nftables-active; else FIREWALL=nftables-empty; fi
-elif command -v iptables >/dev/null 2>&1; then
-  if iptables -S >/dev/null 2>&1; then FIREWALL=iptables-זמין; else FIREWALL=iptables-לא-נגיש; fi
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -qi '^Status: active'; then FIREWALL=active
+elif command -v firewall-cmd >/dev/null 2>&1 && [ "$(firewall-cmd --state 2>/dev/null)" = "running" ]; then FIREWALL=running
+elif command -v nft >/dev/null 2>&1 && nft list ruleset 2>/dev/null | grep -q "chain"; then FIREWALL=nftables-active
+elif command -v iptables >/dev/null 2>&1 && iptables -S 2>/dev/null | grep -q '^-A'; then FIREWALL=iptables-active
+elif command -v ufw >/dev/null 2>&1 || command -v firewall-cmd >/dev/null 2>&1; then FIREWALL=inactive
 fi
 PORTS=לא-זמין
 if command -v ss >/dev/null 2>&1; then PORTS="$(ss -tln 2>/dev/null | awk 'NR>1 {print $4}' | head -n 8 | tr '\n' ',')"; fi
@@ -111,7 +110,7 @@ printf 'CONFIG_WRITABLE|%s\n' "$CONFIG_WRITABLE"
             Get("FIREWALL"), Get("PORTS"), Get("INSTALL_OWNER"), Get("INSTALL_MODE"),
             Get("CONFIG_OWNER"), Get("CONFIG_MODE"), Yes("CONFIG_READABLE"), Yes("CONFIG_WRITABLE"));
 
-        var firewallActive = snapshot.FirewallStatus is "active" or "running" or "nftables-active";
+        var firewallActive = snapshot.FirewallStatus is "active" or "running" or "nftables-active" or "iptables-active";
         var sshRootSeverity = snapshot.SshPermitRootLogin == "yes" ? "קריטי" : snapshot.SshPermitRootLogin == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
         var sshPasswordSeverity = snapshot.SshPasswordAuthentication == "yes" ? "אזהרה" : snapshot.SshPasswordAuthentication == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
         var sshKeySeverity = snapshot.SshPublicKeyAuthentication == "no" ? "אזהרה" : snapshot.SshPublicKeyAuthentication == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
