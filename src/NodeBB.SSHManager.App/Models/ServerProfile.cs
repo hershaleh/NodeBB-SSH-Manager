@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace NodeBB.SSHManager.Models;
 
 public enum SshAuthenticationType
@@ -22,4 +24,10 @@ public sealed class ServerProfile
         : "מפתח SSH";
 
     public string HostDisplay => $"{Host}:{Port}";
+
+    [JsonIgnore]
+    public bool HasSavedCredential { get; set; }
+
+    [JsonIgnore]
+    public string SavedCredentialLabel => HasSavedCredential ? "סיסמה שמורה במחשב" : "לא נשמרה סיסמה";
 }
