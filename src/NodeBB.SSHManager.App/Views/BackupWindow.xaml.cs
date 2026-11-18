@@ -25,7 +25,7 @@ public partial class BackupWindow : Window
     private async void EssentialBackup_Click(object sender, RoutedEventArgs e) =>
         await CreateBackupAsync(RemoteBackupKind.ConfigurationAndUploads);
 
-    private async Task CreateBackupAsync(RemoteBackupKind kind)
+    private void EncryptionOption_Changed(object sender, RoutedEventArgs e)\n    {\n        if (EncryptionFields is not null) EncryptionFields.Visibility = EncryptBackupCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;\n    }\n\n    private async Task CreateBackupAsync(RemoteBackupKind kind)
     {
         var suffix = kind == RemoteBackupKind.FullInstallation ? "full" : "config-uploads";
         var dialog = new SaveFileDialog
@@ -54,7 +54,7 @@ public partial class BackupWindow : Window
             StatusText.Text = "יצירת הגיבוי נכשלה: " + ex.Message;
             MessageBox.Show(this, ex.Message, "שגיאה ביצירת גיבוי", MessageBoxButton.OK, MessageBoxImage.Error);
         }
-        finally { IsEnabled = true; }
+        finally { EncryptionPasswordBox.Clear(); EncryptionConfirmBox.Clear(); IsEnabled = true; }
     }
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();

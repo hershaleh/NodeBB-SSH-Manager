@@ -13,7 +13,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal.
 - SFTP browser with navigation, upload, download and confirmation before deletion.
 - NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, PM2, Docker or the NodeBB CLI, with privilege checks and safe fallbacks.
-- Downloadable file backups (full installation or configuration + uploads), with archive verification; database contents are explicitly excluded.
+- Downloadable file backups (full installation or configuration + uploads), with archive verification and optional-by-default authenticated AES-256 encryption; database contents are explicitly excluded.
 - Read-only NodeBB database configuration inspector that masks credentials and connection URIs.
 - NodeBB log viewer with refresh, local text filtering and copy.
 - Read-only remote security audit for SSH policy, account privileges, firewall status, listening ports and NodeBB file permissions.
@@ -58,7 +58,7 @@ The planned list is a product roadmap, not a claim that every module is already 
 ## Security principles
 
 - Never silently trust an unknown or changed SSH host key.
-- Never store credentials in plaintext profile files or diagnostic logs.
+- Never store credentials in plaintext profile files or diagnostic logs.\n- Encrypt exported backups by default because NodeBB configuration files can contain database credentials.
 - Use least privilege; do not assume root or sudo.
 - Detect the remote operating system and service manager instead of assuming a particular Linux distribution.
 - Quote and validate remote paths; never interpolate untrusted input into shell commands.
