@@ -23,6 +23,8 @@ public partial class SftpFileManagerWindow : Window
     private readonly SshServerSession _session;
     private readonly Renci.SshNet.SftpClient _client;
     private readonly ObservableCollection<RemoteFileItem> _items = [];
+    private readonly SemaphoreSlim _sftpLock = new(1, 1);
+    private volatile bool _isClosing;
     private string _currentPath = "/";
 
     public SftpFileManagerWindow(SshServerSession session)
@@ -33,7 +35,13 @@ public partial class SftpFileManagerWindow : Window
         FilesList.ItemsSource = _items;
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         Loaded += async (_, _) => await ConnectAndLoadAsync();
-        Closed += (_, _) => _client.Dispose();
+        Closed += async (_, _) =>
+        {
+            _isClosing = true;
+            await _sftpLock.WaitAsync();
+            try { _client.Dispose(); }
+            finally { _sftpLock.Release(); }
+        };
     }
 
     private async Task ConnectAndLoadAsync()
@@ -41,7 +49,7 @@ public partial class SftpFileManagerWindow : Window
         try
         {
             StatusText.Text = "מתחבר...";
-            await Task.Run(_client.Connect);
+            await WithSftpLockAsync(() => { _client.Connect(); return true; });
             await LoadDirectoryAsync(_currentPath);
         }
         catch (Exception ex)
@@ -55,7 +63,7 @@ public partial class SftpFileManagerWindow : Window
     {
         try
         {
-            var list = await Task.Run(() => _client.ListDirectory(path)
+            var list = await WithSftpLockAsync(() => _client.ListDirectory(path)
                 .Where(x => x.Name is not ("." or ".."))
                 .OrderByDescending(x => x.IsDirectory).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(x => new RemoteFileItem
@@ -107,16 +115,55 @@ public partial class SftpFileManagerWindow : Window
         if (dialog.ShowDialog(this) != true) return;
         try
         {
-            var remotePath = Combine(_currentPath, Path.GetFileName(dialog.FileName));
-            if (await Task.Run(() => _client.Exists(remotePath)))
-            {
-                if (MessageBox.Show(this, $"הקובץ '{Path.GetFileName(dialog.FileName)}' כבר קיים בשרת. להחליף אותו?",
-                        "אישור החלפה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
-                    return;
-            }
+            var fileName = Path.GetFileName(dialog.FileName);
+            var remotePath = Combine(_currentPath, fileName);
+            var replaceApproved = await WithSftpLockAsync(() => _client.Exists(remotePath));
+            if (replaceApproved &&
+                MessageBox.Show(this, $"הקובץ '{fileName}' כבר קיים בשרת. להחליף אותו?",
+                    "אישור החלפה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                return;
+
             StatusText.Text = "מעלה קובץ...";
-            await using var input = File.OpenRead(dialog.FileName);
-            await Task.Run(() => _client.UploadFile(input, remotePath, true));
+            await WithSftpLockAsync(() =>
+            {
+                var existsNow = _client.Exists(remotePath);
+                if (existsNow && !replaceApproved)
+                    throw new IOException("קובץ באותו שם נוצר בשרת לאחר בדיקת ההחלפה. לא בוצעה דריסה.");
+
+                var token = Guid.NewGuid().ToString("N");
+                var temporaryPath = Combine(_currentPath, $".{fileName}.upload-{token}");
+                var backupPath = Combine(_currentPath, $".{fileName}.previous-{token}");
+                var movedOriginal = false;
+                try
+                {
+                    using (var input = File.OpenRead(dialog.FileName))
+                        _client.UploadFile(input, temporaryPath, false);
+
+                    if (existsNow)
+                    {
+                        _client.RenameFile(remotePath, backupPath);
+                        movedOriginal = true;
+                    }
+
+                    _client.RenameFile(temporaryPath, remotePath);
+                    if (movedOriginal && _client.Exists(backupPath))
+                        _client.DeleteFile(backupPath);
+                }
+                catch
+                {
+                    try
+                    {
+                        if (_client.Exists(temporaryPath)) _client.DeleteFile(temporaryPath);
+                        if (movedOriginal && !_client.Exists(remotePath) && _client.Exists(backupPath))
+                            _client.RenameFile(backupPath, remotePath);
+                    }
+                    catch (Exception recoveryError)
+                    {
+                        DiagnosticLogService.Instance.Error("SFTP", "UploadRecoveryFailed", recoveryError, _session.Profile.Name);
+                    }
+                    throw;
+                }
+            });
             await LoadDirectoryAsync(_currentPath);
             DiagnosticLogService.Instance.Info("SFTP", "UploadCompleted", $"Uploaded a file to {_currentPath}.", _session.Profile.Name);
             StatusText.Text = "ההעלאה הושלמה";
@@ -136,8 +183,23 @@ public partial class SftpFileManagerWindow : Window
         try
         {
             StatusText.Text = "מוריד קובץ...";
-            await using var output = File.Create(dialog.FileName);
-            await Task.Run(() => _client.DownloadFile(item.FullPath, output));
+            var destination = Path.GetFullPath(dialog.FileName);
+            var temporaryPath = destination + ".partial-" + Guid.NewGuid().ToString("N");
+            try
+            {
+                await WithSftpLockAsync(() =>
+                {
+                    using var output = new FileStream(temporaryPath, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+                    _client.DownloadFile(item.FullPath, output);
+                    output.Flush(true);
+                });
+                File.Move(temporaryPath, destination, true);
+            }
+            catch
+            {
+                try { if (File.Exists(temporaryPath)) File.Delete(temporaryPath); } catch { }
+                throw;
+            }
             DiagnosticLogService.Instance.Info("SFTP", "DownloadCompleted", $"Downloaded remote file {item.FullPath}.", _session.Profile.Name);
             StatusText.Text = "ההורדה הושלמה";
         }
@@ -155,7 +217,12 @@ public partial class SftpFileManagerWindow : Window
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         try
         {
-            await Task.Run(() => { if (item.IsDirectory) _client.DeleteDirectory(item.FullPath); else _client.DeleteFile(item.FullPath); });
+            await WithSftpLockAsync(() =>
+            {
+                if (item.IsDirectory) _client.DeleteDirectory(item.FullPath);
+                else _client.DeleteFile(item.FullPath);
+                return true;
+            });
             DiagnosticLogService.Instance.Info("SFTP", "RemoteDeleteCompleted", $"Deleted remote item {item.FullPath}.", _session.Profile.Name);
             await LoadDirectoryAsync(_currentPath);
         }
@@ -163,6 +230,21 @@ public partial class SftpFileManagerWindow : Window
         {
             DiagnosticLogService.Instance.Error("SFTP", "RemoteDeleteFailed", ex, _session.Profile.Name);
             StatusText.Text = "המחיקה נכשלה: " + ex.Message;
+        }
+    }
+
+    private async Task<T> WithSftpLockAsync<T>(Func<T> operation)
+    {
+        if (_isClosing) throw new ObjectDisposedException(nameof(SftpFileManagerWindow));
+        await _sftpLock.WaitAsync();
+        try
+        {
+            if (_isClosing) throw new ObjectDisposedException(nameof(SftpFileManagerWindow));
+            return await Task.Run(operation);
+        }
+        finally
+        {
+            _sftpLock.Release();
         }
     }
 
