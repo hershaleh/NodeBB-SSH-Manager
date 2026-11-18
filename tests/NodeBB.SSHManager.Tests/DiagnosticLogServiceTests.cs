@@ -47,6 +47,17 @@ public sealed class DiagnosticLogServiceTests
         Assert.Equal(expected, NodeBbRuntimeService.IsSafeIdentifier(manager, identifier));
     }
 
+    [Theory]
+    [InlineData("mongodb://admin:super-secret@db.example:27017/nodebb", "mongodb://[REDACTED]")]
+    [InlineData("mongodb+srv://user:secret@cluster.example/nodebb?retryWrites=true", "mongodb+srv://[REDACTED]")]
+    public void Redact_RemovesMongoConnectionUris(string input, string expected)
+    {
+        var actual = DiagnosticLogService.Redact(input);
+        Assert.Equal(expected, actual);
+        Assert.DoesNotContain("super-secret", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("secret@", actual, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Redact_PreservesOrdinaryText()
     {
