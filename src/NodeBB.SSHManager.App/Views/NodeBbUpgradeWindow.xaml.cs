@@ -1,4 +1,5 @@
 using System.Text;
+using Microsoft.Win32;
 using System.Windows;
 using NodeBB.SSHManager.Services;
 
@@ -44,6 +45,7 @@ public partial class NodeBbUpgradeWindow : Window
             PreflightText.Text = b.ToString();
             StatusText.Text = _preflight.CanUpgrade ? "השרת עבר את בדיקות המוכנות." : "השרת אינו מוכן לשדרוג. יש לטפל בבדיקות שנכשלו.";
             UpgradeButton.IsEnabled = _preflight.CanUpgrade;
+            RedisScopeWarningCheck.Visibility = string.Equals(_preflight.DatabaseType, "redis", StringComparison.OrdinalIgnoreCase) ? Visibility.Visible : Visibility.Collapsed;
             void Add(string label, bool ok, string extra = "") =>
                 b.AppendLine($"{(ok ? "✓" : "✗")} {label}{(extra.Length > 0 ? ": " + extra : "")}");
         }
@@ -57,6 +59,20 @@ public partial class NodeBbUpgradeWindow : Window
         finally { RefreshButton.IsEnabled = true; }
     }
 
+    private void BrowseBackupFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "בחירת תיקייה לשמירת גיבויי טרום-השדרוג",
+            Multiselect = false,
+            InitialDirectory = Directory.Exists(BackupFolderBox.Text)
+                ? BackupFolderBox.Text
+                : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments)
+        };
+        if (dialog.ShowDialog(this) == true)
+            BackupFolderBox.Text = dialog.FolderName;
+    }
+
     private async void Upgrade_Click(object sender, RoutedEventArgs e)
     {
         if (_preflight is null || !_preflight.CanUpgrade) return;
@@ -66,26 +82,53 @@ public partial class NodeBbUpgradeWindow : Window
             MessageBox.Show(this, "יש להזין תגית גרסה תקינה, לדוגמה v4.19.1.", "תגית לא תקינה", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (!DatabaseBackupCheck.IsChecked.GetValueOrDefault() ||
-            !FilesBackupCheck.IsChecked.GetValueOrDefault() ||
-            !MigrationWarningCheck.IsChecked.GetValueOrDefault())
+        if (string.IsNullOrWhiteSpace(BackupFolderBox.Text))
         {
-            MessageBox.Show(this, "יש לאשר את שלוש דרישות הגיבוי וההבנה לפני השדרוג.", "נדרשים אישורים", MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, "יש לבחור תיקייה לשמירת הגיבויים.", "נדרשת תיקיית גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var password = BackupPasswordBox.Password;
+        if (password.Length < 12 || !string.Equals(password, BackupPasswordConfirmBox.Password, StringComparison.Ordinal))
+        {
+            MessageBox.Show(this, password.Length < 12 ? "סיסמת הגיבוי חייבת להכיל לפחות 12 תווים." : "סיסמאות ההצפנה אינן תואמות.",
+                "בדיקת סיסמה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (string.Equals(_preflight.DatabaseType, "redis", StringComparison.OrdinalIgnoreCase) &&
+            !RedisScopeWarningCheck.IsChecked.GetValueOrDefault())
+        {
+            MessageBox.Show(this, "יש לאשר במפורש שגיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB.", "נדרש אישור היקף גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (!MigrationWarningCheck.IsChecked.GetValueOrDefault())
+        {
+            MessageBox.Show(this, "יש לאשר שהבנת את הסיכון של מיגרציות מסד הנתונים.", "נדרש אישור", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (MessageBox.Show(this,
-            $"השדרוג יעצור את NodeBB, יעביר את הקוד לתגית {tag} ויריץ ./nodebb upgrade. אם המיגרציה תיכשל, השירות יישאר עצור.\n\nלהמשיך?",
-            "אישור שדרוג", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
+            $"התוכנה תיצור ותאמת גיבוי מוצפן של מסד הנתונים ושל config.json/קובצי התצורה והעלאות, ורק לאחר הצלחתם תעצור את NodeBB ותשדרג לתגית {tag}. אם מיגרציה תיכשל, השירות יישאר עצור.\n\nלהמשיך?",
+            "אישור גיבוי ושדרוג", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes) return;
 
         UpgradeButton.IsEnabled = false;
         RefreshButton.IsEnabled = false;
         TargetTagBox.IsEnabled = false;
-        StatusText.Text = "עוצר את NodeBB ומבצע שדרוג...";
+        StatusText.Text = "בודק שתגית הגרסה קיימת לפני יצירת הגיבויים...";
         try
         {
+            await _service.VerifyTargetTagAsync(_installation, tag);
+            var progress = new Progress<string>(message => StatusText.Text = message);
+            var backupSet = await new NodeBbUpgradeBackupService(_session).CreateAsync(
+                _installation, _preflight.DatabaseType, BackupFolderBox.Text, password, progress);
+            BackupPasswordBox.Clear();
+            BackupPasswordConfirmBox.Clear();
+
+            StatusText.Text = "הגיבויים אומתו. מתחיל כעת את השדרוג...";
             var result = await _service.UpgradeAsync(_installation, tag, true, true);
+            var artifactSummary = string.Join("\n", backupSet.Artifacts.Select(a =>
+                $"{a.Description}: {a.FilePath} ({a.SizeBytes:N0} bytes)"));
+            var message = result.Message + "\n\nתיקיית הגיבויים: " + backupSet.DirectoryPath + "\n" + artifactSummary;
             StatusText.Text = result.Message;
-            MessageBox.Show(this, result.Message + (result.Output.Length > 0 ? "\n\n" + result.Output : ""),
+            MessageBox.Show(this, message + (result.Output.Length > 0 ? "\n\n" + result.Output : ""),
                 result.Success && result.Restarted ? "השדרוג הושלם" : "תוצאת השדרוג",
                 MessageBoxButton.OK, result.Success && result.Restarted ? MessageBoxImage.Information : MessageBoxImage.Warning);
             await RefreshAsync();
@@ -98,6 +141,8 @@ public partial class NodeBbUpgradeWindow : Window
         }
         finally
         {
+            BackupPasswordBox.Clear();
+            BackupPasswordConfirmBox.Clear();
             TargetTagBox.IsEnabled = true;
             RefreshButton.IsEnabled = true;
             UpgradeButton.IsEnabled = _preflight?.CanUpgrade == true;

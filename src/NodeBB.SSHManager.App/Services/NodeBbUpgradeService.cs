@@ -50,6 +50,19 @@ public sealed class NodeBbUpgradeService
         return info;
     }
 
+
+    public async Task VerifyTargetTagAsync(NodeBbInstallation installation, string targetTag,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(installation);
+        if (!IsValidTargetTag(targetTag))
+            throw new ArgumentException("יש להזין תגית גרסה תקינה, לדוגמה v4.19.1.", nameof(targetTag));
+        var check = await _session.ExecuteAsync(BuildVerifyTargetTagScript(installation.Path, targetTag), cancellationToken);
+        if (check.ExitCode != 0)
+            throw new InvalidOperationException(Sanitize(check.Error,
+                "תגית הגרסה לא נמצאה ב-origin. NodeBB לא נעצר ולא בוצע שינוי בקבצים."));
+    }
+
     public async Task<NodeBbUpgradeResult> UpgradeAsync(NodeBbInstallation installation, string targetTag,
         bool databaseBackupConfirmed, bool filesBackupConfirmed, CancellationToken cancellationToken = default)
     {
@@ -60,9 +73,7 @@ public sealed class NodeBbUpgradeService
         var preflight = await InspectAsync(installation, cancellationToken);
         if (!preflight.CanUpgrade)
             throw new InvalidOperationException("השרת אינו מוכן לשדרוג. נדרשים Git, עץ עבודה נקי, remote בשם origin, Node.js, npm ומסד נתונים נתמך. בדוק את פירוט הבדיקות.");
-        var tagCheck = await _session.ExecuteAsync(BuildVerifyTargetTagScript(installation.Path, targetTag), cancellationToken);
-        if (tagCheck.ExitCode != 0)
-            throw new InvalidOperationException(Sanitize(tagCheck.Error, "תגית הגרסה לא נמצאה ב-origin. NodeBB לא נעצר ולא בוצע שינוי בקבצים."));
+        await VerifyTargetTagAsync(installation, targetTag, cancellationToken);
         var runtimeService = new NodeBbRuntimeService(_session);
         var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
         var stopped = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);

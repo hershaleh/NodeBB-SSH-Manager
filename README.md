@@ -23,7 +23,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 
 ## NodeBB upgrades
 
-The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before starting, the operator currently confirms that database and files/config/uploads backups exist. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. The upgrade window still relies on operator confirmation that database and files/config/uploads backups exist; automatic creation and verification is the next safety milestone.
+The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before stopping NodeBB, the application verifies the requested tag, creates an encrypted database backup and a separate encrypted config/uploads archive, then decrypts both locally and compares SHA-256 hashes to verify the encrypted files. If either backup or verification fails, the upgrade does not start. The backup folder is selected by the operator and its path is shown after the operation. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. Redis backups are explicitly whole-server RDB snapshots, including every logical database and any other applications on that Redis instance; restore remains a manual operation. PostgreSQL restore is not implemented. Live remote upgrade and backup behavior still requires compatibility testing on real servers.
 
 ## Database backup scope and limitations
 
@@ -62,4 +62,4 @@ dotnet publish .\src\NodeBB.SSHManager.App\NodeBB.SSHManager.App.csproj -c Relea
 
 Development preview. Remote operations have not yet completed comprehensive live testing against different SSH servers, Linux distributions, service managers and NodeBB deployment methods. Do not use this preview for production administration or unverified destructive operations.
 
-The roadmap includes automated pre-upgrade backup orchestration, scheduled backups, backup retention and validation, restore workflows for additional database engines, bilingual language switching and broader live compatibility testing.
+The roadmap includes scheduled backups, backup retention, restore workflows for additional database engines, bilingual language switching and broader live compatibility testing.
