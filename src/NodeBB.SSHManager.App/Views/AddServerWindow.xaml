@@ -11,7 +11,7 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <StackPanel>
-            <TextBlock Text="הוספת שרת NodeBB" FontSize="23" FontWeight="Bold"/>
+            <TextBlock x:Name="DialogTitle" Text="הוספת שרת NodeBB" FontSize="23" FontWeight="Bold"/>
             <TextBlock Text="הגדר פרופיל חיבור SSH. פרטי סוד לא נשמרים כאן." Foreground="#778399" Margin="0,6,0,0"/>
         </StackPanel>
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,18">
