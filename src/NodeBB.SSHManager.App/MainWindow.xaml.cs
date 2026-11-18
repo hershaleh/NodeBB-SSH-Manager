@@ -60,6 +60,64 @@ public partial class MainWindow : Window
         RefreshDashboard();
     }
 
+    private void ServersList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        UpdateServerActions();
+        RefreshDashboard();
+    }
+
+    private void UpdateServerActions()
+    {
+        var selected = ServersList.SelectedItem is ServerProfile;
+        var connected = selected && _sessionManager.TryGet(((ServerProfile)ServersList.SelectedItem).Id, out _);
+        ConnectButton.IsEnabled = selected && !connected;
+        DisconnectButton.IsEnabled = connected;
+        TerminalButton.IsEnabled = connected;
+        FilesButton.IsEnabled = connected;
+        ManageButton.IsEnabled = connected;
+        TestButton.IsEnabled = selected;
+        RemoveButton.IsEnabled = selected;
+        EditButton.IsEnabled = selected;
+    }
+
+    private void EditServer_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is not ServerProfile current) return;
+        var dialog = new AddServerWindow(current) { Owner = this };
+        if (dialog.ShowDialog() != true || dialog.Profile is null) return;
+        var updated = dialog.Profile;
+        if (_profiles.Any(p => p.Id != current.Id
+            && string.Equals(p.Host, updated.Host, StringComparison.OrdinalIgnoreCase)
+            && p.Port == updated.Port
+            && string.Equals(p.Username, updated.Username, StringComparison.Ordinal)))
+        {
+            MessageBox.Show(this, "שרת עם אותה כתובת, יציאה ומשתמש כבר קיים.", "שרת קיים", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var connectionChanged = !string.Equals(current.Host, updated.Host, StringComparison.OrdinalIgnoreCase)
+            || current.Port != updated.Port || !string.Equals(current.Username, updated.Username, StringComparison.Ordinal)
+            || current.AuthenticationType != updated.AuthenticationType
+            || !string.Equals(current.PrivateKeyPath, updated.PrivateKeyPath, StringComparison.Ordinal);
+        if (connectionChanged)
+        {
+            _sessionManager.Disconnect(current.Id);
+            try { _credentialVault.Remove(current.Id); }
+            catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove an outdated saved credential.", ex, current.Name); }
+        }
+        current.Name = updated.Name;
+        current.Host = updated.Host;
+        current.Port = updated.Port;
+        current.Username = updated.Username;
+        current.AuthenticationType = updated.AuthenticationType;
+        current.PrivateKeyPath = updated.PrivateKeyPath;
+        current.KnownHostFingerprint = updated.KnownHostFingerprint;
+        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileUpdated", "A server profile was updated.", current.Name);
+        SaveProfiles();
+        ServersList.Items.Refresh();
+        UpdateServerActions();
+        RefreshDashboard();
+    }
+
     private void RemoveServer_Click(object sender, RoutedEventArgs e)
     {
         if (ServersList.SelectedItem is not ServerProfile selected)
@@ -292,11 +350,13 @@ public partial class MainWindow : Window
         ConnectedCountText.Text = _sessionManager.ConnectedCount.ToString();
         EmptyState.Visibility = _profiles.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ServerListPanel.Visibility = _profiles.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        UpdateServerActions();
     }
 
     private void SetBusy(bool isBusy)
     {
         IsEnabled = !isBusy;
         Cursor = isBusy ? System.Windows.Input.Cursors.Wait : System.Windows.Input.Cursors.Arrow;
+        if (!isBusy) UpdateServerActions();
     }
 }
