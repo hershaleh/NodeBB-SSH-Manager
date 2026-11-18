@@ -6,13 +6,13 @@ namespace NodeBB.SSHManager.Views;
 
 public partial class NodeBbManagerWindow : Window
 {
-    private readonly NodeBbRemoteService _service;
+    private readonly NodeBbRemoteService _service;\n    private readonly SshServerSession _session;
     private readonly ObservableCollection<NodeBbInstallation> _installations = [];
 
     public NodeBbManagerWindow(SshServerSession session)
     {
         InitializeComponent();
-        _service = new NodeBbRemoteService(session);
+        _session = session;\n        _service = new NodeBbRemoteService(session);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         InstallationsList.ItemsSource = _installations;
     }
@@ -29,6 +29,16 @@ public partial class NodeBbManagerWindow : Window
         }
         catch (Exception ex) { StatusText.Text = "הסריקה נכשלה: " + ex.Message; }
         finally { SetBusy(false, StatusText.Text); }
+    }
+
+    private void Packages_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
+        {
+            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            return;
+        }
+        new PluginThemeManagerWindow(_session, installation) { Owner = this }.ShowDialog();
     }
 
     private async void Start_Click(object sender, RoutedEventArgs e) => await RunActionAsync("start");
