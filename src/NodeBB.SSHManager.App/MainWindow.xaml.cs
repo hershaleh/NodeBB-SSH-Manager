@@ -262,6 +262,13 @@ public partial class MainWindow : Window
         new ServerDiagnosticsWindow(session) { Owner = this }.ShowDialog();
     }
 
+    private async void SystemServices_Click(object sender, RoutedEventArgs e)
+    {
+        var session = await GetSelectedSessionAsync();
+        if (session is null) return;
+        new SystemServicesWindow(session) { Owner = this }.ShowDialog();
+    }
+
     private void Diagnostics_Click(object sender, RoutedEventArgs e)
     {
         new DiagnosticsWindow { Owner = this }.ShowDialog();

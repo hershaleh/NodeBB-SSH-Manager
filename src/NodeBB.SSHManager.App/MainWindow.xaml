@@ -148,7 +148,7 @@
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◫" FontSize="17" Width="30"/><TextBlock Text="מסדי נתונים"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◷" FontSize="17" Width="30"/><TextBlock Text="גיבויים"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⌁" FontSize="17" Width="30"/><TextBlock Text="ניטור ואבחון"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="שירותי מערכת"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="SystemServices_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="שירותי מערכת"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⬡" FontSize="17" Width="30"/><TextBlock Text="אבטחה"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="≡" FontSize="17" Width="30"/><TextBlock Text="לוגים"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="&gt;_" FontSize="15" Width="30"/><TextBlock Text="מסוף SSH"/></StackPanel></Button>

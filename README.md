@@ -19,7 +19,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Read-only remote security audit for SSH policy, account privileges, firewall status, listening ports and NodeBB file permissions.
 - Plugin/theme package inventory and controlled install, update and removal; plugin activate/deactivate actions with package-name validation and confirmation.
 - Structured local diagnostic logging and ZIP report export.
-- Read-only server monitoring for uptime, load, memory, disk usage and top processes.
+- Read-only server monitoring for uptime, load, memory, disk usage and top processes.\n- System service inventory and controlled start/stop/restart for systemd, OpenRC and SysV, with explicit confirmation and non-interactive privilege checks.
 - Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
 
