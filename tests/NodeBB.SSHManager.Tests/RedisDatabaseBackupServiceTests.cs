@@ -1,3 +1,4 @@
+using System.IO;
 using System.Text;
 using NodeBB.SSHManager.Services;
 using Xunit;
