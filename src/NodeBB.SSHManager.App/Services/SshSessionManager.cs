@@ -79,7 +79,10 @@ public sealed class SshSessionManager : IDisposable
         CancellationToken cancellationToken = default)
     {
         if (_sessions.TryGetValue(profile.Id, out var existing) && existing.IsConnected)
+        {
+            DiagnosticLogService.Instance.Info("SSH", "SessionReused", "An existing SSH session was reused.", profile.Name);
             return existing;
+        }
 
         return await Task.Run(() =>
         {
@@ -105,10 +108,12 @@ public sealed class SshSessionManager : IDisposable
                 var session = new SshServerSession(profile, secret, info, client);
                 if (_sessions.TryGetValue(profile.Id, out var old)) old.Dispose();
                 _sessions[profile.Id] = session;
+                DiagnosticLogService.Instance.Info("SSH", "SessionConnected", "Persistent SSH session established.", profile.Name);
                 return session;
             }
-            catch
+            catch (Exception ex)
             {
+                DiagnosticLogService.Instance.Error("SSH", "SessionConnectFailed", ex, profile.Name);
                 client.Dispose();
                 if (fingerprint is not null &&
                     !string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal))
@@ -131,7 +136,11 @@ public sealed class SshSessionManager : IDisposable
 
     public void Disconnect(Guid profileId)
     {
-        if (_sessions.TryRemove(profileId, out var session)) session.Dispose();
+        if (_sessions.TryRemove(profileId, out var session))
+        {
+            session.Dispose();
+            DiagnosticLogService.Instance.Info("SSH", "SessionDisconnected", "SSH session disconnected.", session.Profile.Name);
+        }
     }
 
     public static AuthenticationMethod CreateAuthentication(ServerProfile profile, string secret)
