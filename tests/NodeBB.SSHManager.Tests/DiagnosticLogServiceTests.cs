@@ -38,6 +38,8 @@ public sealed class DiagnosticLogServiceTests
     [InlineData("DOCKER", "0123456789abcdef", true)]
     [InlineData("DOCKER", "nodebb; rm -rf /", false)]
     [InlineData("SYSTEMD", "nodebb;id", false)]
+    [InlineData("PM2", "42", true)]
+    [InlineData("PM2", "nodebb;id", false)]
     [InlineData("MANUAL", "CLI", true)]
     [InlineData("MANUAL", "anything", false)]
     public void RuntimeIdentifierValidation_RejectsUnsafeIdentifiers(string manager, string identifier, bool expected)

@@ -16,7 +16,7 @@ public sealed class NodeBbRuntimeService
     {
         "SYSTEMD" or "OPENRC" or "SYSV" => ServiceIdentifier.IsMatch(identifier),
         "DOCKER" => ContainerIdentifier.IsMatch(identifier),
-        "PM2" => Regex.IsMatch(identifier, @"^\\d{1,8}$"),
+        "PM2" => Regex.IsMatch(identifier, @"^\d{1,8}$"),
         "MANUAL" => identifier == "CLI",
         _ => false
     };
