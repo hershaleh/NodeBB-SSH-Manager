@@ -30,7 +30,7 @@ public sealed class PostgresDatabaseRestoreServiceTests
     public void BuildRestoreScript_QuotesInstallationPath()
     {
         var script = PostgresDatabaseRestoreService.BuildRestoreScript("/srv/nodebb's forum", Work);
-        Assert.Contains("'/srv/nodebb'\\\\''s forum'", script);
+        Assert.Contains("'/srv/nodebb'\\''s forum'", script);
     }
 
     [Theory]
