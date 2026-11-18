@@ -192,18 +192,19 @@ public partial class MainWindow : Window
         }
         if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו.",
                 "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        var savedCredential = _credentialVault.Get(selected.Id);
-        _sessionManager.Disconnect(selected.Id);
-        try { _credentialVault.Remove(selected.Id); }
-        catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
-        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         _profiles.Remove(selected);
         if (!SaveProfiles())
         {
             _profiles.Add(selected);
-            if (!string.IsNullOrEmpty(savedCredential)) { try { _credentialVault.Set(selected.Id, savedCredential); } catch { } }
-            RefreshDashboard(); return;
+            RefreshDashboard();
+            return;
         }
+        // Only tear down the session and remove its credential after the profile deletion
+        // is durably stored. A disk error must not disconnect a server or lose its credential.
+        _sessionManager.Disconnect(selected.Id);
+        try { _credentialVault.Remove(selected.Id); }
+        catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
+        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         RefreshDashboard();
     }
 
