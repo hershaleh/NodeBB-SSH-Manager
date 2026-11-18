@@ -37,8 +37,17 @@
                         </StackPanel>
                     </StackPanel>
                 </Border>
+                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,14,0,0">
+                    <StackPanel>
+                        <TextBlock Text="שחזור גיבוי הגדרות והעלאות" FontWeight="SemiBold" FontSize="16"/>
+                        <TextBlock Text="אפשר לשחזר גיבוי ממוקד של config.json והעלאות. מסד הנתונים אינו משתנה, וקובצי package/lock אינם משוחזרים." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,10"/>
+                        <TextBlock Text="סיסמת הגיבוי (רק אם הקובץ מוצפן)" Foreground="#778399" FontSize="11"/>
+                        <PasswordBox x:Name="RestorePasswordBox" Padding="9" Margin="0,4,0,10"/>
+                        <Button x:Name="RestoreEssentialButton" Content="בחירת גיבוי ושחזור הגדרות והעלאות" Click="RestoreEssential_Click" HorizontalAlignment="Left" Padding="16,9" Background="#A23B3B" Foreground="White" BorderThickness="0"/>
+                    </StackPanel>
+                </Border>
                 <Border Background="#FFF4E5" CornerRadius="8" Padding="12" Margin="0,12,0,0">
-                    <TextBlock Text="חשוב: אלה גיבויי קבצים בלבד ואינם כוללים את תוכן MongoDB או Redis. config.json עשוי להכיל סיסמאות ופרטי גישה. ההצפנה מופעלת כברירת מחדל; אם תבטל אותה, הארכיון יישמר ללא הצפנה. שחזור עדיין אינו זמין." TextWrapping="Wrap" Foreground="#8A4B08"/>
+                    <TextBlock Text="חשוב: גיבויי קבצים אינם כוללים את תוכן מסד הנתונים. שחזור config.json מחזיר גם הגדרות חיבור ופרטי גישה, ולכן התוכנה מוודאת שסוג מסד הנתונים והשרת/מסד היעד תואמים להתקנה הנוכחית. ארכיון התקנה מלא אינו נתמך בשחזור זה. שמור תמיד גם גיבוי מסד נתונים נפרד." TextWrapping="Wrap" Foreground="#8A4B08"/>
                 </Border>
                 <TextBlock x:Name="StatusText" Foreground="#778399" Margin="0,14,0,0" TextWrapping="Wrap"/>
             </StackPanel>

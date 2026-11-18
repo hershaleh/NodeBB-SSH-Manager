@@ -11,6 +11,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal and SFTP browser with navigation, upload, download and confirmation before deletion.
 - NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, PM2, Docker or NodeBB CLI.
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption.
+- Safe restore of configuration/uploads archives only, with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation archive restore is intentionally not offered; package/lock files are not restored.
 - MongoDB database backup scoped to the NodeBB database.
 - Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance.
 - PostgreSQL custom-format database backup available from the database management window, using a protected temporary pgpass file; credentials are not passed as command-line arguments.
@@ -24,7 +25,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 
 ## NodeBB upgrades
 
-The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before stopping NodeBB, the application verifies the requested tag, creates an encrypted database backup and a separate encrypted config/uploads archive, then decrypts both locally and compares SHA-256 hashes to verify the encrypted files. If either backup or verification fails, the upgrade does not start. The backup folder is selected by the operator and its path is shown after the operation. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. Redis backups are explicitly whole-server RDB snapshots, including every logical database and any other applications on that Redis instance; restore remains a manual operation. PostgreSQL restore is not implemented. Live remote upgrade and backup behavior still requires compatibility testing on real servers.
+The upgrade workflow supports Git-based installations with a clean working tree and an origin remote. It fetches tags, checks out an explicitly entered version tag, and runs ./nodebb upgrade while NodeBB is stopped. Before stopping NodeBB, the application verifies the requested tag, creates an encrypted database backup and a separate encrypted config/uploads archive, then decrypts both locally and compares SHA-256 hashes to verify the encrypted files. If either backup or verification fails, the upgrade does not start. The backup folder is selected by the operator and its path is shown after the operation. If the upgrade command fails, the application deliberately leaves NodeBB stopped because database schema migrations may already have run. Redis backups are explicitly whole-server RDB snapshots, including every logical database and any other applications on that Redis instance; Redis restore remains a manual operation. Live remote upgrade, backup and restore behavior still requires compatibility testing on real servers.
 
 ## Database backup scope and limitations
 

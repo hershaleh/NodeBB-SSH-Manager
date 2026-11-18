@@ -102,5 +102,68 @@ public partial class BackupWindow : Window
         }
     }
 
+
+    private async void RestoreEssential_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "בחירת גיבוי הגדרות והעלאות",
+            Filter = "גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        var encrypted = dialog.FileName.EndsWith(".nbbbackup", StringComparison.OrdinalIgnoreCase);
+        var password = RestorePasswordBox.Password;
+        if (encrypted && password.Length < 12)
+        {
+            MessageBox.Show(this, "יש להזין את סיסמת ההצפנה (לפחות 12 תווים).", "סיסמת גיבוי",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (MessageBox.Show(this,
+            "השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?",
+            "אישור שחזור קבצים", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+
+        IsEnabled = false;
+        StatusText.Text = "מכין ובודק את ארכיון הגיבוי...";
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var decrypted = Path.Combine(tempRoot, "file-restore-" + Guid.NewGuid().ToString("N") + ".tar.gz");
+        var archivePath = dialog.FileName;
+        try
+        {
+            if (encrypted)
+            {
+                Directory.CreateDirectory(tempRoot);
+                await BackupEncryptionService.DecryptFileAsync(dialog.FileName, decrypted, password);
+                archivePath = decrypted;
+            }
+
+            StatusText.Text = "בודק את הארכיון ומבצע שחזור בטוח...";
+            await new RemoteBackupRestoreService(_session).RestoreAsync(_installation, archivePath);
+            StatusText.Text = "שחזור ההגדרות וההעלאות הושלם בהצלחה.";
+            MessageBox.Show(this,
+                "config.json ותיקיית ההעלאות (אם נכללה בגיבוי) שוחזרו בהצלחה. מסד הנתונים וקובצי package/lock לא שונו.",
+                "השחזור הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("BackupUI", "EssentialRestoreFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שחזור הקבצים נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור קבצים", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(decrypted)) File.Delete(decrypted); } catch { }
+            RestorePasswordBox.Clear();
+            EncryptionPasswordBox.Clear();
+            EncryptionConfirmBox.Clear();
+            IsEnabled = true;
+        }
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }
