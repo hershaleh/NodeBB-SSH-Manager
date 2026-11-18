@@ -86,7 +86,14 @@ public partial class NodeBbManagerWindow : Window
     private async void Start_Click(object sender, RoutedEventArgs e) => await RunActionAsync("start");
     private async void Stop_Click(object sender, RoutedEventArgs e) => await RunActionAsync("stop");
     private async void Restart_Click(object sender, RoutedEventArgs e) => await RunActionAsync("restart");
-    private async void Build_Click(object sender, RoutedEventArgs e) => await RunActionAsync("build");\n\n    private void Upgrade_Click(object sender, RoutedEventArgs e)\n    {\n        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)\n        { StatusText.Text = "בחר התקנת NodeBB תחילה."; return; }\n        new NodeBbUpgradeWindow(_session, installation) { Owner = this }.ShowDialog();\n    }
+    private async void Build_Click(object sender, RoutedEventArgs e) => await RunActionAsync("build");
+
+    private void Upgrade_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
+        { StatusText.Text = "בחר התקנת NodeBB תחילה."; return; }
+        new NodeBbUpgradeWindow(_session, installation) { Owner = this }.ShowDialog();
+    }
 
     private async Task RunActionAsync(string action)
     {
@@ -104,7 +111,9 @@ public partial class NodeBbManagerWindow : Window
             var result = await _service.RunLifecycleAsync(installation, action);
             var details = string.IsNullOrWhiteSpace(result.Output) ? result.Error : result.Output;
             StatusText.Text = result.ExitCode == 0 ? $"הפעולה {action} הסתיימה בהצלחה." : $"הפעולה נכשלה (קוד {result.ExitCode}).";
-            MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
+            MessageBox.Show(this, $"{StatusText.Text}
+
+{details}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
         }
         catch (Exception ex) { StatusText.Text = "שגיאה: " + ex.Message; }

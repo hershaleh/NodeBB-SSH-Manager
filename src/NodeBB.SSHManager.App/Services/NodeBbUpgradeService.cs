@@ -60,6 +60,9 @@ public sealed class NodeBbUpgradeService
         var preflight = await InspectAsync(installation, cancellationToken);
         if (!preflight.CanUpgrade)
             throw new InvalidOperationException("השרת אינו מוכן לשדרוג. נדרשים Git, עץ עבודה נקי, remote בשם origin, Node.js, npm ומסד נתונים נתמך. בדוק את פירוט הבדיקות.");
+        var tagCheck = await _session.ExecuteAsync(BuildVerifyTargetTagScript(installation.Path, targetTag), cancellationToken);
+        if (tagCheck.ExitCode != 0)
+            throw new InvalidOperationException(Sanitize(tagCheck.Error, "תגית הגרסה לא נמצאה ב-origin. NodeBB לא נעצר ולא בוצע שינוי בקבצים."));
         var runtimeService = new NodeBbRuntimeService(_session);
         var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
         var stopped = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);
@@ -128,6 +131,19 @@ fi
 """;
     }
 
+    internal static string BuildVerifyTargetTagScript(string installationPath, string targetTag)
+    {
+        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
+            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        if (!IsValidTargetTag(targetTag)) throw new ArgumentException("תגית הגרסה אינה תקינה.", nameof(targetTag));
+        return $"""
+set -eu
+cd {{ShellQuote(installationPath)}}
+git fetch --tags origin
+git rev-parse --verify {{ShellQuote("refs/tags/" + targetTag + "^{commit}")}} >/dev/null 2>&1 || { echo 'תגית הגרסה המבוקשת אינה קיימת ב-origin.' >&2; exit 33; }
+""";
+    }
+
     internal static string BuildUpgradeScript(string installationPath, string targetTag, string expectedCommit)
     {
         if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
@@ -143,7 +159,6 @@ TARGET={{ShellQuote(targetTag)}}
 CURRENT="$(git rev-parse HEAD)"
 [ "$CURRENT" = "$EXPECTED" ] || { echo 'הקוד השתנה מאז בדיקת המוכנות; השדרוג בוטל.' >&2; exit 31; }
 [ -z "$(git status --porcelain --untracked-files=all)" ] || { echo 'עץ העבודה אינו נקי; השדרוג בוטל.' >&2; exit 32; }
-git fetch --tags origin
 git rev-parse --verify "refs/tags/$TARGET^{commit}" >/dev/null 2>&1 || { echo 'תגית הגרסה המבוקשת אינה קיימת ב-origin.' >&2; exit 33; }
 git checkout --detach "refs/tags/$TARGET"
 ./nodebb upgrade

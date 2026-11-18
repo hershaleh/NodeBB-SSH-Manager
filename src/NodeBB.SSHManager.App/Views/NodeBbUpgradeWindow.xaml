@@ -25,7 +25,7 @@
      <TextBlock TextWrapping="Wrap" Foreground="#805000">חשוב: לפני השדרוג יש ליצור גיבוי מסד נתונים וגיבוי קבצים הכולל config.json והעלאות. השדרוג מריץ מיגרציות מסד נתונים; אם הן נכשלות, לא ניתן להבטיח חזרה אוטומטית. במקרה כשל NodeBB יישאר עצור כדי למנוע הפעלה במצב לא עקבי.</TextBlock>
     </Border>
     <TextBlock Text="תגית גרסה מדויקת (למשל v4.19.1)" FontWeight="SemiBold" Margin="0,14,0,4"/>
-    <TextBox x:Name="TargetTagBox" Text="v4.19.1" Padding="10" FontSize="14"/>
+    <TextBox x:Name="TargetTagBox" Padding="10" FontSize="14"/>
     <CheckBox x:Name="DatabaseBackupCheck" Content="יצרתי גיבוי עדכני של מסד הנתונים ואני יודע היכן הוא שמור" Margin="0,12,0,0"/>
     <CheckBox x:Name="FilesBackupCheck" Content="יצרתי גיבוי קבצים, הגדרות והעלאות של התקנת NodeBB" Margin="0,8,0,0"/>
     <CheckBox x:Name="MigrationWarningCheck" Content="אני מבין שמיגרציות מסד נתונים אינן מתבטלות אוטומטית במקרה כשל" Margin="0,8,0,0"/>

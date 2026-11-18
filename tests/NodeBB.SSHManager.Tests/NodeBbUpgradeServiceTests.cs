@@ -56,4 +56,11 @@ public sealed class NodeBbUpgradeServiceTests
             "0123456789abcdef0123456789abcdef01234567");
         Assert.Contains("'/srv/my nodebb'", script);
     }
+    [Fact]
+    public void VerifyTargetTagScript_FetchesAndValidatesBeforeMaintenance()
+    {
+        var script = NodeBbUpgradeService.BuildVerifyTargetTagScript("/srv/nodebb", "v4.19.1");
+        Assert.Contains("git fetch --tags origin", script);
+        Assert.Contains("refs/tags/v4.19.1^{commit}", script);
+    }
 }
