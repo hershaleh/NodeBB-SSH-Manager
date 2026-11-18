@@ -63,4 +63,36 @@ public sealed class NodeBbUpgradeServiceTests
         Assert.Contains("git fetch --tags origin", script);
         Assert.Contains("refs/tags/v4.19.1^{commit}", script);
     }
+    [Fact]
+    public void HealthCheckScript_UsesNodeAndConfiguredPortWithBoundedHttpRetries()
+    {
+        var script = NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb");
+        Assert.Contains("config.port || 4567", script);
+        Assert.Contains("config.bind_address", script);
+        Assert.Contains("http.get", script);
+        Assert.Contains("status >= 200 && status < 400", script);
+        Assert.Contains("status === 401 || status === 403", script);
+        Assert.Contains("timeoutAt", script);
+        Assert.Contains("NODEBB_HTTP_HEALTH|ok|", script);
+        Assert.DoesNotContain("curl ", script);
+        Assert.DoesNotContain("wget ", script);
+    }
+
+    [Fact]
+    public void HealthCheckScript_QuotesPathAndRejectsUnsafeTimeout()
+    {
+        var script = NodeBbUpgradeService.BuildHealthCheckScript("/srv/my nodebb", 60);
+        Assert.Contains("cd '/srv/my nodebb'", script);
+        Assert.Contains("timeout_seconds=60", script);
+        Assert.Throws<ArgumentOutOfRangeException>(() => NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb", 5));
+        Assert.Throws<ArgumentOutOfRangeException>(() => NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb", 121));
+    }
+
+    [Fact]
+    public void HealthCheckScript_RejectsInvalidInstallationPath()
+    {
+        Assert.Throws<ArgumentException>(() => NodeBbUpgradeService.BuildHealthCheckScript(" "));
+        Assert.Throws<ArgumentException>(() => NodeBbUpgradeService.BuildHealthCheckScript("/srv/nodebb\\0bad"));
+    }
+
 }

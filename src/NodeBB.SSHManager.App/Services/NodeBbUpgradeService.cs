@@ -102,10 +102,91 @@ public sealed class NodeBbUpgradeService
                 Sanitize(started.Output + Environment.NewLine + started.Error, "לא התקבל פירוט מהשרת."));
         }
 
+        DiagnosticLogService.Instance.Info("NodeBBUpgrade", "UpgradeStarted",
+            $"NodeBB start command succeeded after upgrade to {targetTag}; checking HTTP health.", _session.Profile.Name);
+
+        var health = await _session.ExecuteAsync(BuildHealthCheckScript(installation.Path), cancellationToken);
+        if (health.ExitCode != 0)
+        {
+            DiagnosticLogService.Instance.Error("NodeBBUpgrade", "PostUpgradeHealthCheckFailed",
+                $"NodeBB upgrade to {targetTag} completed and start command succeeded, but the HTTP health check failed: {Sanitize(health.Error + Environment.NewLine + health.Output, "No health-check details.")}",
+                _session.Profile.Name);
+            return new NodeBbUpgradeResult(false, true,
+                $"קוד NodeBB עודכן ופקודת ההפעלה הצליחה, אך הפורום לא עבר בדיקת HTTP בתוך 45 שניות. הגיבויים המוצפנים נשמרו. אין לבצע שחזור אוטומטי: ייתכן שמיגרציות מסד הנתונים כבר הושלמו. יש לבדוק את לוגי NodeBB, הגדרות bind/port, reverse proxy וחיבור למסד הנתונים.",
+                Sanitize(health.Output + Environment.NewLine + health.Error, "לא התקבל פירוט מבדיקת הבריאות."));
+        }
+
         DiagnosticLogService.Instance.Info("NodeBBUpgrade", "UpgradeCompleted",
-            $"NodeBB upgraded to {targetTag} and start command succeeded.", _session.Profile.Name);
+            $"NodeBB upgraded to {targetTag}; start command and HTTP health check succeeded.", _session.Profile.Name);
         return new NodeBbUpgradeResult(true, true,
-            $"השדרוג ל-{targetTag} הסתיים ופקודת ההפעלה הצליחה. מומלץ לבדוק את הפורום בדפדפן.", Sanitize(update.Output, ""));
+            $"השדרוג ל-{targetTag} הסתיים בהצלחה. השירות הופעל והפורום השיב לבקשת HTTP.", Sanitize(update.Output + Environment.NewLine + health.Output, ""));
+    }
+
+    internal static string BuildHealthCheckScript(string installationPath, int timeoutSeconds = 45)
+    {
+        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\\0') >= 0)
+            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        if (timeoutSeconds is < 10 or > 120)
+            throw new ArgumentOutOfRangeException(nameof(timeoutSeconds), "זמן בדיקת הבריאות חייב להיות בין 10 ל-120 שניות.");
+
+        return $"""
+set -eu
+cd {{ShellQuote(installationPath)}}
+command -v node >/dev/null 2>&1 || { echo 'Node.js is unavailable for the HTTP health check.' >&2; exit 70; }
+node <<'NODE'
+'use strict';
+const fs = require('fs');
+const http = require('http');
+
+let config;
+try {
+  config = JSON.parse(fs.readFileSync('./config.json', 'utf8'));
+} catch (error) {
+  console.error('Cannot read or parse NodeBB config.json for the HTTP health check.');
+  process.exit(71);
+}
+
+const port = Number(config.port || 4567);
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  console.error('NodeBB config.json contains an invalid HTTP port.');
+  process.exit(72);
+}
+
+let host = String(config.bind_address || '127.0.0.1').trim();
+if (!host || host === '0.0.0.0' || host === '::' || host === '*') host = host === '::' ? '::1' : '127.0.0.1';
+const timeoutAt = Date.now() + ({{timeoutSeconds}} * 1000);
+
+function probe() {
+  return new Promise(resolve => {
+    const request = http.get({ hostname: host, port, path: '/', method: 'GET', timeout: 2500 }, response => {
+      const status = response.statusCode || 0;
+      response.resume();
+      resolve({ ok: (status >= 200 && status < 400) || status === 401 || status === 403, status });
+    });
+    request.on('timeout', () => request.destroy(new Error('HTTP probe timed out')));
+    request.on('error', () => resolve({ ok: false, status: 0 }));
+  });
+}
+
+(async () => {
+  let lastStatus = 0;
+  while (Date.now() < timeoutAt) {
+    const result = await probe();
+    lastStatus = result.status;
+    if (result.ok) {
+      console.log('NODEBB_HTTP_HEALTH|ok|' + result.status + '|' + host + '|' + port);
+      process.exit(0);
+    }
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+  console.error('NODEBB_HTTP_HEALTH|failed|last_status=' + lastStatus + '|host=' + host + '|port=' + port + '|timeout_seconds={{timeoutSeconds}}');
+  process.exit(1);
+})().catch(() => {
+  console.error('NodeBB HTTP health check encountered an unexpected error.');
+  process.exit(73);
+});
+NODE
+""";
     }
 
     internal static string BuildPreflightScript(string installationPath)
