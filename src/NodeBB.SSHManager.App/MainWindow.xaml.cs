@@ -376,6 +376,7 @@ public partial class MainWindow : Window
             MessageBox.Show(this, "החיבור הצליח, אך לא ניתן היה לעדכן את כספת הסיסמאות המוצפנת. פרטי ההתחברות לא נשמרו.",
                 "שמירת פרטי התחברות נכשלה", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
+        RefreshDashboard();
     }
 
     private bool ConfirmHostFingerprint(ServerProfile profile, string fingerprint)
