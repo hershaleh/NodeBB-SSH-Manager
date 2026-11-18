@@ -33,6 +33,16 @@ public partial class NodeBbManagerWindow : Window
         finally { SetBusy(false, StatusText.Text); }
     }
 
+    private void Security_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
+        {
+            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            return;
+        }
+        new SecurityAuditWindow(_session, installation) { Owner = this }.ShowDialog();
+    }
+
     private void Logs_Click(object sender, RoutedEventArgs e)
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
