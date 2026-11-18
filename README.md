@@ -92,3 +92,7 @@ dotnet publish .\src\NodeBB.SSHManager.App\NodeBB.SSHManager.App.csproj -c Relea
 Development preview. The current remote-management functions have not yet completed comprehensive live testing against different SSH servers, Linux distributions, service managers and NodeBB deployment methods. Do not use this preview for production administration or unverified destructive operations.
 
 The next development milestones are broader server capability detection, safer NodeBB lifecycle handling, backup/database/plugin modules, and automated tests for the service layer.
+
+
+### Database backups
+- MongoDB: encrypted remote database backup using MongoDB Database Tools and NodeBB's configured connection. Secrets are written to a protected temporary config file on the server, never command-line arguments. Redis/PostgreSQL backup and database restore are not implemented yet.

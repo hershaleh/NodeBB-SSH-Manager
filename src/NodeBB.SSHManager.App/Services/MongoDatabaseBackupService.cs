@@ -44,8 +44,6 @@ INSTALLATION={{ShellQuote(installationPath)}}
 WORK={{ShellQuote(workDirectory)}}
 umask 077
 mkdir -m 700 "$WORK"
-cleanup() { rm -rf -- "$WORK"; }
-trap cleanup EXIT HUP INT TERM
 command -v node >/dev/null 2>&1 || { echo 'Node.js לא נמצא בשרת.' >&2; exit 127; }
 command -v mongodump >/dev/null 2>&1 || { echo 'mongodump אינו מותקן. נדרשת התקנת MongoDB Database Tools.' >&2; exit 127; }
 node - "$INSTALLATION/config.json" "$WORK/mongo.yml" <<'NODE'
