@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.IO;
 using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
 using Xunit;
