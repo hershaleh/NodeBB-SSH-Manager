@@ -9,7 +9,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - SSH password and private-key authentication; optional credential remembering uses Windows DPAPI per-user encryption.
 - SSH host-key SHA-256 pinning with explicit first-use approval and rejection of changed fingerprints.
 - Interactive SSH terminal and SFTP browser with navigation, upload, download and confirmation before deletion.
-- NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers.
+- NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, Supervisor, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers.
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption.
 - Safe restore of configuration/uploads archives only, with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation archive restore is intentionally not offered; package/lock files are not restored.
 - MongoDB database backup scoped to the NodeBB database.
