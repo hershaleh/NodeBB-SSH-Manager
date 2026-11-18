@@ -63,7 +63,8 @@ public partial class SftpFileManagerWindow : Window
     {
         try
         {
-            var list = await WithSftpLockAsync(() => _client.ListDirectory(path)
+            var safePath = SftpPathSafety.NormalizeAbsolutePath(path);
+            var list = await WithSftpLockAsync(() => _client.ListDirectory(safePath)
                 .Where(x => x.Name is not ("." or ".."))
                 .OrderByDescending(x => x.IsDirectory).ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .Select(x => new RemoteFileItem
@@ -74,8 +75,8 @@ public partial class SftpFileManagerWindow : Window
                     SizeDisplay = x.IsDirectory ? "—" : FormatSize(x.Length),
                     ModifiedDisplay = x.LastWriteTime.ToString("yyyy-MM-dd HH:mm")
                 }).ToArray());
-            _currentPath = path;
-            PathBox.Text = path;
+            _currentPath = safePath;
+            PathBox.Text = safePath;
             _items.Clear();
             foreach (var item in list) _items.Add(item);
             StatusText.Text = $"{_items.Count} פריטים";
