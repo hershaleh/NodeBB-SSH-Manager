@@ -115,7 +115,7 @@ public sealed class SshSessionManager : IDisposable
                 if (_sessions.TryRemove(profile.Id, out var stale))
                 {
                     stale.Dispose();
-                    DiagnosticLogService.Instance.Warning("SSH", "StaleSessionReplaced", "A disconnected SSH session was cleaned up before reconnecting.", profile.Name);
+                    DiagnosticLogService.Instance.Warning("SSH", "StaleSessionReplaced", "A disconnected SSH session was cleaned up before reconnecting.", null, profile.Name);
                 }
             }
 
