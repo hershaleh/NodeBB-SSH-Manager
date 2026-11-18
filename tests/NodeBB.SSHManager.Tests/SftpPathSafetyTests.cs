@@ -9,6 +9,7 @@ public sealed class SftpPathSafetyTests
     [InlineData("/var/www", "config.json", "/var/www/config.json")]
     [InlineData("/var//www/", "with spaces.txt", "/var/www/with spaces.txt")]
     [InlineData("/srv/nodebb", "file'name.txt", "/srv/nodebb/file'name.txt")]
+    [InlineData("/srv/nodebb", "literal\\backslash.txt", "/srv/nodebb/literal\\backslash.txt")]
     public void Combine_ReturnsNormalizedRemotePath(string directory, string name, string expected)
     {
         Assert.Equal(expected, SftpPathSafety.Combine(directory, name));
@@ -20,7 +21,6 @@ public sealed class SftpPathSafetyTests
     [InlineData("..")]
     [InlineData("../escape")]
     [InlineData("folder/file.txt")]
-    [InlineData("folder\\file.txt")]
     [InlineData("bad\nname")]
     public void ValidateName_RejectsUnsafeNames(string name)
     {
