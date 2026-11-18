@@ -83,9 +83,9 @@ public partial class PluginThemeManagerWindow : Window
         };
         var warning = action switch
         {
-            PackageAction.Remove or PackageAction.Update => "\\n\\nפעולה זו עשויה להשפיע על תאימות הפורום. ודא שיש גיבוי תקין.",
-            PackageAction.Deactivate => "\\n\\nNodeBB משתמש בפקודת reset -p להשבתת תוסף. הפקודה עשויה לאפס גם הגדרות או מצב השייכים לתוסף. ודא שיש גיבוי לפני ההמשך.",
-            _ => "\\n\\nייתכן שתידרש בנייה מחדש או הפעלה מחדש של NodeBB."
+            PackageAction.Remove or PackageAction.Update => "\n\nפעולה זו עשויה להשפיע על תאימות הפורום. ודא שיש גיבוי תקין.",
+            PackageAction.Deactivate => "\n\nNodeBB משתמש בפקודת reset -p להשבתת תוסף. הפקודה עשויה לאפס גם הגדרות או מצב השייכים לתוסף. ודא שיש גיבוי לפני ההמשך.",
+            _ => "\n\nייתכן שתידרש בנייה מחדש או הפעלה מחדש של NodeBB."
         };
         if (MessageBox.Show(this, $"האם {description}?{warning}", "אישור שינוי חבילה",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;

@@ -10,7 +10,7 @@ public sealed class NodeBbRemoteService
     public async Task<IReadOnlyList<NodeBbInstallation>> DiscoverAsync(CancellationToken cancellationToken = default)
     {
         const string script = """
-for root in /var/www /opt /srv /home; do
+for root in /var/www /opt /srv /home /usr/local /var/lib "$HOME"; do
   [ -d "$root" ] || continue
   find "$root" -maxdepth 5 -type f -name package.json -print 2>/dev/null
 done | while IFS= read -r f; do
