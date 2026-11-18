@@ -51,7 +51,7 @@ fi
 if command -v docker >/dev/null 2>&1; then
   for id in $(docker ps -aq 2>/dev/null); do
     if docker inspect "$id" 2>/dev/null | grep -Fq -- "$INSTALL_PATH"; then
-      printf 'DOCKER|%s\\n' "$id"
+      printf 'DOCKER|%s\n' "$id"
       exit 0
     fi
   done
@@ -59,7 +59,7 @@ fi
 if command -v podman >/dev/null 2>&1; then
   for id in $(podman ps -aq 2>/dev/null); do
     if podman inspect "$id" 2>/dev/null | grep -Fq -- "$INSTALL_PATH"; then
-      printf 'PODMAN|%s\\n' "$id"
+      printf 'PODMAN|%s\n' "$id"
       exit 0
     fi
   done
