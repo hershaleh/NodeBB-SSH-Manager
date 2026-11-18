@@ -72,6 +72,7 @@ public sealed class SshConnectionService
                     observedFingerprint);
             }
 
+            DiagnosticLogService.Instance.Info("SSH", "ConnectionTestSucceeded", "SSH connection and identity check succeeded.", profile.Name);
             return new SshTestResult(
                 SshTestStatus.Success,
                 "חיבור SSH ואימות המשתמש הצליחו.",
@@ -95,6 +96,7 @@ public sealed class SshConnectionService
         }
         catch (Exception ex)
         {
+            DiagnosticLogService.Instance.Error("SSH", "ConnectionTestFailed", ex, profile.Name);
             return new SshTestResult(SshTestStatus.Failed, ex.Message, observedFingerprint);
         }
     }
