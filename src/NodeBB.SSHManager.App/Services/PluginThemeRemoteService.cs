@@ -34,7 +34,7 @@ public sealed class PluginThemeRemoteService
 cd {path} || exit 1
 for d in node_modules/nodebb-plugin-* node_modules/nodebb-theme-*; do
   [ -d "$d" ] || continue
-  name="${d##*/}"
+  name="${{d##*/}}"
   version=לא-ידועה
   if [ -r "$d/package.json" ]; then
     found="$(grep -m 1 '"version"' "$d/package.json" | sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p')"
@@ -68,7 +68,7 @@ done | sort
             throw new ArgumentException("שם החבילה אינו תקין. יש להשתמש בשם nodebb-plugin-... או nodebb-theme-...", nameof(packageName));
 
         var isPlugin = packageName.StartsWith("nodebb-plugin-", StringComparison.Ordinal);
-        if (!isPlugin && action is PackageAction.Activate or PackageAction.Deactivate)
+        if (!isPlugin && (action is PackageAction.Activate or PackageAction.Deactivate))
             throw new InvalidOperationException("הפעלה והשבתה של ערכות עיצוב תתבצע דרך ממשק הניהול של NodeBB.");
 
         var path = ShellQuote(installation.Path);

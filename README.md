@@ -12,7 +12,8 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Persistent SSH sessions for multiple servers.
 - Interactive SSH terminal.
 - SFTP browser with navigation, upload, download and confirmation before deletion.
-- Initial NodeBB discovery and CLI lifecycle actions (start, stop, restart, build).\n- Plugin/theme package inventory and controlled install, update and removal; plugin activate/deactivate actions with package-name validation and confirmation.
+- Initial NodeBB discovery and CLI lifecycle actions (start, stop, restart, build).
+- Plugin/theme package inventory and controlled install, update and removal; plugin activate/deactivate actions with package-name validation and confirmation.
 - Structured local diagnostic logging and ZIP report export.
 - Read-only server monitoring for uptime, load, memory, disk usage and top processes.
 - Read-only remote capability inventory: OS, kernel, architecture, init/service manager, package manager, user privileges, Node.js/npm/Git, MongoDB/Redis, Docker/Podman and PM2.

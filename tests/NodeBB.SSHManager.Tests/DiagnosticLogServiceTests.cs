@@ -19,6 +19,18 @@ public sealed class DiagnosticLogServiceTests
         Assert.DoesNotContain("eyJhbGciOiJIUzI1NiJ9", actual, StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("nodebb-plugin-example", true)]
+    [InlineData("nodebb-theme-example", true)]
+    [InlineData("nodebb-plugin-abc_123.test", true)]
+    [InlineData("nodebb-plugin-; rm -rf /", false)]
+    [InlineData("ordinary-package", false)]
+    [InlineData("../nodebb-plugin-escape", false)]
+    public void PackageNameValidation_RejectsUnsafeNames(string packageName, bool expected)
+    {
+        Assert.Equal(expected, PluginThemeRemoteService.IsValidPackageName(packageName));
+    }
+
     [Fact]
     public void Redact_PreservesOrdinaryText()
     {

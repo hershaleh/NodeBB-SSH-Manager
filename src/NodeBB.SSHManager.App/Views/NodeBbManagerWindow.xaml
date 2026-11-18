@@ -23,7 +23,8 @@
    <Button Content="הפעל" Click="Start_Click" Padding="18,9" Margin="0,0,8,0"/>
    <Button Content="עצור" Click="Stop_Click" Padding="18,9" Margin="0,0,8,0"/>
    <Button Content="הפעל מחדש" Click="Restart_Click" Padding="18,9" Margin="0,0,8,0"/>
-   <Button Content="בנייה מחדש" Click="Build_Click" Padding="18,9" Background="#FFF4E5" Foreground="#9A5700" Margin="0,0,8,0"/>\n   <Button Content="תוספים ועיצובים" Click="Packages_Click" Padding="18,9"/>
+   <Button Content="בנייה מחדש" Click="Build_Click" Padding="18,9" Background="#FFF4E5" Foreground="#9A5700" Margin="0,0,8,0"/>
+   <Button Content="תוספים ועיצובים" Click="Packages_Click" Padding="18,9"/>
   </WrapPanel>
  </Grid>
 </Window>

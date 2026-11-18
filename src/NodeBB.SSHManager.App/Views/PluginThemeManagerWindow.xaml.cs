@@ -66,7 +66,7 @@ public partial class PluginThemeManagerWindow : Window
         }
 
         var isTheme = packageName.StartsWith("nodebb-theme-", StringComparison.Ordinal);
-        if (isTheme && action is PackageAction.Activate or PackageAction.Deactivate)
+        if (isTheme && (action is PackageAction.Activate or PackageAction.Deactivate))
         {
             StatusText.Text = "הפעלה והשבתה של ערכת עיצוב נעשות דרך ממשק הניהול של NodeBB.";
             return;
@@ -110,6 +110,7 @@ public partial class PluginThemeManagerWindow : Window
 
     private void SetBusy(bool busy, string message)
     {
+        IsEnabled = !busy;
         RefreshButton.IsEnabled = !busy;
         StatusText.Text = message;
     }
