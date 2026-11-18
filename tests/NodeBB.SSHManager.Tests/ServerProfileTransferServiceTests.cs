@@ -65,6 +65,37 @@ public sealed class ServerProfileTransferServiceTests
         Assert.Throws<InvalidDataException>(() => _service.Import("{not-json"));
     }
 
+
+    [Fact]
+    public void Import_RejectsMoreThanMaximumProfiles()
+    {
+        var profiles = Enumerable.Range(0, 501).Select(i =>
+        {
+            var profile = CreateProfile();
+            profile.Id = Guid.NewGuid();
+            profile.Name = $"Server {i}";
+            profile.Host = $"server{i}.example.org";
+            return profile;
+        }).ToArray();
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(profiles)));
+    }
+
+    [Fact]
+    public void Import_RejectsUnknownAuthenticationType()
+    {
+        var profile = CreateProfile();
+        profile.AuthenticationType = (SshAuthenticationType)999;
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
+    }
+
+    [Fact]
+    public void Import_RejectsOverlongProfileFields()
+    {
+        var profile = CreateProfile();
+        profile.Name = new string('n', 121);
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
+    }
+
     private static ServerProfile CreateProfile() => new()
     {
         Name = "Production forum",
