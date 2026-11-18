@@ -21,6 +21,33 @@ public sealed record RemoteSecuritySnapshot(
 
 public sealed record SecurityAuditItem(string Severity, string Item, string CurrentValue, string Recommendation);
 
+public sealed record PermissionAssessment(string Severity, string Recommendation);
+
+public static class UnixPermissionAssessment
+{
+    public static PermissionAssessment Assess(string mode, bool isDirectory)
+    {
+        var digits = mode.Trim().TrimStart('0');
+        if (digits.Length != 3 || digits.Any(ch => ch < '0' || ch > '7'))
+            return new("בדיקה נדרשת", "לא ניתן לפענח את הרשאות הקובץ; בדוק אותן ידנית.");
+        var group = digits[1] - '0';
+        var other = digits[2] - '0';
+        var groupWrite = (group & 2) != 0;
+        var otherWrite = (other & 2) != 0;
+        var groupRead = (group & 4) != 0;
+        var otherRead = (other & 4) != 0;
+        if (isDirectory)
+            return groupWrite || otherWrite
+                ? new("אזהרה", "תיקיית ההתקנה ניתנת לכתיבה לקבוצה או למשתמשים אחרים; צמצם הרשאות לאחר בדיקת תהליכי הפריסה.")
+                : new("תקין", "לא זוהתה הרשאת כתיבה לקבוצה או למשתמשים אחרים.");
+        if (groupWrite || otherWrite)
+            return new("קריטי", "config.json ניתן לכתיבה לקבוצה או למשתמשים אחרים; הגבל את ההרשאות מיד.");
+        if (groupRead || otherRead)
+            return new("אזהרה", "config.json קריא לקבוצה או למשתמשים אחרים ועלול לחשוף פרטי גישה; שקול הרשאות 600.");
+        return new("תקין", "הרשאות הקריאה והכתיבה מוגבלות לבעלים.");
+    }
+}
+
 public sealed class RemoteSecurityAuditService
 {
     private readonly SshServerSession _session;
@@ -111,6 +138,8 @@ printf 'CONFIG_WRITABLE|%s\n' "$CONFIG_WRITABLE"
             Get("CONFIG_OWNER"), Get("CONFIG_MODE"), Yes("CONFIG_READABLE"), Yes("CONFIG_WRITABLE"));
 
         var firewallActive = snapshot.FirewallStatus is "active" or "running" or "nftables-active" or "iptables-active";
+        var configPermissions = UnixPermissionAssessment.Assess(snapshot.ConfigPermissions, isDirectory: false);
+        var installPermissions = UnixPermissionAssessment.Assess(snapshot.InstallationPermissions, isDirectory: true);
         var sshRootSeverity = snapshot.SshPermitRootLogin == "yes" ? "קריטי" : snapshot.SshPermitRootLogin == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
         var sshPasswordSeverity = snapshot.SshPasswordAuthentication == "yes" ? "אזהרה" : snapshot.SshPasswordAuthentication == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
         var sshKeySeverity = snapshot.SshPublicKeyAuthentication == "no" ? "אזהרה" : snapshot.SshPublicKeyAuthentication == "לא-זמין" ? "בדיקה נדרשת" : "תקין";
@@ -136,8 +165,8 @@ printf 'CONFIG_WRITABLE|%s\n' "$CONFIG_WRITABLE"
                 snapshot.ConfigWritable ? "הגן על קובץ התצורה המכיל פרטי גישה והגבל הרשאות ככל האפשר." : "בדוק שהבעלים וההרשאות מתאימים לתחזוקה."),
             new(snapshot.ConfigReadable ? "תקין" : "בדיקה נדרשת", "קריאות config.json", snapshot.ConfigReadable ? "קריא למשתמש SSH" : "אינו קריא או לא נמצא",
                 "הגבל הרשאות קריאה לקובץ המכיל פרטי גישה."),
-            new("מידע", "בעלות והרשאות config.json", $"{snapshot.ConfigOwner} · {snapshot.ConfigPermissions}", "ודא שקובץ התצורה בבעלות המשתמש המתאים ובהרשאות מצומצמות."),
-            new("מידע", "בעלות והרשאות התקנה", $"{snapshot.InstallationOwner} · {snapshot.InstallationPermissions}", "ודא שהתיקייה בבעלות משתמש NodeBB ייעודי ושאין הרשאות כתיבה מיותרות."),
+            new(configPermissions.Severity, "הרשאות Unix של config.json", $"{snapshot.ConfigOwner} · {snapshot.ConfigPermissions}", configPermissions.Recommendation),
+            new(installPermissions.Severity, "הרשאות Unix של תיקיית ההתקנה", $"{snapshot.InstallationOwner} · {snapshot.InstallationPermissions}", installPermissions.Recommendation),
             new("מידע", "יציאות TCP מאזינות", snapshot.ListeningPorts, "בדוק שאין שירותים מיותרים החשופים לרשת.")
         };
 
