@@ -1,0 +1,34 @@
+<Window x:Class="NodeBB.SSHManager.Views.BackupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="גיבויים" Width="720" Height="520" MinWidth="600" MinHeight="420"
+        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
+    <Grid Margin="24">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock Text="גיבוי התקנת NodeBB" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
+            <TextBlock x:Name="InstallationLabel" Foreground="#778399" Margin="0,5,0,0"/>
+        </StackPanel>
+        <StackPanel Grid.Row="1" Margin="0,20,0,20">
+            <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="גיבוי מלא של תיקיית NodeBB" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Text="יוצר ארכיון של כל תיקיית ההתקנה, כולל קבצים ותלויות. הגיבוי עלול להיות גדול." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,12"/>
+                    <Button Content="יצירת גיבוי מלא" Click="FullBackup_Click" HorizontalAlignment="Left" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0"/>
+                </StackPanel>
+            </Border>
+            <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18">
+                <StackPanel>
+                    <TextBlock Text="גיבוי הגדרות והעלאות" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Text="כולל config.json, קובצי package/lock וקובצי public/uploads שנמצאו. אינו כולל את מסד הנתונים." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,12"/>
+                    <Button Content="יצירת גיבוי ממוקד" Click="EssentialBackup_Click" HorizontalAlignment="Left" Padding="16,9"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#FFF4E5" CornerRadius="8" Padding="12" Margin="0,14,0,0">
+                <TextBlock Text="חשוב: אלה גיבויי קבצים בלבד. הם אינם כוללים MongoDB או Redis. שחזור עדיין אינו זמין; אין למחוק את הגיבוי המקורי עד לבדיקת תקינותו." TextWrapping="Wrap" Foreground="#8A4B08"/>
+            </Border>
+            <TextBlock x:Name="StatusText" Foreground="#778399" Margin="0,14,0,0"/>
+        </StackPanel>
+        <Button Grid.Row="2" Content="סגור" Click="Close_Click" HorizontalAlignment="Left" Padding="18,9"/>
+    </Grid>
+</Window>

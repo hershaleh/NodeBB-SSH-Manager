@@ -33,6 +33,26 @@ public partial class NodeBbManagerWindow : Window
         finally { SetBusy(false, StatusText.Text); }
     }
 
+    private void Database_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
+        {
+            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            return;
+        }
+        new DatabaseManagerWindow(_session, installation) { Owner = this }.ShowDialog();
+    }
+
+    private void Backups_Click(object sender, RoutedEventArgs e)
+    {
+        if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
+        {
+            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            return;
+        }
+        new BackupWindow(_session, installation) { Owner = this }.ShowDialog();
+    }
+
     private void Packages_Click(object sender, RoutedEventArgs e)
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)

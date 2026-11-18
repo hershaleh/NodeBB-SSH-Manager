@@ -13,6 +13,8 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal.
 - SFTP browser with navigation, upload, download and confirmation before deletion.
 - Initial NodeBB discovery and CLI lifecycle actions (start, stop, restart, build).
+- Downloadable file backups (full installation or configuration + uploads), with archive verification; database contents are explicitly excluded.
+- Read-only NodeBB database configuration inspector that masks credentials and connection URIs.
 - Plugin/theme package inventory and controlled install, update and removal; plugin activate/deactivate actions with package-name validation and confirmation.
 - Structured local diagnostic logging and ZIP report export.
 - Read-only server monitoring for uptime, load, memory, disk usage and top processes.
