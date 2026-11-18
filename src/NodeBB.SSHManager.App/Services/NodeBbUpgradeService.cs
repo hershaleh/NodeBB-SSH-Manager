@@ -136,12 +136,7 @@ fi
         if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
             throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
         if (!IsValidTargetTag(targetTag)) throw new ArgumentException("תגית הגרסה אינה תקינה.", nameof(targetTag));
-        return $"""
-set -eu
-cd {{ShellQuote(installationPath)}}
-git fetch --tags origin
-git rev-parse --verify {{ShellQuote("refs/tags/" + targetTag + "^{commit}")}} >/dev/null 2>&1 || { echo 'תגית הגרסה המבוקשת אינה קיימת ב-origin.' >&2; exit 33; }
-""";
+        return $"set -eu\ncd {ShellQuote(installationPath)}\ngit fetch --tags origin\nif ! git rev-parse --verify {ShellQuote("refs/tags/" + targetTag + "^{commit}")} >/dev/null 2>&1; then echo \"Tag not found on origin.\" >&2; exit 33; fi\n";
     }
 
     internal static string BuildUpgradeScript(string installationPath, string targetTag, string expectedCommit)
