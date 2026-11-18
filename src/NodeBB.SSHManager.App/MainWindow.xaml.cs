@@ -11,6 +11,7 @@ public partial class MainWindow : Window
     private readonly ServerProfileStore _profileStore = new();
     private readonly SshConnectionService _sshService = new();
     private readonly SshSessionManager _sessionManager = new();
+    private readonly CredentialVaultService _credentialVault = new();
     private readonly ObservableCollection<ServerProfile> _profiles = [];
 
     public MainWindow()
@@ -69,6 +70,8 @@ public partial class MainWindow : Window
         if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו.",
                 "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _sessionManager.Disconnect(selected.Id);
+        try { _credentialVault.Remove(selected.Id); }
+        catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         _profiles.Remove(selected);
         SaveProfiles();
@@ -82,7 +85,7 @@ public partial class MainWindow : Window
             MessageBox.Show(this, "בחר שרת לבדיקה.", "לא נבחר שרת", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        var prompt = new SecretPromptWindow(selected) { Owner = this };
+        var prompt = new SecretPromptWindow(selected, _credentialVault.Get(selected.Id)) { Owner = this };
         if (prompt.ShowDialog() != true) return;
         SetBusy(true);
         try
@@ -95,6 +98,7 @@ public partial class MainWindow : Window
                 SaveProfiles();
                 result = await _sshService.TestConnectionAsync(selected, prompt.Secret);
             }
+            if (result.Status == SshTestStatus.Success) SaveCredentialChoice(selected, prompt);
             ShowConnectionResult(result);
         }
         catch (Exception ex)
@@ -158,7 +162,7 @@ public partial class MainWindow : Window
     private async Task<SshServerSession?> EnsureConnectedAsync(ServerProfile profile)
     {
         if (_sessionManager.TryGet(profile.Id, out var active)) return active;
-        var prompt = new SecretPromptWindow(profile) { Owner = this };
+        var prompt = new SecretPromptWindow(profile, _credentialVault.Get(profile.Id)) { Owner = this };
         if (prompt.ShowDialog() != true) return null;
         SetBusy(true);
         try
@@ -177,6 +181,7 @@ public partial class MainWindow : Window
                 return null;
             }
             var session = await _sessionManager.ConnectAsync(profile, prompt.Secret);
+            SaveCredentialChoice(profile, prompt);
             RefreshDashboard();
             MessageBox.Show(this, $"חיבור SSH מתמשך נוצר בהצלחה אל {profile.Name}.",
                 "החיבור פעיל", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -196,6 +201,30 @@ public partial class MainWindow : Window
             return null;
         }
         finally { SetBusy(false); }
+    }
+
+
+    private void SaveCredentialChoice(ServerProfile profile, SecretPromptWindow prompt)
+    {
+        try
+        {
+            if (prompt.RememberSecret && !string.IsNullOrEmpty(prompt.Secret))
+            {
+                _credentialVault.Set(profile.Id, prompt.Secret);
+                DiagnosticLogService.Instance.Info("CredentialVault", "CredentialSaved", "A credential was saved using Windows DPAPI.", profile.Name);
+            }
+            else
+            {
+                _credentialVault.Remove(profile.Id);
+                DiagnosticLogService.Instance.Info("CredentialVault", "CredentialNotRetained", "No saved credential is retained for this server.", profile.Name);
+            }
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("CredentialVault", "CredentialSaveFailed", "Could not update the encrypted credential vault: " + ex.Message, profile.Name);
+            MessageBox.Show(this, "החיבור הצליח, אך לא ניתן היה לעדכן את כספת הסיסמאות המוצפנת. פרטי ההתחברות לא נשמרו.",
+                "שמירת פרטי התחברות נכשלה", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     private bool ConfirmHostFingerprint(ServerProfile profile, string fingerprint)

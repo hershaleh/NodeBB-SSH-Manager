@@ -7,7 +7,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - .NET 11 / WPF application and Hebrew RTL dashboard.
 - Multiple saved server profiles.
 - SSH password and private-key authentication.
-- Passwords and key passphrases are requested at connection time and are not stored in the profile JSON.
+- Passwords and key passphrases are requested at connection time; optional remembering uses Windows DPAPI per-user encryption in a separate vault, never the profile JSON.
 - SSH host-key SHA-256 pinning with explicit first-use approval and rejection of changed fingerprints.
 - Persistent SSH sessions for multiple servers.
 - Interactive SSH terminal.
@@ -31,7 +31,7 @@ Application logs are stored locally under:
 
 The log records UTC timestamps, severity, component, event, server label (when relevant), error details and exception stack traces. Log files are rotated and retained in a bounded number.
 
-Use **דוח אבחון** in the main window to export a ZIP containing recent logs and a small runtime manifest. The export is local and manual; nothing is uploaded automatically. Server profiles, credentials, private keys, environment variables and remote file contents are not intentionally included. Known credential patterns are redacted before logging and again before export.
+Use **דוח אבחון** in the main window to export a ZIP containing recent logs and a small runtime manifest. The export is local and manual; nothing is uploaded automatically. Server profiles, encrypted credential vault, credentials, private keys, environment variables and remote file contents are not included. Known credential patterns are redacted before logging and again before export.
 
 Do not share diagnostic reports publicly without reviewing them first. A report can still contain server names, hostnames, paths or other operational metadata.
 
