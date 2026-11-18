@@ -7,6 +7,8 @@ public sealed class UnixPermissionAssessmentTests
 {
     [Theory]
     [InlineData("600", false, "תקין")]
+    [InlineData("0600", false, "תקין")]
+    [InlineData("000", false, "תקין")]
     [InlineData("640", false, "אזהרה")]
     [InlineData("644", false, "אזהרה")]
     [InlineData("660", false, "קריטי")]
