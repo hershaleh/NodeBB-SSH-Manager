@@ -104,6 +104,24 @@ public sealed class ServerProfileStoreTests : IDisposable
         Assert.Single(Directory.GetFiles(_directory, "servers.json.corrupt-*.bak"));
     }
 
+
+    [Fact]
+    public void Save_RejectsMoreThanMaximumProfiles()
+    {
+        var profiles = Enumerable.Range(0, 501).Select(i => CreateProfile($"Server {i}")).ToArray();
+        Assert.Throws<InvalidDataException>(() => new ServerProfileStore(FilePath).Save(profiles));
+        Assert.False(File.Exists(FilePath));
+    }
+
+    [Fact]
+    public void Save_RejectsOverlongProfileFields()
+    {
+        var profile = CreateProfile();
+        profile.Name = new string('x', 121);
+        Assert.Throws<InvalidDataException>(() => new ServerProfileStore(FilePath).Save([profile]));
+        Assert.False(File.Exists(FilePath));
+    }
+
     private static ServerProfile CreateProfile(string name = "Test server") => new()
     {
         Name = name,
