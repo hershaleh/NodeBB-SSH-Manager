@@ -97,4 +97,16 @@ public partial class RestrictedNodeBbManagerWindow : Window
         }
         finally { _busy = false; IsEnabled = true; }
     }
+    private void ToggleTerminal_Click(object sender, RoutedEventArgs e)
+    {
+        TerminalPanel.Visibility = TerminalPanel.Visibility == Visibility.Visible
+            ? Visibility.Collapsed : Visibility.Visible;
+        if (TerminalPanel.Visibility == Visibility.Visible)
+            TerminalOutputBox.Text = string.IsNullOrWhiteSpace(_lastOutput) ? OutputBox.Text : _lastOutput;
+    }
+
+    private void ManagerTabs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        // Tab selection is intentionally local; command execution remains explicit.
+    }
 }
