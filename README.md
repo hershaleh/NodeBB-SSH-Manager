@@ -12,7 +12,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Credential vault file-size bounds and tests for DPAPI save/read/remove behavior.
 - SSH password and private-key authentication; optional credential remembering uses Windows DPAPI per-user encryption.
 - SSH host-key SHA-256 pinning with explicit first-use approval and rejection of changed fingerprints.
-- Interactive SSH terminal and SFTP browser with navigation, upload, download and confirmation before deletion.
+- Interactive SSH terminal and SFTP browser with direct absolute-path navigation, directory creation, file/directory rename, upload, download and confirmation before deletion.
 - NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, Supervisor, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers.
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption.
 - Safe restore of configuration/uploads archives only, with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation archive restore is intentionally not offered; package/lock files are not restored.
@@ -22,7 +22,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - MongoDB restore with archive validation, dry-run, pre-restore dump, database scoping and rollback attempt.
 - PostgreSQL custom-dump restore with archive TOC validation, database-name matching, pre-restore dump, transactional object replacement and rollback attempt.
 - Read-only database configuration inspector with masked credentials.
-- NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring.
+- NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring with optional 30-second, 1-minute or 5-minute automatic refresh.
 - System service inventory and controlled start/stop/restart with confirmation and privilege checks.
 - Structured local diagnostic logging and ZIP report export.
 - GitHub Actions build and self-contained Windows x64 publish artifact.
@@ -69,4 +69,15 @@ dotnet publish .\src\NodeBB.SSHManager.App\NodeBB.SSHManager.App.csproj -c Relea
 
 Development preview. Remote operations have not yet completed comprehensive live testing against different SSH servers, Linux distributions, service managers and NodeBB deployment methods. Do not use this preview for production administration or unverified destructive operations.
 
-The roadmap includes scheduled backups, backup retention, restore workflows for additional database engines, bilingual language switching and broader live compatibility testing.
+## First-use checklist and known limitations
+
+1. Install and launch the self-contained Windows x64 build.
+2. Add one SSH profile. Confirm the host-key fingerprint on first connection; a changed fingerprint is rejected.
+3. Test the connection, then open the SSH terminal and SFTP browser to confirm the account's actual permissions.
+4. Open NodeBB management and verify that the discovered installation path and detected runtime match the intended forum.
+5. Create and verify a database backup and a separate encrypted configuration/uploads backup before attempting upgrades or restores.
+6. Run the read-only security audit and export a diagnostic report if a connection or command fails.
+
+The application intentionally does not elevate privileges, bypass network filtering, or silently change server permissions. Some operations require a suitable remote utility and sufficient SSH account permissions; the application reports remote command errors rather than assuming success.
+
+Not yet implemented: unattended scheduled backups and retention policies, Redis restore, automated restore for database engines beyond the supported MongoDB/PostgreSQL workflows, and a full English/Hebrew language switch. Remote behavior still needs hands-on validation against the actual target server before production use. The first practical milestone is to validate connection, NodeBB lifecycle, SFTP, backups and diagnostics against the user's server; additional features should follow only if that test identifies a real need.

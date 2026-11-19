@@ -10,7 +10,13 @@
             <TextBlock x:Name="ServerLabel" Foreground="#778399" Margin="0,5,0,0"/>
         </StackPanel>
         <DockPanel Grid.Row="1" Margin="0,16,0,12">
-            <Button x:Name="RefreshButton" Content="רענון נתונים" Click="Refresh_Click" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0"/>
+            <Button x:Name="RefreshButton" Content="רענון נתונים" Click="Refresh_Click" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0" Margin="0,0,12,0"/>
+            <CheckBox x:Name="AutoRefreshCheckBox" Content="רענון אוטומטי" VerticalAlignment="Center" Checked="AutoRefresh_Checked" Unchecked="AutoRefresh_Unchecked" Margin="0,0,8,0"/>
+            <ComboBox x:Name="AutoRefreshIntervalComboBox" Width="105" Height="30" VerticalContentAlignment="Center" SelectionChanged="AutoRefreshInterval_SelectionChanged" Margin="0,0,12,0">
+                <ComboBoxItem Content="30 שניות" Tag="30"/>
+                <ComboBoxItem Content="דקה" Tag="60"/>
+                <ComboBoxItem Content="5 דקות" Tag="300"/>
+            </ComboBox>
             <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
         </DockPanel>
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
