@@ -17,6 +17,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}:{session.Profile.Port} · nodebb-plugins";
         OutputBox.Text = initialHelp;
         TerminalOutputBox.Text = initialHelp;
+        UploadZipButton.Visibility = InstallSourceBox.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private async void List_Click(object sender, RoutedEventArgs e)
@@ -49,6 +50,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async void Zips_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListZipsAsync(), "קובצי ZIP");
     private async void Help_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.HelpAsync(), "עזרה");
 
+    private void InstallSourceBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (UploadZipButton is not null)
+            UploadZipButton.Visibility = InstallSourceBox.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private async void UploadZip_Click(object sender, RoutedEventArgs e)
     {
         var dialog = new OpenFileDialog
@@ -74,6 +81,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
         {
             TargetBox.Text = info.Name;
             InstallSourceBox.SelectedIndex = 2;
+            ManagerTabs.SelectedIndex = 1;
+            MessageBox.Show(this, $"הקובץ {info.Name} הועלה לשרת בהצלחה. כעת לחץ על 'התקן' כדי להתקין אותו.",
+                "העלאת ZIP הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
