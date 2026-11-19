@@ -64,14 +64,27 @@ public sealed class SshConnectionService
             client.Connect();
 
             cancellationToken.ThrowIfCancellationRequested();
-            using var command = client.RunCommand("id -un; uname -s");
-            if (command.ExitStatus != 0)
+            // Keep probe commands simple and separate. Some restricted SSH gateways reject
+            // shell command separators (such as ';') even when each command is permitted.
+            using var identityCommand = client.RunCommand("id -un");
+            if (identityCommand.ExitStatus != 0)
             {
                 return new SshTestResult(
                     SshTestStatus.Failed,
-                    string.IsNullOrWhiteSpace(command.Error)
-                        ? "החיבור נוצר, אך פקודת בדיקת המערכת נכשלה."
-                        : command.Error,
+                    string.IsNullOrWhiteSpace(identityCommand.Error)
+                        ? "החיבור נוצר, אך בדיקת זיהוי המשתמש נכשלה."
+                        : identityCommand.Error,
+                    observedFingerprint);
+            }
+
+            using var systemCommand = client.RunCommand("uname -s");
+            if (systemCommand.ExitStatus != 0)
+            {
+                return new SshTestResult(
+                    SshTestStatus.Failed,
+                    string.IsNullOrWhiteSpace(systemCommand.Error)
+                        ? "החיבור נוצר, אך בדיקת זיהוי מערכת ההפעלה נכשלה."
+                        : systemCommand.Error,
                     observedFingerprint);
             }
 
@@ -80,7 +93,7 @@ public sealed class SshConnectionService
                 SshTestStatus.Success,
                 "חיבור SSH ואימות המשתמש הצליחו.",
                 observedFingerprint,
-                command.Result.Trim());
+                $"User: {identityCommand.Result.Trim()}\nSystem: {systemCommand.Result.Trim()}");
         }
         catch (Exception) when (observedFingerprint is not null
                                 && !string.Equals(
