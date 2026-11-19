@@ -54,11 +54,7 @@ public sealed class SshConnectionService
             client.HostKeyReceived += (_, eventArgs) =>
             {
                 observedFingerprint = "SHA256:" + eventArgs.FingerPrintSHA256;
-                eventArgs.CanTrust = !string.IsNullOrWhiteSpace(profile.KnownHostFingerprint)
-                    && string.Equals(
-                        observedFingerprint,
-                        profile.KnownHostFingerprint,
-                        StringComparison.Ordinal);
+                eventArgs.CanTrust = IsHostKeyTrusted(profile.KnownHostFingerprint, observedFingerprint);
             };
 
             client.Connect();
@@ -76,10 +72,7 @@ public sealed class SshConnectionService
                 "SSH authentication successful.");
         }
         catch (Exception) when (observedFingerprint is not null
-                                && !string.Equals(
-                                    observedFingerprint,
-                                    profile.KnownHostFingerprint,
-                                    StringComparison.Ordinal))
+                                && !IsHostKeyTrusted(profile.KnownHostFingerprint, observedFingerprint))
         {
             return new SshTestResult(
                 SshTestStatus.HostKeyVerificationRequired,
@@ -95,6 +88,13 @@ public sealed class SshConnectionService
             DiagnosticLogService.Instance.Error("SSH", "ConnectionTestFailed", ex, profile.Name);
             return new SshTestResult(SshTestStatus.Failed, GetFriendlyErrorMessage(ex), observedFingerprint);
         }
+    }
+
+    public static bool IsHostKeyTrusted(string? expectedFingerprint, string? observedFingerprint)
+    {
+        return !string.IsNullOrWhiteSpace(expectedFingerprint)
+            && !string.IsNullOrWhiteSpace(observedFingerprint)
+            && string.Equals(expectedFingerprint, observedFingerprint, StringComparison.Ordinal);
     }
 
     public static string GetFriendlyErrorMessage(Exception exception)

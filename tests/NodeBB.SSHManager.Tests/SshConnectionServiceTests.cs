@@ -7,6 +7,21 @@ namespace NodeBB.SSHManager.Tests;
 
 public sealed class SshConnectionServiceTests
 {
+
+    [Theory]
+    [InlineData("SHA256:trusted-fingerprint", "SHA256:trusted-fingerprint", true)]
+    [InlineData(null, "SHA256:observed-fingerprint", false)]
+    [InlineData("", "SHA256:observed-fingerprint", false)]
+    [InlineData("SHA256:trusted-fingerprint", null, false)]
+    [InlineData("SHA256:trusted-fingerprint", "", false)]
+    [InlineData("SHA256:trusted-fingerprint", "SHA256:changed-fingerprint", false)]
+    [InlineData("sha256:trusted-fingerprint", "SHA256:trusted-fingerprint", false)]
+    public void IsHostKeyTrusted_RequiresExactPreviouslyApprovedFingerprint(
+        string? expected, string? observed, bool trusted)
+    {
+        Assert.Equal(trusted, SshConnectionService.IsHostKeyTrusted(expected, observed));
+    }
+
     [Fact]
     public void GetFriendlyErrorMessage_AuthenticationFailure_IsActionable()
     {

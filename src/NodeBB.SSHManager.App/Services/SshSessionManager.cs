@@ -89,7 +89,7 @@ public sealed class SshServerSession : IDisposable
         client.HostKeyReceived += (_, e) =>
         {
             var actual = "SHA256:" + e.FingerPrintSHA256;
-            e.CanTrust = string.Equals(actual, Profile.KnownHostFingerprint, StringComparison.Ordinal);
+            e.CanTrust = SshConnectionService.IsHostKeyTrusted(Profile.KnownHostFingerprint, actual);
         };
         return client;
     }
@@ -158,8 +158,7 @@ public sealed class SshSessionManager : IDisposable
                 client.HostKeyReceived += (_, e) =>
                 {
                     fingerprint = "SHA256:" + e.FingerPrintSHA256;
-                    e.CanTrust = !string.IsNullOrWhiteSpace(profile.KnownHostFingerprint)
-                        && string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal);
+                    e.CanTrust = SshConnectionService.IsHostKeyTrusted(profile.KnownHostFingerprint, fingerprint);
                 };
 
                 try
@@ -177,7 +176,7 @@ public sealed class SshSessionManager : IDisposable
                     DiagnosticLogService.Instance.Error("SSH", "SessionConnectFailed", ex, profile.Name);
                     client.Dispose();
                     if (fingerprint is not null &&
-                        !string.Equals(fingerprint, profile.KnownHostFingerprint, StringComparison.Ordinal))
+                        !SshConnectionService.IsHostKeyTrusted(profile.KnownHostFingerprint, fingerprint))
                         throw new SshHostKeyException(fingerprint);
                     throw;
                 }
