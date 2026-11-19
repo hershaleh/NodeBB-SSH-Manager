@@ -13,6 +13,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private bool _busy;
     private string _lastOutput = "";
     private readonly ObservableCollection<PluginCard> _allPlugins = [];
+    private IReadOnlyList<ServerActionHistoryEntry> _historyEntries = [];
 
     public RestrictedNodeBbManagerWindow(SshServerSession session, string initialHelp)
     {
@@ -471,8 +472,16 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
     private void RefreshActionHistory()
     {
-        var entries = new ServerActionHistoryService().GetForServer(_session.Profile.Host, _session.Profile.Port);
-        HistoryCountText.Text = entries.Count == 0 ? "עדיין לא נשמרו פעולות" : $"נשמרו {entries.Count} פעולות אחרונות";
+        _historyEntries = new ServerActionHistoryService().GetForServer(_session.Profile.Host, _session.Profile.Port);
+        HistoryCountText.Text = _historyEntries.Count == 0 ? "עדיין לא נשמרו פעולות" : $"נשמרו {_historyEntries.Count} פעולות אחרונות";
+        ApplyHistoryFilter();
+    }
+
+    private void ApplyHistoryFilter()
+    {
+        var filter = HistoryFilterBox?.SelectedIndex ?? 0;
+        var entries = _historyEntries.Where(entry =>
+            filter == 0 || (filter == 1 && entry.Succeeded) || (filter == 2 && !entry.Succeeded)).ToArray();
         HistoryItems.ItemsSource = entries.Select(entry => new HistoryDisplayItem(
             entry.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"),
             entry.Action,
@@ -480,7 +489,52 @@ public partial class RestrictedNodeBbManagerWindow : Window
             entry.Succeeded ? "הצליח" : "נכשל",
             entry.Succeeded ? "#18794E" : "#B42318",
             entry.Summary)).ToArray();
-        HistoryEmptyState.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        HistoryEmptyState.Visibility = entries.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
+        if (_historyEntries.Count > 0 && entries.Length == 0)
+            HistoryCountText.Text = "אין פעולות התואמות למסנן";
+        else if (_historyEntries.Count > 0)
+            HistoryCountText.Text = $"מוצגות {entries.Length} מתוך {_historyEntries.Count} פעולות";
+    }
+
+    private void HistoryFilterBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (HistoryItems is not null) ApplyHistoryFilter();
+    }
+
+    private void ExportHistory_Click(object sender, RoutedEventArgs e)
+    {
+        var filter = HistoryFilterBox?.SelectedIndex ?? 0;
+        var entries = _historyEntries.Where(entry =>
+            filter == 0 || (filter == 1 && entry.Succeeded) || (filter == 2 && !entry.Succeeded)).ToArray();
+        if (entries.Length == 0)
+        {
+            MessageBox.Show(this, "אין פעולות לייצוא במסנן הנוכחי.", "ייצוא היסטוריה",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+
+        var dialog = new SaveFileDialog
+        {
+            Title = "ייצוא היסטוריית פעולות",
+            Filter = "קובץ CSV (*.csv)|*.csv",
+            FileName = "nodebb-action-history.csv",
+            AddExtension = true,
+            DefaultExt = ".csv"
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            File.WriteAllText(dialog.FileName, ServerActionHistoryService.ExportCsv(entries), new System.Text.UTF8Encoding(true));
+            MessageBox.Show(this, $"יוצאו {entries.Length} פעולות בהצלחה.", "ייצוא היסטוריה",
+                MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, "ייצוא ההיסטוריה נכשל. בדוק הרשאות כתיבה ליעד.", "שגיאה",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            DiagnosticLogService.Instance.Warning("ActionHistory", "ExportFailed",
+                "Could not export server action history.", ex, ServerLabel.Text);
+        }
     }
 
     private void ClearHistory_Click(object sender, RoutedEventArgs e)

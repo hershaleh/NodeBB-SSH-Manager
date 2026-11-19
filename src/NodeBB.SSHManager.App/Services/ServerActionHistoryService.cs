@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 
 namespace NodeBB.SSHManager.Services;
@@ -72,6 +73,27 @@ public sealed class ServerActionHistoryService
             var retained = ReadEntries().Where(entry => !SameServer(entry, host, port)).ToList();
             WriteEntries(retained);
         }
+    }
+
+
+    public static string ExportCsv(IEnumerable<ServerActionHistoryEntry> entries)
+    {
+        ArgumentNullException.ThrowIfNull(entries);
+        static string Cell(string? value) => "\"" + (value ?? string.Empty).Replace("\"", "\"\"") + "\"";
+        var builder = new StringBuilder();
+        builder.AppendLine("תאריך ושעה,שרת,כתובת,פורט,פעולה,יעד,תוצאה,סיכום");
+        foreach (var entry in entries.OrderByDescending(item => item.Timestamp))
+        {
+            builder.Append(Cell(entry.Timestamp.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))).Append(',')
+                .Append(Cell(entry.ServerName)).Append(',')
+                .Append(Cell(entry.ServerHost)).Append(',')
+                .Append(entry.ServerPort).Append(',')
+                .Append(Cell(entry.Action)).Append(',')
+                .Append(Cell(entry.Target)).Append(',')
+                .Append(Cell(entry.Succeeded ? "הצליח" : "נכשל")).Append(',')
+                .Append(Cell(DiagnosticLogService.Redact(entry.Summary))).AppendLine();
+        }
+        return builder.ToString();
     }
 
     private List<ServerActionHistoryEntry> ReadEntries()

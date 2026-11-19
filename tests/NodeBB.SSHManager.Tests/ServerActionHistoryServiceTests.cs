@@ -55,6 +55,26 @@ public sealed class ServerActionHistoryServiceTests : IDisposable
         Assert.Throws<ArgumentException>(() => _service.Add(Entry("host-a", 0, "פעולה", true)));
     }
 
+
+    [Fact]
+    public void ExportCsv_QuotesAndEscapesFieldsAndKeepsHebrewHeaders()
+    {
+        var entry = Entry("host-a", 22, "עדכון", false) with
+        {
+            ServerName = "שרת, ראשי",
+            Target = "pkg\"quoted\"",
+            Summary = "שורה ראשונה, שורה שנייה"
+        };
+
+        var csv = ServerActionHistoryService.ExportCsv([entry]);
+
+        Assert.Contains("תאריך ושעה,שרת,כתובת,פורט,פעולה,יעד,תוצאה,סיכום", csv, StringComparison.Ordinal);
+        Assert.Contains("\"שרת, ראשי\"", csv, StringComparison.Ordinal);
+        Assert.Contains("\"pkg\"\"quoted\"\"", csv, StringComparison.Ordinal);
+        Assert.Contains("\"שורה ראשונה, שורה שנייה\"", csv, StringComparison.Ordinal);
+        Assert.Contains("\"נכשל\"", csv, StringComparison.Ordinal);
+    }
+
     private static ServerActionHistoryEntry Entry(string host, int port, string action, bool succeeded) =>
         new(DateTimeOffset.UtcNow, "שרת בדיקה", host, port, action, "", succeeded, "בוצע");
 
