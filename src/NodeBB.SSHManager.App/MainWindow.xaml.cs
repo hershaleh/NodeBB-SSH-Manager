@@ -148,6 +148,21 @@ public partial class MainWindow : Window
         RefreshDashboard();
     }
 
+    private void ServerRow_Open_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is ServerProfile profile)
+            _ = OpenServerManagerAsync(profile);
+    }
+
+    private void ServerRowMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = element;
+            menu.IsOpen = true;
+        }
+    }
+
     private void ServerContextMenu_Opened(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.ContextMenu menu) return;

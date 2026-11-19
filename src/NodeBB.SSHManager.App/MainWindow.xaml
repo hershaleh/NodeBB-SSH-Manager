@@ -176,14 +176,14 @@
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="14,0">
                                         <Border Background="#EAF7F0" CornerRadius="12" Padding="10,5"
-                                                Visibility="{Binding IsConnected, Converter={x:Static BooleanToVisibilityConverter.Instance}}">
-                                            <TextBlock Text="מחובר" Foreground="#16734B" FontSize="11" FontWeight="SemiBold"/>
+                                                >
+                                            <TextBlock Text="{Binding ConnectionStatusLabel}" Foreground="#16734B" FontSize="11" FontWeight="SemiBold"/>
                                         </Border>
                                         <TextBlock Text="{Binding AuthenticationLabel}" Foreground="#667085" FontSize="10"
                                                    HorizontalAlignment="Center" Margin="0,5,0,0"/>
                                     </StackPanel>
                                     <Button Grid.Column="3" Content="⋯" FontSize="22" Width="38" Height="38" Padding="0"
-                                            Style="{StaticResource QuietButton}" VerticalAlignment="Center">
+                                            Style="{StaticResource QuietButton}" VerticalAlignment="Center" Click="ServerRowMenu_Click">
                                         <Button.ContextMenu>
                                             <ContextMenu FlowDirection="RightToLeft" Opened="ServerContextMenu_Opened">
                                                 <MenuItem Header="פתח סביבת ניהול" Click="ServerRow_Open_Click"/>
@@ -195,8 +195,6 @@
                                             </ContextMenu>
                                         </Button.ContextMenu>
                                         <Button.ToolTip>פעולות לשרת</Button.ToolTip>
-                                        <Button.Tag>{Binding Id}</Button.Tag>
-                                        <Button.Click> </Button.Click>
                                     </Button>
                                 </Grid>
                             </DataTemplate>
