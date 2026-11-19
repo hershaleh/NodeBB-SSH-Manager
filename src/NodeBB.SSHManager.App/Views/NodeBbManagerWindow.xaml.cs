@@ -143,9 +143,12 @@ public partial class NodeBbManagerWindow : Window
         {
             SetBusy(true, $"מבצע {action}...");
             var result = await _service.RunLifecycleAsync(installation, action);
-            var details = string.IsNullOrWhiteSpace(result.Output) ? result.Error : result.Output;
+            var details = string.Join(Environment.NewLine + Environment.NewLine,
+                new[] { result.Output.Trim(), result.Error.Trim() }.Where(value => !string.IsNullOrWhiteSpace(value)));
             StatusText.Text = result.ExitCode == 0 ? $"הפעולה {action} הסתיימה בהצלחה." : $"הפעולה נכשלה (קוד {result.ExitCode}).";
-            MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
+            DiagnosticLogService.Instance.Info("NodeBBManagerUI", "LifecycleActionCompleted",
+                $"NodeBB action {action} completed with exit code {result.ExitCode}.", _session.Profile.Name);
+            MessageBox.Show(this, $"{StatusText.Text}{(string.IsNullOrWhiteSpace(details) ? string.Empty : Environment.NewLine + Environment.NewLine + details)}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
         }
         catch (Exception ex)
