@@ -1,6 +1,10 @@
 using System.Windows;
 using System.Collections.ObjectModel;
 using System.Text.RegularExpressions;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Windows.Media;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Services;
 
@@ -13,6 +17,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private bool _busy;
     private string _lastOutput = "";
     private readonly ObservableCollection<PluginCard> _allPlugins = [];
+    private readonly HashSet<string> _knownPluginPackages = new(StringComparer.OrdinalIgnoreCase);
+    private readonly string _packageInventoryCachePath;
     private IReadOnlyList<ServerActionHistoryEntry> _historyEntries = [];
 
     public RestrictedNodeBbManagerWindow(SshServerSession session, string initialHelp)
@@ -20,6 +26,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
         InitializeComponent();
         _session = session;
         _service = new RestrictedNodeBbCliService(session);
+        _packageInventoryCachePath = GetPackageInventoryCachePath(session.Profile.Host, session.Profile.Port, session.Profile.Username);
+        LoadKnownPluginInventory();
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}:{session.Profile.Port} · nodebb-plugins";
         TerminalOutputBox.Text = initialHelp;
         PluginCards.ItemsSource = _allPlugins;
@@ -152,6 +160,13 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
+            if (result.ExitCode == 0 && (label == "הסרה" || label == "הסרה מרובה"))
+            {
+                var removedPackages = (historyTarget ?? ResolveHistoryTarget(label))
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                foreach (var package in removedPackages) _knownPluginPackages.Remove(package);
+                SaveKnownPluginInventory();
+            }
             if (label == "רשימת תוספים") UpdatePluginCards(raw);
             if (keepPluginView)
             {
@@ -254,14 +269,73 @@ public partial class RestrictedNodeBbManagerWindow : Window
         return "השרת לא הצליח להשלים את הפעולה. פתח את הטרמינל כדי לראות את הודעת השגיאה המקורית.";
     }
 
+    private static string GetPackageInventoryCachePath(string host, int port, string username)
+    {
+        var identity = host.Trim().ToLowerInvariant() + "\n" + port + "\n" + username.Trim();
+        var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity))).ToLowerInvariant();
+        var directory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "NodeBB SSH Manager", "PackageInventory");
+        Directory.CreateDirectory(directory);
+        return Path.Combine(directory, key + ".json");
+    }
+
+    private void LoadKnownPluginInventory()
+    {
+        try
+        {
+            if (!File.Exists(_packageInventoryCachePath)) return;
+            var names = JsonSerializer.Deserialize<string[]>(File.ReadAllText(_packageInventoryCachePath)) ?? [];
+            foreach (var name in names)
+            {
+                try { _knownPluginPackages.Add(RestrictedNodeBbCliService.ValidatePackage(name)); }
+                catch (ArgumentException) { /* Ignore invalid or stale cache entries. */ }
+            }
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "PackageInventoryCacheLoadFailed",
+                "Could not load the local package inventory cache.", ex, ServerLabel.Text);
+        }
+    }
+
+    private void SaveKnownPluginInventory()
+    {
+        try
+        {
+            var directory = Path.GetDirectoryName(_packageInventoryCachePath)!;
+            Directory.CreateDirectory(directory);
+            var temporaryPath = _packageInventoryCachePath + ".tmp";
+            File.WriteAllText(temporaryPath,
+                JsonSerializer.Serialize(_knownPluginPackages.OrderBy(name => name, StringComparer.OrdinalIgnoreCase)),
+                new UTF8Encoding(false));
+            File.Move(temporaryPath, _packageInventoryCachePath, true);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "PackageInventoryCacheSaveFailed",
+                "Could not save the local package inventory cache.", ex, ServerLabel.Text);
+        }
+    }
+
     private void UpdatePluginCards(string raw)
     {
-        var found = RestrictedNodeBbCliService.ExtractPluginPackageNames(raw);
+        // The restricted server's list command reports active packages only.
+        // Keep the last known inventory so packages disabled outside this app remain actionable.
+        var active = new HashSet<string>(
+            RestrictedNodeBbCliService.ExtractPluginPackageNames(raw),
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var name in active) _knownPluginPackages.Add(name);
+        SaveKnownPluginInventory();
+
         _allPlugins.Clear();
-        foreach (var name in found)
-            _allPlugins.Add(new PluginCard(name, RestrictedNodeBbCliService.GetPackageKindLabel(name)));
+        foreach (var name in _knownPluginPackages.OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+            _allPlugins.Add(new PluginCard(name, RestrictedNodeBbCliService.GetPackageKindLabel(name), active.Contains(name)));
+
         ApplyPluginFilter();
-        PluginCountText.Text = found.Count == 0 ? "לא זוהו שמות חבילות בתשובת השרת" : $"נמצאו {found.Count} פריטים שהשרת דיווח עליהם כמותקנים ופעילים";
+        var inactiveCount = _allPlugins.Count - active.Count;
+        PluginCountText.Text = _allPlugins.Count == 0
+            ? "לא זוהו תוספים ברשימת השרת"
+            : $"{active.Count} פעילים · {inactiveCount} לא מופיעים ברשימת הפעילים";
     }
 
     private void PluginSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyPluginFilter();
@@ -435,7 +509,15 @@ public partial class RestrictedNodeBbManagerWindow : Window
     }
 
     private async void PluginUpdate_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "עדכון", _service.UpdateAsync);
-    private async void PluginDisable_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "השבתה", _service.DisableAsync);
+    private async void PluginToggle_Click(object sender, RoutedEventArgs e)
+    {
+        var package = SelectedPlugin(sender);
+        var card = _allPlugins.FirstOrDefault(item => string.Equals(item.Name, package, StringComparison.OrdinalIgnoreCase));
+        if (card is null) return;
+        await RunPluginCardActionAsync(sender,
+            card.IsActive ? "השבתה" : "הפעלה",
+            card.IsActive ? _service.DisableAsync : _service.ActivateAsync);
+    }
     private async void PluginRemove_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "הסרה", _service.RemoveAsync);
 
     private async Task RunPluginCardActionAsync(object sender, string label, Func<string, CancellationToken, Task<(int ExitCode, string Output, string Error)>> action)
@@ -562,9 +644,27 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
 public sealed record HistoryDisplayItem(string Timestamp, string Action, string Target, string Result, string ResultColor, string Summary);
 
-public sealed class PluginCard(string name, string kindLabel)
+public sealed class PluginCard(string name, string kindLabel, bool isActive)
 {
     public string Name { get; } = name;
     public string KindLabel { get; } = kindLabel;
+    public bool IsActive { get; } = isActive;
     public bool IsSelected { get; set; }
+    public string StatusLabel => IsActive ? "פעיל" : "לא ברשימת הפעילים";
+    public string StatusDescription => IsActive
+        ? "השרת מדווח שהתוסף פעיל."
+        : "השרת לא מדווח עליו כפעיל. ייתכן שהושבת או הוסר.";
+    public Brush StatusBackground => IsActive
+        ? new SolidColorBrush(Color.FromRgb(232, 247, 239))
+        : new SolidColorBrush(Color.FromRgb(255, 245, 233));
+    public Brush StatusForeground => IsActive
+        ? new SolidColorBrush(Color.FromRgb(24, 121, 78))
+        : new SolidColorBrush(Color.FromRgb(154, 91, 19));
+    public string ToggleActionLabel => IsActive ? "השבתה" : "הפעלה";
+    public Brush ToggleBackground => IsActive
+        ? new SolidColorBrush(Color.FromRgb(255, 245, 233))
+        : new SolidColorBrush(Color.FromRgb(233, 247, 240));
+    public Brush ToggleForeground => IsActive
+        ? new SolidColorBrush(Color.FromRgb(154, 91, 19))
+        : new SolidColorBrush(Color.FromRgb(22, 118, 79));
 }
