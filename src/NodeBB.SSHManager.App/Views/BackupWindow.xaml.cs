@@ -52,11 +52,14 @@ public partial class BackupWindow : Window
         }
 
         var suffix = kind == RemoteBackupKind.FullInstallation ? "full" : "config-uploads";
+        var serverToken = string.Concat(_session.Profile.Name.Select(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_' ? ch : '-')).Trim('-');
+        if (string.IsNullOrWhiteSpace(serverToken)) serverToken = "server";
+        var filePrefix = $"NodeBB-{serverToken}-{suffix}";
         var extension = encrypted ? ".nbbbackup" : ".tar.gz";
         var dialog = new SaveFileDialog
         {
             Title = "שמירת גיבוי NodeBB",
-            FileName = $"NodeBB-{suffix}-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
+            FileName = $"{filePrefix}-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
             Filter = encrypted ? "גיבוי NodeBB מוצפן|*.nbbbackup" : "ארכיון GZip TAR|*.tar.gz",
             DefaultExt = extension,
             AddExtension = true,
@@ -84,8 +87,14 @@ public partial class BackupWindow : Window
                 await _service.DownloadBackupAsync(_installation, kind, dialog.FileName);
             }
 
+            var keepText = (RetentionComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+            var keepCount = int.TryParse(keepText, out var parsedKeep) ? parsedKeep : 0;
+            var removed = keepCount > 0
+                ? LocalBackupRetentionService.ApplyRetention(Path.GetDirectoryName(dialog.FileName)!, filePrefix, keepCount)
+                : 0;
             StatusText.Text = encrypted ? "הגיבוי הוצפן ונשמר בהצלחה." : "הגיבוי נשמר בהצלחה.";
-            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? "מוצפן" : "ללא הצפנה")}",
+            if (removed > 0) StatusText.Text += $" הוסרו {removed} גיבויים ישנים לפי מדיניות השמירה.";
+            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? "מוצפן" : "ללא הצפנה")}\nגיבויים ישנים שהוסרו: {removed}",
                 "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
