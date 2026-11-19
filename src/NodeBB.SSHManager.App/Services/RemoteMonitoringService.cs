@@ -46,16 +46,7 @@ printf '\n'
             throw error;
         }
 
-        var values = result.Output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(line => line.Split('|', 2))
-            .Where(parts => parts.Length == 2)
-            .GroupBy(parts => parts[0], StringComparer.OrdinalIgnoreCase)
-            .ToDictionary(group => group.Key, group => group.Last()[1], StringComparer.OrdinalIgnoreCase);
-
-        string Get(string key) => values.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value) ? value : "לא זמין";
-        int? memoryPercent = int.TryParse(Get("MEMORY_PERCENT"), out var memoryValue) ? Math.Clamp(memoryValue, 0, 100) : null;
-        var cpuCount = int.TryParse(Get("CPU_COUNT"), out var cpuValue) && cpuValue > 0 ? cpuValue : 1;
-        var metrics = new RemoteServerMetrics(Get("UPTIME"), Get("LOAD"), Get("MEMORY"), memoryPercent, Get("DISK"), Get("PROCESSES"), cpuCount, DateTimeOffset.UtcNow);
+        var metrics = RemoteMonitoringOutputParser.Parse(result.Output);
         DiagnosticLogService.Instance.Info("Monitoring", "CollectionCompleted", "Remote server metrics collection completed.", _session.Profile.Name);
         return metrics;
     }
