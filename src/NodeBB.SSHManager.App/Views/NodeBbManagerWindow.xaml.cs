@@ -19,6 +19,7 @@ public partial class NodeBbManagerWindow : Window
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         InstallationsList.ItemsSource = _installations;
         UpdateActionAvailability();
+        Loaded += async (_, _) => await DiscoverInstallationsAsync();
     }
 
     private void InstallationsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -40,7 +41,10 @@ public partial class NodeBbManagerWindow : Window
         DiscoverButton.IsEnabled = !_isBusy;
     }
 
-    private async void Discover_Click(object sender, RoutedEventArgs e)
+    private async void Discover_Click(object sender, RoutedEventArgs e) =>
+        await DiscoverInstallationsAsync();
+
+    private async Task DiscoverInstallationsAsync()
     {
         try
         {
@@ -48,9 +52,18 @@ public partial class NodeBbManagerWindow : Window
             var found = await _service.DiscoverAsync();
             _installations.Clear();
             foreach (var item in found) _installations.Add(item);
-            StatusText.Text = found.Count == 0 ? "לא נמצאה התקנת NodeBB בנתיבים שנבדקו." : $"נמצאו {found.Count} התקנות.";
+            if (found.Count > 0) InstallationsList.SelectedIndex = 0;
+            StatusText.Text = found.Count == 0
+                ? "לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH."
+                : $"נמצאו {found.Count} התקנות. נבחרה ההתקנה הראשונה.";
+            DiagnosticLogService.Instance.Info("NodeBBManagerUI", "DiscoveryCompleted",
+                $"Discovered {found.Count} NodeBB installations.", _session.Profile.Name);
         }
-        catch (Exception ex) { StatusText.Text = "הסריקה נכשלה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("NodeBBManagerUI", "DiscoveryFailed", ex, _session.Profile.Name);
+            StatusText.Text = "הסריקה נכשלה: " + ex.Message;
+        }
         finally { SetBusy(false, StatusText.Text); }
     }
 
