@@ -115,17 +115,5 @@ public sealed class SshConnectionService
     }
 
     private static AuthenticationMethod CreateAuthentication(ServerProfile profile, string secret)
-    {
-        if (profile.AuthenticationType == SshAuthenticationType.Password)
-            return new PasswordAuthenticationMethod(profile.Username, secret);
-
-        if (string.IsNullOrWhiteSpace(profile.PrivateKeyPath) || !File.Exists(profile.PrivateKeyPath))
-            throw new FileNotFoundException("לא נמצא קובץ מפתח SSH בפרופיל השרת.", profile.PrivateKeyPath);
-
-        var keyFile = string.IsNullOrEmpty(secret)
-            ? new PrivateKeyFile(profile.PrivateKeyPath)
-            : new PrivateKeyFile(profile.PrivateKeyPath, secret);
-
-        return new PrivateKeyAuthenticationMethod(profile.Username, keyFile);
-    }
+        => SshSessionManager.CreateAuthentication(profile, secret);
 }

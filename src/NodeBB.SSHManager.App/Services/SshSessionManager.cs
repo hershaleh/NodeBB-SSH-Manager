@@ -220,14 +220,21 @@ public sealed class SshSessionManager : IDisposable
 
     public static AuthenticationMethod CreateAuthentication(ServerProfile profile, string secret)
     {
-        if (profile.AuthenticationType == SshAuthenticationType.Password)
-            return new PasswordAuthenticationMethod(profile.Username, secret);
-        if (string.IsNullOrWhiteSpace(profile.PrivateKeyPath) || !File.Exists(profile.PrivateKeyPath))
-            throw new FileNotFoundException("לא נמצא קובץ מפתח SSH בפרופיל השרת.", profile.PrivateKeyPath);
-        var key = string.IsNullOrEmpty(secret)
-            ? new PrivateKeyFile(profile.PrivateKeyPath)
-            : new PrivateKeyFile(profile.PrivateKeyPath, secret);
-        return new PrivateKeyAuthenticationMethod(profile.Username, key);
+        switch (profile.AuthenticationType)
+        {
+            case SshAuthenticationType.Password:
+                return new PasswordAuthenticationMethod(profile.Username, secret);
+            case SshAuthenticationType.PrivateKey:
+                if (string.IsNullOrWhiteSpace(profile.PrivateKeyPath) || !File.Exists(profile.PrivateKeyPath))
+                    throw new FileNotFoundException("לא נמצא קובץ מפתח SSH בפרופיל השרת.", profile.PrivateKeyPath);
+                var key = string.IsNullOrEmpty(secret)
+                    ? new PrivateKeyFile(profile.PrivateKeyPath)
+                    : new PrivateKeyFile(profile.PrivateKeyPath, secret);
+                return new PrivateKeyAuthenticationMethod(profile.Username, key);
+            default:
+                throw new ArgumentOutOfRangeException(nameof(profile.AuthenticationType), profile.AuthenticationType,
+                    "סוג האימות בפרופיל SSH אינו נתמך.");
+        }
     }
 
     public void Dispose()

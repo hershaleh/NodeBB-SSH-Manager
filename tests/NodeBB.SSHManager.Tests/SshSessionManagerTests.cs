@@ -62,6 +62,6 @@ public sealed class SshSessionManagerTests
             AuthenticationType = (SshAuthenticationType)999
         };
 
-        Assert.Throws<FileNotFoundException>(() => SshSessionManager.CreateAuthentication(profile, ""));
+        Assert.Throws<ArgumentOutOfRangeException>(() => SshSessionManager.CreateAuthentication(profile, ""));
     }
 }
