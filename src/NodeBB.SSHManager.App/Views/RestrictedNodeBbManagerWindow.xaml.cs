@@ -248,10 +248,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
     private void UpdatePluginCards(string raw)
     {
-        var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var line in raw.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
-            foreach (Match match in Regex.Matches(line, @"(?<![A-Za-z0-9@._/-])((?:@[A-Za-z0-9._-]+/)?nodebb-(?:plugin|theme)-[A-Za-z0-9._-]+)", RegexOptions.IgnoreCase))
-                found.Add(match.Groups[1].Value.TrimEnd('.', ',', ':', ';'));
+        var found = RestrictedNodeBbCliService.ExtractPluginPackageNames(raw);
         _allPlugins.Clear();
         foreach (var name in found)
             _allPlugins.Add(new PluginCard(name, name.Contains("theme", StringComparison.OrdinalIgnoreCase) ? "ערכת עיצוב" : "תוסף"));

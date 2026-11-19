@@ -32,6 +32,22 @@ public sealed class RestrictedNodeBbCliServiceTests
         Assert.Throws<ArgumentException>(() => RestrictedNodeBbCliService.ValidateInstallTarget(value));
 
     [Theory]
+    [InlineData("nodebb-plugin-spoilers\\nnodebb-theme-modern", 2)]
+    [InlineData("@nodebb/plugin-write-api\\n@nodebb/theme-harmony", 2)]
+    [InlineData("@scope/nodebb-plugin-example\\n@scope/plugin-extra", 2)]
+    [InlineData("No plugins are currently installed.", 0)]
+    public void ExtractPluginPackageNames_RecognizesSupportedPackageFormats(string output, int expectedCount) =>
+        Assert.Equal(expectedCount, RestrictedNodeBbCliService.ExtractPluginPackageNames(output).Count);
+
+    [Fact]
+    public void ExtractPluginPackageNames_DeduplicatesAndSortsCaseInsensitively()
+    {
+        var names = RestrictedNodeBbCliService.ExtractPluginPackageNames(
+            "nodebb-plugin-alpha\\nnodebb-plugin-beta\\nnodebb-plugin-alpha");
+        Assert.Equal(new[] { "nodebb-plugin-alpha", "nodebb-plugin-beta" }, names);
+    }
+
+    [Theory]
     [InlineData("logs.txt")]
     [InlineData("../bad.zip")]
     [InlineData("bad name.zip")]

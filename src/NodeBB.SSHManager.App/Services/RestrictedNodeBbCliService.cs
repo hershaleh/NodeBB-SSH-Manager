@@ -15,8 +15,21 @@ public sealed class RestrictedNodeBbCliService
         @"^[A-Za-z0-9][A-Za-z0-9._-]{0,119}\.zip$",
         RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
 
+    private static readonly Regex PluginPackageName = new(
+        @"(?<![A-Za-z0-9._/-])((?:@[A-Za-z0-9._-]+/)?(?:nodebb-(?:plugin|theme)-|(?:plugin|theme)-)[A-Za-z0-9._-]+)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.IgnoreCase);
+
     private readonly SshServerSession _session;
     public RestrictedNodeBbCliService(SshServerSession session) => _session = session;
+
+    public static IReadOnlyList<string> ExtractPluginPackageNames(string raw)
+    {
+        var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var line in (raw ?? string.Empty).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))
+            foreach (Match match in PluginPackageName.Matches(line))
+                found.Add(match.Groups[1].Value.TrimEnd('.', ',', ':', ';'));
+        return found.ToArray();
+    }
 
     public Task<(int ExitCode, string Output, string Error)> HelpAsync(CancellationToken ct = default) => RunAsync("help", ct);
     public Task<(int ExitCode, string Output, string Error)> ListAsync(CancellationToken ct = default) => RunAsync("list", ct);
