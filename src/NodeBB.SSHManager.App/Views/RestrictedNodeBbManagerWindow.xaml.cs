@@ -126,10 +126,13 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async Task RunAsync(Func<Task<(int ExitCode, string Output, string Error)>> operation, string label)
     {
         if (_busy) return;
-        if (label != "רשימת תוספים") ManagerTabs.SelectedIndex = 2;
+        var keepPluginView = label is "השבתה" or "הסרה" or "עדכון" or "הפעלה" or "רשימת תוספים";
+        if (!keepPluginView) ManagerTabs.SelectedIndex = 2;
         _busy = true; IsEnabled = false;
         SummaryTitle.Text = label + " — בביצוע";
         SummaryText.Text = "הבקשה נשלחה לשרת. ממתין לתשובה...";
+        if (PluginActionStatus is not null && keepPluginView)
+            PluginActionStatus.Text = label + " מתבצע…";
         try
         {
             var result = await operation();
@@ -138,6 +141,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
             if (label == "רשימת תוספים") UpdatePluginCards(raw);
+            if (PluginActionStatus is not null && keepPluginView)
+                PluginActionStatus.Text = result.ExitCode == 0
+                    ? "✓ " + label + " הושלם. " + (label == "רשימת תוספים" ? "הרשימה עודכנה." : "אפשר להמשיך לנהל תוספים.")
+                    : "⚠ " + label + " לא הושלם. " + TranslateError(raw);
+            if (keepPluginView) ManagerTabs.SelectedIndex = 1;
         }
         catch (Exception ex)
         {
@@ -147,7 +155,34 @@ public partial class RestrictedNodeBbManagerWindow : Window
             SummaryText.Text = TranslateError(ex.Message);
             DiagnosticLogService.Instance.Error("RestrictedCLI", "UiActionFailed", ex);
         }
-        finally { _busy = false; IsEnabled = true; }
+        finally
+        {
+            _busy = false;
+            IsEnabled = true;
+            if (label is "השבתה" or "הסרה")
+            {
+                ManagerTabs.SelectedIndex = 1;
+                try
+                {
+                    var refreshed = await _service.ListAsync();
+                    if (refreshed.ExitCode == 0)
+                    {
+                        var refreshedRaw = string.Join(Environment.NewLine,
+                            new[] { refreshed.Output, refreshed.Error }.Where(v => !string.IsNullOrWhiteSpace(v)));
+                        _lastOutput = "[רענון רשימת תוספים]" + Environment.NewLine + refreshedRaw.Trim();
+                        TerminalOutputBox.Text = _lastOutput;
+                        UpdatePluginCards(refreshedRaw);
+                    }
+                }
+                catch (Exception refreshError)
+                {
+                    if (PluginActionStatus is not null)
+                        PluginActionStatus.Text += " רענון הרשימה נכשל; אפשר לנסות שוב.";
+                    DiagnosticLogService.Instance.Warning("RestrictedCLI", "PluginRefreshAfterActionFailed",
+                        "Could not refresh plugin list after an action.", refreshError, "restricted server");
+                }
+            }
+        }
     }
 
     private void ShowHebrewSummary(string label, int exitCode, string raw)
@@ -240,8 +275,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         if (string.IsNullOrWhiteSpace(package)) return;
         if (MessageBox.Show(this, $"האם לבצע {label} עבור {package}? השרת מפעיל גיבוי אוטומטי לפני שינוי.", "אישור פעולה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => action(package, CancellationToken.None), label);
-        if ((label is "השבתה" or "הסרה") && _lastOutput.Contains("הסתיים בהצלחה", StringComparison.Ordinal))
-            await RunAsync(() => _service.ListAsync(), "רשימת תוספים");
+        ManagerTabs.SelectedIndex = 1;
     }
 
     private void ToggleTerminal_Click(object sender, RoutedEventArgs e)

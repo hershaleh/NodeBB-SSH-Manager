@@ -121,7 +121,8 @@
     <TabItem Header="ניהול תוספים">
      <Grid Margin="0,12,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <StackPanel><TextBlock Text="ספריית התוספים" FontSize="21" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="PluginCountText" Text="טען את רשימת התוספים מהשרת" Foreground="#75849A" FontSize="12" Margin="0,4,0,0"/></StackPanel>
+       <StackPanel><TextBlock Text="ספריית התוספים" FontSize="21" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="PluginCountText" Text="טען את רשימת התוספים מהשרת" Foreground="#75849A" FontSize="12" Margin="0,4,0,0"/>
+        <TextBlock x:Name="PluginActionStatus" Text="בחר תוסף כדי לנהל אותו" Foreground="#4965B8" FontSize="11" FontWeight="SemiBold" Margin="0,6,0,0"/></StackPanel>
        <Button Grid.Column="1" Content="רענון מהשרת" Click="List_Click" Padding="15,9" VerticalAlignment="Center"/>
       </Grid>
       <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="16" Padding="16" Margin="0,14,0,14">
