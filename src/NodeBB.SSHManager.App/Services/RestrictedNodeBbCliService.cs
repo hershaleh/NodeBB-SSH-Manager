@@ -22,7 +22,7 @@ public sealed class RestrictedNodeBbCliService
     private readonly SshServerSession _session;
     public RestrictedNodeBbCliService(SshServerSession session) => _session = session;
 
-    public static IReadOnlyList<string> ExtractPluginPackageNames(string raw)
+    public static IReadOnlyList<string> ExtractPluginPackageNames(string? raw)
     {
         var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
         foreach (var line in (raw ?? string.Empty).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries))

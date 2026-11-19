@@ -276,6 +276,23 @@ public partial class RestrictedNodeBbManagerWindow : Window
         return TargetBox.Text.Trim();
     }
 
+    private void PluginCopy_Click(object sender, RoutedEventArgs e)
+    {
+        var package = SelectedPlugin(sender);
+        if (string.IsNullOrWhiteSpace(package)) return;
+        try
+        {
+            Clipboard.SetText(package);
+            PluginActionStatus.Text = $"שם החבילה {package} הועתק ללוח.";
+        }
+        catch (Exception ex)
+        {
+            PluginActionStatus.Text = "לא ניתן להעתיק את שם החבילה.";
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "CopyPluginNameFailed",
+                "Could not copy plugin package name to clipboard.", ex, ServerLabel.Text);
+        }
+    }
+
     private async void PluginUpdate_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "עדכון", _service.UpdateAsync);
     private async void PluginDisable_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "השבתה", _service.DisableAsync);
     private async void PluginRemove_Click(object sender, RoutedEventArgs e) => await RunPluginCardActionAsync(sender, "הסרה", _service.RemoveAsync);
