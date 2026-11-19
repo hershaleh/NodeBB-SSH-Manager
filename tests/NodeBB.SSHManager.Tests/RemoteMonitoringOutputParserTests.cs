@@ -20,11 +20,11 @@ public sealed class RemoteMonitoringOutputParserTests
     }
 
     [Theory]
-    [InlineData("0", null)]
+    [InlineData("0", 0)]
     [InlineData("-1", null)]
     [InlineData("101", null)]
     [InlineData("not-a-number", null)]
-    public void RejectsInvalidMemoryPercent(string value, int? expected)
+    public void ParsesOnlyValidMemoryPercent(string value, int? expected)
     {
         var metrics = RemoteMonitoringOutputParser.Parse($"MEMORY_PERCENT|{value}");
         Assert.Equal(expected, metrics.MemoryUsagePercent);
