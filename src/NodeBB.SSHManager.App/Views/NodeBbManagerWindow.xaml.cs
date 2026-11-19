@@ -18,6 +18,7 @@ public partial class NodeBbManagerWindow : Window
         _service = new NodeBbRemoteService(session);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         InstallationsList.ItemsSource = _installations;
+        InstallationPicker.ItemsSource = _installations;
         UpdateActionAvailability();
         Loaded += async (_, _) => await DetectAndOpenManagerAsync();
     }
@@ -52,22 +53,25 @@ public partial class NodeBbManagerWindow : Window
     }
 
     private void InstallationsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        => UpdateActionAvailability();
+    { if (InstallationsList.SelectedItem is NodeBbInstallation item) { if (InstallationPicker.SelectedItem != item) InstallationPicker.SelectedItem = item; } UpdateActionAvailability(); }
+
+    private void InstallationPicker_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    { if (InstallationPicker.SelectedItem is NodeBbInstallation item) { if (InstallationsList.SelectedItem != item) InstallationsList.SelectedItem = item; SelectedInstallationText.Text = $"{item.Path}  ·  {item.Version}"; } }
 
     private void UpdateActionAvailability()
     {
         var enabled = !_isBusy && InstallationsList.SelectedItem is NodeBbInstallation;
-        StartButton.IsEnabled = enabled;
-        StopButton.IsEnabled = enabled;
-        RestartButton.IsEnabled = enabled;
-        BuildButton.IsEnabled = enabled;
-        UpgradeButton.IsEnabled = enabled;
-        PackagesButton.IsEnabled = enabled;
-        BackupsButton.IsEnabled = enabled;
-        DatabaseButton.IsEnabled = enabled;
-        LogsButton.IsEnabled = enabled;
-        SecurityButton.IsEnabled = enabled;
-        DiscoverButton.IsEnabled = !_isBusy;
+        if (StartButton is not null) StartButton.IsEnabled = enabled;
+        if (StopButton is not null) StopButton.IsEnabled = enabled;
+        if (RestartButton is not null) RestartButton.IsEnabled = enabled;
+        if (BuildButton is not null) BuildButton.IsEnabled = enabled;
+        if (UpgradeButton is not null) UpgradeButton.IsEnabled = enabled;
+        if (PackagesButton is not null) PackagesButton.IsEnabled = enabled;
+        if (BackupsButton is not null) BackupsButton.IsEnabled = enabled;
+        if (DatabaseButton is not null) DatabaseButton.IsEnabled = enabled;
+        if (LogsButton is not null) LogsButton.IsEnabled = enabled;
+        if (SecurityButton is not null) SecurityButton.IsEnabled = enabled;
+        if (DiscoverButton is not null) DiscoverButton.IsEnabled = !_isBusy;
     }
 
     private async void Discover_Click(object sender, RoutedEventArgs e) =>
@@ -81,7 +85,7 @@ public partial class NodeBbManagerWindow : Window
             var found = await _service.DiscoverAsync();
             _installations.Clear();
             foreach (var item in found) _installations.Add(item);
-            if (found.Count > 0) InstallationsList.SelectedIndex = 0;
+            if (found.Count > 0) { InstallationsList.SelectedIndex = 0; InstallationPicker.SelectedIndex = 0; }
             StatusText.Text = found.Count == 0
                 ? "לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH."
                 : $"נמצאו {found.Count} התקנות. נבחרה ההתקנה הראשונה.";
@@ -188,6 +192,12 @@ public partial class NodeBbManagerWindow : Window
         }
         finally { SetBusy(false, StatusText.Text); }
     }
+
+    private void Terminal_Click(object sender, RoutedEventArgs e) => new SshTerminalWindow(_session) { Owner = this }.Show();
+
+    private void Monitoring_Click(object sender, RoutedEventArgs e) => new ServerMonitoringWindow(_session) { Owner = this }.ShowDialog();
+    private void Diagnostics_Click(object sender, RoutedEventArgs e) => new ServerDiagnosticsWindow(_session) { Owner = this }.ShowDialog();
+    private void Services_Click(object sender, RoutedEventArgs e) => new SystemServicesWindow(_session) { Owner = this }.ShowDialog();
 
     private void SetBusy(bool busy, string message)
     {

@@ -33,8 +33,22 @@ public sealed class RestrictedNodeBbCliService
     public Task<(int ExitCode, string Output, string Error)> InstallAsync(string target, CancellationToken ct = default)
     {
         target = ValidateInstallTarget(target);
+        if (ZipName.IsMatch(target)) return RunAsync("install-zip " + target, ct);
+        if (GitHubTarget.IsMatch(target)) return RunAsync("install-github " + target, ct);
         return RunAsync("install " + target, ct);
     }
+
+    public Task<(int ExitCode, string Output, string Error)> InstallNpmAsync(string package, CancellationToken ct = default)
+    { package = ValidatePackage(package); return RunAsync("install " + package, ct); }
+
+    public Task<(int ExitCode, string Output, string Error)> InstallGitHubAsync(string url, CancellationToken ct = default)
+    { url = ValidateGitHubTarget(url); return RunAsync("install-github " + url, ct); }
+
+    public Task<(int ExitCode, string Output, string Error)> InstallZipAsync(string fileName, CancellationToken ct = default)
+    { fileName = ValidateZipName(fileName); return RunAsync("install-zip " + fileName, ct); }
+
+    public static string ValidateGitHubTarget(string? target)
+    { target = target?.Trim() ?? ""; if (!GitHubTarget.IsMatch(target)) throw new ArgumentException("יש להזין כתובת HTTPS תקינה של GitHub בפורמט https://github.com/owner/repo או עם #branch."); return target; }
     public Task<(int ExitCode, string Output, string Error)> UpdateAsync(string package, CancellationToken ct = default)
     {
         package = ValidatePackage(package);

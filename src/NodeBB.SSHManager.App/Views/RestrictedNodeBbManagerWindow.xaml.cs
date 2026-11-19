@@ -8,6 +8,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
 {
     private readonly RestrictedNodeBbCliService _service;
     private bool _busy;
+    private string _lastOutput = "";
 
     public RestrictedNodeBbManagerWindow(SshServerSession session, string initialHelp)
     {
@@ -15,6 +16,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         _service = new RestrictedNodeBbCliService(session);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}:{session.Profile.Port} · nodebb-plugins";
         OutputBox.Text = initialHelp;
+        TerminalOutputBox.Text = initialHelp;
     }
 
     private async void List_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListAsync(), "רשימת תוספים");
@@ -46,10 +48,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async void Install_Click(object sender, RoutedEventArgs e)
     {
         var target = TargetBox.Text.Trim();
-        try { RestrictedNodeBbCliService.ValidateInstallTarget(target); }
+        var source = (InstallSourceBox.SelectedIndex);
+        try { if (source == 0) RestrictedNodeBbCliService.ValidatePackage(target); else if (source == 1) RestrictedNodeBbCliService.ValidateGitHubTarget(target); else RestrictedNodeBbCliService.ValidateZipName(target); }
         catch (Exception ex) { MessageBox.Show(this, ex.Message, "יעד התקנה לא תקין", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         if (MessageBox.Show(this, $"להתקין את היעד הבא?\n\n{target}\n\nהשרת מבצע גיבוי אוטומטי לפני התקנה.", "אישור התקנה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        await RunAsync(() => _service.InstallAsync(target), "התקנה");
+        await RunAsync(() => source switch { 0 => _service.InstallNpmAsync(target), 1 => _service.InstallGitHubAsync(target), _ => _service.InstallZipAsync(target) }, "התקנה");
     }
     private async void Update_Click(object sender, RoutedEventArgs e) => await PackageActionAsync("עדכון", _service.UpdateAsync);
     private async void Activate_Click(object sender, RoutedEventArgs e) => await PackageActionAsync("הפעלה", _service.ActivateAsync);
@@ -84,11 +87,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
             var result = await operation();
             var output = string.Join(Environment.NewLine + Environment.NewLine,
                 new[] { result.Output.Trim(), result.Error.Trim() }.Where(x => !string.IsNullOrWhiteSpace(x)));
-            OutputBox.Text = $"[{label}] {(result.ExitCode == 0 ? "הסתיים בהצלחה" : $"נכשל (קוד {result.ExitCode})")}\r\n\r\n{(string.IsNullOrWhiteSpace(output) ? "השרת לא החזיר פלט." : output)}";
+            _lastOutput = $"[{label}] {(result.ExitCode == 0 ? "הסתיים בהצלחה" : $"נכשל (קוד {result.ExitCode})")}\r\n\r\n{(string.IsNullOrWhiteSpace(output) ? "השרת לא החזיר פלט." : output)}";
+            OutputBox.Text = _lastOutput; TerminalOutputBox.Text = _lastOutput;
         }
         catch (Exception ex)
         {
-            OutputBox.Text = $"[{label}] שגיאה\r\n\r\n{ex.Message}";
+            _lastOutput = $"[{label}] שגיאה\r\n\r\n{ex.Message}"; OutputBox.Text = _lastOutput; TerminalOutputBox.Text = _lastOutput;
             DiagnosticLogService.Instance.Error("RestrictedCLI", "UiActionFailed", ex);
         }
         finally { _busy = false; IsEnabled = true; }
