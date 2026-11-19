@@ -15,6 +15,8 @@ public sealed class ServerProfile
     public string Host { get; set; } = "";
     public int Port { get; set; } = 22;
     public string Username { get; set; } = "";
+    public bool IsFavorite { get; set; }
+    public string FavoriteGlyph => IsFavorite ? "★" : "☆";
     public SshAuthenticationType AuthenticationType { get; set; } = SshAuthenticationType.PrivateKey;
     public string PrivateKeyPath { get; set; } = "";
     public string? KnownHostFingerprint { get; set; }

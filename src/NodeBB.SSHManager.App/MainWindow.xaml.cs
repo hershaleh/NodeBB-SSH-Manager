@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
 using Microsoft.Win32;
@@ -21,7 +22,9 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ServersList.ItemsSource = _profiles;
-        CollectionViewSource.GetDefaultView(_profiles).Filter = FilterServerProfile;
+        var profilesView = CollectionViewSource.GetDefaultView(_profiles);
+        profilesView.Filter = FilterServerProfile;
+        profilesView.SortDescriptions.Add(new SortDescription(nameof(ServerProfile.IsFavorite), ListSortDirection.Descending));
         LoadProfiles();
         DiagnosticLogService.Instance.Info("MainWindow", "DashboardLoaded", "Main dashboard loaded.");
         Closed += (_, _) =>
@@ -195,7 +198,39 @@ public partial class MainWindow : Window
         var container = System.Windows.Controls.ItemsControl.ContainerFromElement(ServersList, target)
             as System.Windows.Controls.ListBoxItem;
         if (container?.DataContext is ServerProfile profile)
+        {
             ServersList.SelectedItem = profile;
+            if (menu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Name == "FavoriteMenuItem") is { } favoriteItem)
+                favoriteItem.Header = profile.IsFavorite ? "הסר מהמועדפים" : "הוסף למועדפים";
+        }
+    }
+
+    private void FavoriteButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is ServerProfile profile)
+            SetFavorite(profile);
+    }
+
+    private void ToggleFavorite_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is ServerProfile profile)
+            SetFavorite(profile);
+    }
+
+    private void SetFavorite(ServerProfile profile)
+    {
+        var previous = profile.IsFavorite;
+        profile.IsFavorite = !previous;
+        if (!SaveProfiles())
+        {
+            profile.IsFavorite = previous;
+            return;
+        }
+        CollectionViewSource.GetDefaultView(_profiles).Refresh();
+        ServersList.Items.Refresh();
+        ServersList.SelectedItem = profile;
+        DiagnosticLogService.Instance.Info("Profiles", profile.IsFavorite ? "ServerFavorited" : "ServerUnfavorited",
+            profile.IsFavorite ? "Server profile added to favorites." : "Server profile removed from favorites.", profile.Name);
     }
 
     private void GlobalMenu_Click(object sender, RoutedEventArgs e)

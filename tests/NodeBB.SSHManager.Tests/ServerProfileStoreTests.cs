@@ -39,6 +39,7 @@ public sealed class ServerProfileStoreTests : IDisposable
         Assert.Equal(profile.AuthenticationType, loaded.AuthenticationType);
         Assert.Equal(profile.PrivateKeyPath, loaded.PrivateKeyPath);
         Assert.Equal(profile.KnownHostFingerprint, loaded.KnownHostFingerprint);
+        Assert.Equal(profile.IsFavorite, loaded.IsFavorite);
     }
 
     [Fact]
@@ -130,7 +131,8 @@ public sealed class ServerProfileStoreTests : IDisposable
         Username = "nodebb",
         AuthenticationType = SshAuthenticationType.PrivateKey,
         PrivateKeyPath = Path.Combine(Path.GetTempPath(), "id_ed25519"),
-        KnownHostFingerprint = "SHA256:example-fingerprint"
+        KnownHostFingerprint = "SHA256:example-fingerprint",
+        IsFavorite = true
     };
 
     public void Dispose()
