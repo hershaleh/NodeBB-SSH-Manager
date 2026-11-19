@@ -65,7 +65,7 @@ public partial class ServerComparisonWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Warning("ServerComparison", "ServerCollectionFailed",
-                "A server could not be included in the comparison.", ex.Message, session.Profile.Name);
+                "A server could not be included in the comparison.", ex, session.Profile.Name);
             return Empty(session, "לא ניתן לאסוף נתונים: " + ex.Message);
         }
     }
