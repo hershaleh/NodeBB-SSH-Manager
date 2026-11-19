@@ -386,6 +386,25 @@ public partial class MainWindow : Window
         ServersList.Items.Refresh(); UpdateServerActions(); RefreshDashboard();
     }
 
+    private void CopySshCommand_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is not ServerProfile profile) return;
+        try
+        {
+            var command = SshCommandFormatter.FormatPowerShell(profile);
+            Clipboard.SetText(command);
+            MessageBox.Show(this,
+                "פקודת SSH הועתקה ללוח. הפקודה אינה כוללת סיסמה; בחיבור מבוסס סיסמה תתבקש להזין אותה בחלון PowerShell.",
+                "הפקודה הועתקה", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Warning("Profiles", "SshCommandCopyFailed",
+                "Could not create or copy an SSH command.", ex, profile.Name);
+            MessageBox.Show(this, "לא ניתן ליצור או להעתיק את פקודת SSH.", "שגיאה", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
     private void DuplicateServer_Click(object sender, RoutedEventArgs e)
     {
         if (ServersList.SelectedItem is not ServerProfile selected) return;

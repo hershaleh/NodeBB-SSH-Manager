@@ -43,6 +43,40 @@ public sealed class ServerProfileStoreTests : IDisposable
     }
 
     [Fact]
+    public void FormatPowerShell_BuildsPasswordAuthenticationCommandWithoutSecrets()
+    {
+        var profile = CreateProfile();
+        profile.AuthenticationType = SshAuthenticationType.Password;
+
+        var command = SshCommandFormatter.FormatPowerShell(profile);
+
+        Assert.Equal("ssh -p 22 'nodebb@forum.example.org'", command);
+        Assert.DoesNotContain("password", command, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void FormatPowerShell_IncludesQuotedPrivateKeyPath()
+    {
+        var profile = CreateProfile();
+        profile.PrivateKeyPath = @"C:\Users\Test User\key's id_ed25519";
+
+        var command = SshCommandFormatter.FormatPowerShell(profile);
+
+        Assert.Equal("ssh -p 22 -i 'C:\\Users\\Test User\\key''s id_ed25519' 'nodebb@forum.example.org'", command);
+    }
+
+    [Fact]
+    public void FormatPowerShell_RejectsInvalidConnectionDetails()
+    {
+        var profile = CreateProfile();
+        profile.Port = 0;
+        Assert.Throws<ArgumentException>(() => SshCommandFormatter.FormatPowerShell(profile));
+        profile.Port = 22;
+        profile.Host = " ";
+        Assert.Throws<ArgumentException>(() => SshCommandFormatter.FormatPowerShell(profile));
+    }
+
+    [Fact]
     public void CreateDuplicate_GeneratesNewIdentityAndDoesNotCopyFavoriteOrRuntimeState()
     {
         var original = CreateProfile();

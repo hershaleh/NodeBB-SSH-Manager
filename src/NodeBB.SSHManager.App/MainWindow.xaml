@@ -227,6 +227,7 @@
                                                 <MenuItem Header="בדיקת חיבור" Click="TestConnection_Click"/>
                                                 <MenuItem Header="עריכת פרופיל" Click="EditServer_Click"/>
                                                 <MenuItem Header="שכפול פרופיל" Click="DuplicateServer_Click"/>
+                                                <MenuItem Header="העתק פקודת SSH" Click="CopySshCommand_Click"/>
                                                 <MenuItem Header="שכח פרטי התחברות" Click="ForgetCredential_Click"/>
                                                 <Separator/>
                                                 <MenuItem Header="הסר פרופיל מהמחשב" Click="RemoveServer_Click"/>
