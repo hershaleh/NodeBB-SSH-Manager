@@ -20,36 +20,7 @@ public partial class NodeBbManagerWindow : Window
         InstallationsList.ItemsSource = _installations;
         InstallationPicker.ItemsSource = _installations;
         UpdateActionAvailability();
-        Loaded += async (_, _) => await DetectAndOpenManagerAsync();
-    }
-
-    
-    private async Task DetectAndOpenManagerAsync()
-    {
-        try
-        {
-            SetBusy(true, "מזהה את ממשק הניהול בשרת...");
-            var probe = await _session.ExecuteAsync("help");
-            var help = probe.Output + Environment.NewLine + probe.Error;
-            if (help.Contains("NodeBB Plugin Management CLI (Restricted)", StringComparison.OrdinalIgnoreCase)
-                || help.Contains("nodebb-plugins>", StringComparison.OrdinalIgnoreCase))
-            {
-                new RestrictedNodeBbManagerWindow(_session, help) { Owner = this }.ShowDialog();
-                Close();
-                return;
-            }
-
-            await DiscoverInstallationsAsync();
-        }
-        catch (Exception ex)
-        {
-            DiagnosticLogService.Instance.Error("NodeBBManagerUI", "InterfaceDetectionFailed", ex, _session.Profile.Name);
-            StatusText.Text = "זיהוי ממשק השרת נכשל: " + ex.Message;
-        }
-        finally
-        {
-            if (IsVisible) SetBusy(false, StatusText.Text);
-        }
+        Loaded += async (_, _) => await DiscoverInstallationsAsync();
     }
 
     private void InstallationsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

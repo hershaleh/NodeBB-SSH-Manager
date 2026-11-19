@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using System.IO.Compression;
 
 namespace NodeBB.SSHManager.Services;
 
@@ -29,6 +30,40 @@ public sealed class RestrictedNodeBbCliService
         return RunAsync($"logs {lines}", ct);
     }
     public Task<(int ExitCode, string Output, string Error)> ListZipsAsync(CancellationToken ct = default) => RunAsync("list-zips", ct);
+
+    public async Task<(int ExitCode, string Output, string Error)> UploadZipAsync(
+        string localPath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(localPath) || !File.Exists(localPath))
+            throw new FileNotFoundException("לא נמצא קובץ ZIP שנבחר.", localPath);
+
+        var info = new FileInfo(localPath);
+        const long maxBytes = 25L * 1024 * 1024;
+        if (info.Length <= 0 || info.Length > maxBytes)
+            throw new InvalidDataException("גודל קובץ ZIP חייב להיות בין 1 בייט ל־25MB.");
+
+        var fileName = ValidateZipName(Path.GetFileName(localPath));
+        // Verify that the selected file is a readable ZIP before sending it.
+        using (var archiveStream = File.OpenRead(localPath))
+        using (var archive = new ZipArchive(archiveStream, ZipArchiveMode.Read, leaveOpen: false))
+        {
+            if (archive.Entries.Count == 0)
+                throw new InvalidDataException("קובץ ZIP אינו מכיל קבצים.");
+        }
+
+        DiagnosticLogService.Instance.Info("RestrictedCLI", "ZipUploadStarted",
+            $"Uploading ZIP file ({info.Length} bytes) through the restricted SSH stdin channel.", _session.Profile.Name);
+        await using var source = new FileStream(localPath, FileMode.Open, FileAccess.Read, FileShare.Read,
+            81920, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        var result = await _session.ExecuteWithInputAsync("upload-zip " + fileName, source, ct);
+        if (result.ExitCode == 0)
+            DiagnosticLogService.Instance.Info("RestrictedCLI", "ZipUploadCompleted",
+                "ZIP upload completed through the restricted SSH stdin channel.", _session.Profile.Name);
+        else
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "ZipUploadFailed",
+                $"ZIP upload failed with exit code {result.ExitCode}.", null, _session.Profile.Name);
+        return result;
+    }
 
     public Task<(int ExitCode, string Output, string Error)> InstallAsync(string target, CancellationToken ct = default)
     {

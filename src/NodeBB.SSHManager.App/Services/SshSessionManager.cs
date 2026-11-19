@@ -52,6 +52,32 @@ public sealed class SshServerSession : IDisposable
         finally { _commandLock.Release(); }
     }
 
+    public async Task<(int ExitCode, string Output, string Error)> ExecuteWithInputAsync(
+        string command, Stream input, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        await _commandLock.WaitAsync(cancellationToken);
+        try
+        {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            if (!Client.IsConnected) throw new InvalidOperationException("אין חיבור SSH פעיל.");
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using var cmd = Client.CreateCommand(command);
+            cmd.CommandTimeout = TimeSpan.FromMinutes(5);
+            var execution = cmd.ExecuteAsync(cancellationToken);
+            using (var commandInput = cmd.CreateInputStream())
+            {
+                await input.CopyToAsync(commandInput, 81920, cancellationToken);
+                await commandInput.FlushAsync(cancellationToken);
+            }
+            await execution;
+            return (cmd.ExitStatus ?? -1, cmd.Result, cmd.Error);
+        }
+        finally { _commandLock.Release(); }
+    }
+
     public SftpClient CreateSftpClient()
     {
         var auth = SshSessionManager.CreateAuthentication(Profile, _secret);

@@ -1,8 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.RestrictedNodeBbManagerWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="NodeBB · סביבת ניהול" Width="1120" Height="820" MinWidth="900" MinHeight="650"
- WindowStartupLocation="CenterOwner" Background="#F3F5FA" FlowDirection="RightToLeft" FontFamily="Segoe UI">
+ Title="NodeBB · סביבת ניהול" Width="1180" Height="850" MinWidth="940" MinHeight="680"
+ WindowStartupLocation="CenterOwner" Background="#F5F7FC" FlowDirection="RightToLeft" FontFamily="Segoe UI">
  <Window.Resources>
   <Style x:Key="Tile" TargetType="Button"><Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E5E9F1"/><Setter Property="BorderThickness" Value="1"/><Setter Property="Padding" Value="17"/><Setter Property="Cursor" Value="Hand"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button"><Border x:Name="b" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="15" Padding="{TemplateBinding Padding}"><ContentPresenter/></Border><ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="BorderBrush" Value="#AABAF2"/><Setter TargetName="b" Property="Background" Value="#FCFCFF"/></Trigger><Trigger Property="IsPressed" Value="True"><Setter TargetName="b" Property="Opacity" Value=".8"/></Trigger></ControlTemplate.Triggers></ControlTemplate></Setter.Value></Setter></Style>
  </Window.Resources>
@@ -46,32 +46,32 @@
       <Border Grid.Row="1" Background="White" BorderBrush="#E5E9F1" BorderThickness="1" CornerRadius="14" Padding="16" Margin="0,14,0,14">
        <StackPanel>
         <TextBlock Text="מקור התקנה" FontWeight="SemiBold" Foreground="#344054"/>
-        <ComboBox x:Name="InstallSourceBox" SelectedIndex="0" Height="36" Margin="0,8,0,10" Padding="8">
+        <ComboBox x:Name="InstallSourceBox" SelectedIndex="0" Height="38" Margin="0,8,0,10" Padding="8">
          <ComboBoxItem Content="npm — חבילה במאגר npm"/>
          <ComboBoxItem Content="GitHub — כתובת HTTPS"/>
          <ComboBoxItem Content="ZIP — קובץ שכבר הועלה לשרת"/>
         </ComboBox>
-        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-         <TextBox x:Name="TargetBox" Height="38" Padding="10" VerticalContentAlignment="Center" FlowDirection="LeftToRight"/>
-         <Button Grid.Column="1" Content="התקן" Click="Install_Click" Padding="20,9" Margin="10,0,0,0" Background="#405CE8" Foreground="White" BorderThickness="0"/>
+        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+         <TextBox x:Name="TargetBox" Height="40" Padding="11" VerticalContentAlignment="Center" FlowDirection="LeftToRight"/>
+         <Button Grid.Column="1" Content="בחר ZIP והעלה" Click="UploadZip_Click" Padding="15,9" Margin="8,0,0,0" Background="#E9EEFF" Foreground="#344FC2" BorderBrush="#D7DFFF"/>
+         <Button Grid.Column="2" Content="התקן" Click="Install_Click" Padding="22,9" Margin="8,0,0,0" Background="#405CE8" Foreground="White" BorderThickness="0"/>
         </Grid>
-        <TextBlock Text="ZIP: יש להזין את שם הקובץ שכבר הועלה לשרת. העלאת קובץ מהמחשב תתווסף לאחר השלמת ממשק ההעברה הבינארית המאובטח." TextWrapping="Wrap" Foreground="#8994A6" FontSize="10" Margin="0,8,0,0"/>
+        <TextBlock Text="אפשר להעלות קובץ ZIP ישירות מהמחשב (עד 25MB). לאחר ההעלאה שם הקובץ יופיע בשדה ותוכל להתקין אותו." TextWrapping="Wrap" Foreground="#66758C" FontSize="11" Margin="0,9,0,0"/>
        </StackPanel>
       </Border>
-      <Grid Grid.Row="2">
-       <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-       <WrapPanel Grid.Row="0" Margin="0,0,0,10">
-        <Button Content="עדכון" Click="Update_Click" Padding="12,7" Margin="0,0,7,0"/>
-        <Button Content="הפעלה" Click="Activate_Click" Padding="12,7" Margin="0,0,7,0"/>
-        <Button Content="השבתה" Click="Disable_Click" Padding="12,7" Margin="0,0,7,0"/>
-        <Button Content="הסרה" Click="Remove_Click" Padding="12,7" Margin="0,0,7,0"/>
-        <Button Content="מחיקת ZIP" Click="DeleteZip_Click" Padding="12,7"/>
-       </WrapPanel>
-       <Border Grid.Row="1" Background="#101828" CornerRadius="12" Padding="12">
-        <TextBox x:Name="OutputBox" IsReadOnly="True" TextWrapping="NoWrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" FlowDirection="LeftToRight" Background="Transparent" Foreground="#E6EDF7" BorderThickness="0"/>
-       </Border>
-      </Grid>
+      <WrapPanel Grid.Row="2" Margin="0,0,0,10">
+       <Button Content="עדכון" Click="Update_Click" Padding="12,7" Margin="0,0,7,0"/>
+       <Button Content="הפעלה" Click="Activate_Click" Padding="12,7" Margin="0,0,7,0"/>
+       <Button Content="השבתה" Click="Disable_Click" Padding="12,7" Margin="0,0,7,0"/>
+       <Button Content="הסרה" Click="Remove_Click" Padding="12,7" Margin="0,0,7,0"/>
+       <Button Content="מחיקת ZIP" Click="DeleteZip_Click" Padding="12,7"/>
+      </WrapPanel>
      </Grid>
+    </TabItem>
+    <TabItem Header="תוצאות ופעילות">
+     <Border Background="#101828" CornerRadius="14" Padding="16" Margin="0,14,0,0">
+      <TextBox x:Name="OutputBox" IsReadOnly="True" TextWrapping="NoWrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" FontSize="12" FlowDirection="LeftToRight" Background="Transparent" Foreground="#E6EDF7" BorderThickness="0"/>
+     </Border>
     </TabItem>
    </TabControl>
    <Border x:Name="TerminalPanel" Grid.Row="1" Background="#101828" CornerRadius="12" Padding="12" Margin="0,12,0,0" Visibility="Collapsed" Height="190">

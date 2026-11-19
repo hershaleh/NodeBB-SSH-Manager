@@ -19,7 +19,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
         TerminalOutputBox.Text = initialHelp;
     }
 
-    private async void List_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListAsync(), "רשימת תוספים");
+    private async void List_Click(object sender, RoutedEventArgs e)
+    {
+        ManagerTabs.SelectedIndex = 2;
+        await RunAsync(() => _service.ListAsync(), "רשימת תוספים");
+    }
     private async void Backup_Click(object sender, RoutedEventArgs e)
     {
         if (MessageBox.Show(this, "ליצור גיבוי מלא של הפורום ורשימת התוספים לפני המשך?", "גיבוי", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
@@ -44,6 +48,34 @@ public partial class RestrictedNodeBbManagerWindow : Window
     }
     private async void Zips_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListZipsAsync(), "קובצי ZIP");
     private async void Help_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.HelpAsync(), "עזרה");
+
+    private async void UploadZip_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "בחירת תוסף ZIP מהמחשב",
+            Filter = "קובצי ZIP (*.zip)|*.zip",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        var info = new FileInfo(dialog.FileName);
+        if (info.Length > 25L * 1024 * 1024)
+        {
+            MessageBox.Show(this, "גודל קובץ ZIP מוגבל ל־25MB.", "הקובץ גדול מדי",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (MessageBox.Show(this, $"להעלות לשרת את הקובץ {info.Name} ({info.Length / 1024.0 / 1024.0:F1}MB)?",
+                "אישור העלאת ZIP", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+
+        await RunAsync(() => _service.UploadZipAsync(dialog.FileName), "העלאת ZIP");
+        if (_lastOutput.Contains("הסתיים בהצלחה", StringComparison.Ordinal))
+        {
+            TargetBox.Text = info.Name;
+            InstallSourceBox.SelectedIndex = 2;
+        }
+    }
 
     private async void Install_Click(object sender, RoutedEventArgs e)
     {
@@ -79,6 +111,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async Task RunAsync(Func<Task<(int ExitCode, string Output, string Error)>> operation, string label)
     {
         if (_busy) return;
+        ManagerTabs.SelectedIndex = 2;
         _busy = true;
         IsEnabled = false;
         OutputBox.Text = $"מבצע: {label}...\r\n";

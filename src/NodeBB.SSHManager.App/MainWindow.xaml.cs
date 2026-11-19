@@ -144,8 +144,33 @@ public partial class MainWindow : Window
     {
         var session = await EnsureConnectedAsync(profile);
         if (session is null) return;
-        new NodeBbManagerWindow(session) { Owner = this }.ShowDialog();
+        await OpenNodeBbManagerAsync(session);
         RefreshDashboard();
+    }
+
+    private async Task OpenNodeBbManagerAsync(SshServerSession session)
+    {
+        try
+        {
+            // Detect the restricted account before opening any window. This prevents
+            // a disabled full-manager window from remaining behind the restricted UI.
+            var probe = await session.ExecuteAsync("help");
+            var help = probe.Output + Environment.NewLine + probe.Error;
+            var restricted = help.Contains("NodeBB Plugin Management CLI (Restricted)", StringComparison.OrdinalIgnoreCase)
+                || help.Contains("nodebb-plugins>", StringComparison.OrdinalIgnoreCase);
+
+            Window manager = restricted
+                ? new RestrictedNodeBbManagerWindow(session, help)
+                : new NodeBbManagerWindow(session);
+            manager.Owner = this;
+            manager.ShowDialog();
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("NodeBBManagerUI", "InterfaceDetectionFailed", ex, session.Profile.Name);
+            MessageBox.Show(this, "לא ניתן לפתוח את ממשק הניהול: " + ex.Message,
+                "שגיאה בפתיחת מנהל NodeBB", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ServerRow_Open_Click(object sender, RoutedEventArgs e)
@@ -383,7 +408,7 @@ public partial class MainWindow : Window
     {
         var session = await GetSelectedSessionAsync();
         if (session is null) return;
-        new NodeBbManagerWindow(session) { Owner = this }.ShowDialog();
+        await OpenNodeBbManagerAsync(session);
     }
 
     private async Task<SshServerSession?> GetSelectedSessionAsync()
