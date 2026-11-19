@@ -43,6 +43,38 @@ public sealed class ServerProfileStoreTests : IDisposable
     }
 
     [Fact]
+    public void CreateDuplicate_GeneratesNewIdentityAndDoesNotCopyFavoriteOrRuntimeState()
+    {
+        var original = CreateProfile();
+        original.IsConnected = true;
+        original.HasSavedCredential = true;
+        original.ConnectionCheckLabel = "נגיש · SSH תקין";
+
+        var duplicate = original.CreateDuplicate("Duplicate");
+
+        Assert.NotEqual(original.Id, duplicate.Id);
+        Assert.Equal("Duplicate", duplicate.Name);
+        Assert.Equal(original.Host, duplicate.Host);
+        Assert.Equal(original.Port, duplicate.Port);
+        Assert.Equal(original.Username, duplicate.Username);
+        Assert.Equal(original.AuthenticationType, duplicate.AuthenticationType);
+        Assert.Equal(original.PrivateKeyPath, duplicate.PrivateKeyPath);
+        Assert.Equal(original.KnownHostFingerprint, duplicate.KnownHostFingerprint);
+        Assert.False(duplicate.IsFavorite);
+        Assert.False(duplicate.IsConnected);
+        Assert.False(duplicate.HasSavedCredential);
+        Assert.Equal("טרם נבדק", duplicate.ConnectionCheckLabel);
+    }
+
+    [Fact]
+    public void CreateDuplicate_RejectsInvalidName()
+    {
+        var profile = CreateProfile();
+        Assert.Throws<ArgumentException>(() => profile.CreateDuplicate(" "));
+        Assert.Throws<ArgumentException>(() => profile.CreateDuplicate(new string('x', 121)));
+    }
+
+    [Fact]
     public void Save_ReplacesExistingFileAndLeavesNoTemporaryFiles()
     {
         var store = new ServerProfileStore(FilePath);

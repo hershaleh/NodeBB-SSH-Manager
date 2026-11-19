@@ -41,4 +41,23 @@ public sealed class ServerProfile
 
     [JsonIgnore]
     public string SavedCredentialLabel => HasSavedCredential ? "סיסמה שמורה במחשב" : "לא נשמרה סיסמה";
+
+    public ServerProfile CreateDuplicate(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.Length > 120)
+            throw new ArgumentException("שם הפרופיל חייב להכיל 1 עד 120 תווים.", nameof(name));
+
+        return new ServerProfile
+        {
+            Id = Guid.NewGuid(),
+            Name = name.Trim(),
+            Host = Host,
+            Port = Port,
+            Username = Username,
+            AuthenticationType = AuthenticationType,
+            PrivateKeyPath = PrivateKeyPath,
+            KnownHostFingerprint = KnownHostFingerprint,
+            IsFavorite = false
+        };
+    }
 }

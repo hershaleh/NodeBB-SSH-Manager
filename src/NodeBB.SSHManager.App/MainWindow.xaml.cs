@@ -386,6 +386,38 @@ public partial class MainWindow : Window
         ServersList.Items.Refresh(); UpdateServerActions(); RefreshDashboard();
     }
 
+    private void DuplicateServer_Click(object sender, RoutedEventArgs e)
+    {
+        if (ServersList.SelectedItem is not ServerProfile selected) return;
+
+        var baseName = $"עותק של {selected.Name}";
+        if (baseName.Length > 120) baseName = baseName[..120];
+        var name = baseName;
+        var suffix = 2;
+        while (_profiles.Any(profile => string.Equals(profile.Name, name, StringComparison.OrdinalIgnoreCase)))
+        {
+            var ending = $" ({suffix++})";
+            name = baseName[..Math.Min(baseName.Length, 120 - ending.Length)] + ending;
+        }
+
+        var duplicate = selected.CreateDuplicate(name);
+        _profiles.Add(duplicate);
+        if (!SaveProfiles())
+        {
+            _profiles.Remove(duplicate);
+            RefreshDashboard();
+            return;
+        }
+
+        DiagnosticLogService.Instance.Info("Profiles", "ServerProfileDuplicated",
+            "A server profile was duplicated without copying saved credentials.", duplicate.Name);
+        ServersList.SelectedItem = duplicate;
+        RefreshDashboard();
+        MessageBox.Show(this,
+            $"נוצר הפרופיל '{duplicate.Name}'. פרטי החיבור נשמרו, אך סיסמה שמורה לא הועתקה. יש לשמור פרטי התחברות בנפרד אם נדרש.",
+            "שכפול הפרופיל הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
     private void RemoveServer_Click(object sender, RoutedEventArgs e)
     {
         if (ServersList.SelectedItem is not ServerProfile selected)
