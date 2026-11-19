@@ -66,6 +66,15 @@ public partial class ServerMonitoringWindow : Window
             MemoryText.Text = metrics.Memory;
             DiskText.Text = metrics.Disk;
             ProcessesText.Text = metrics.TopProcesses;
+            var alerts = new List<string>();
+            var diskPercentages = System.Text.RegularExpressions.Regex.Matches(metrics.Disk, @"\((\d+)%\)")
+                .Select(match => int.Parse(match.Groups[1].Value)).ToArray();
+            if (diskPercentages.Any(value => value >= 90)) alerts.Add("אחת ממחיצות הדיסק בשימוש של 90% ומעלה.");
+            var loadMatch = System.Text.RegularExpressions.Regex.Match(metrics.LoadAverage, @"^\s*(\d+(?:\.\d+)?)");
+            if (loadMatch.Success && double.TryParse(loadMatch.Groups[1].Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var load) && load >= 2)
+                alerts.Add("עומס המערכת גבוה (ממוצע דקה של 2 ומעלה).");
+            HealthAlertsText.Text = alerts.Count == 0 ? "לא זוהו חריגות במדדים הזמינים. נתוני זיכרון מפורטים מוצגים לעיל." : string.Join(Environment.NewLine, alerts.Select(alert => "• " + alert));
+            HealthPanel.Background = alerts.Count == 0 ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose;
             CollectedAtText.Text = $"נאסף: {metrics.CollectedAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
             StatusText.Text = "הנתונים עודכנו.";
         }

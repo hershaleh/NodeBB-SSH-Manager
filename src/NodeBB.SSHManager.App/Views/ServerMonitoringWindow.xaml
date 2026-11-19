@@ -39,6 +39,12 @@
                 <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
                     <StackPanel><TextBlock Text="נפח דיסקים" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="DiskText" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="#43516A"/></StackPanel>
                 </Border>
+                <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                    <StackPanel>
+                        <TextBlock Text="התראות בריאות השרת" FontWeight="SemiBold" FontSize="16"/>
+                        <TextBlock x:Name="HealthAlertsText" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
                 <Border Background="#101827" CornerRadius="12" Padding="18">
                     <StackPanel><TextBlock Text="תהליכים מובילים לפי CPU" Foreground="#DCE7F8" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="ProcessesText" TextWrapping="Wrap" Margin="0,10,0,0" Foreground="#C7F7D4" FontFamily="Consolas" FontSize="12"/></StackPanel>
                 </Border>
