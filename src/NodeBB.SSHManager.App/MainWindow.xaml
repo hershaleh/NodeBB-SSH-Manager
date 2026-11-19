@@ -116,6 +116,7 @@
                                 <MenuItem Header="היסטוריית פעולות מכל השרתים" Click="AllServerHistory_Click"/>
                                 <Separator/>
                                 <MenuItem Header="דוח אבחון האפליקציה" Click="Diagnostics_Click"/>
+                                <MenuItem Header="השוואת שרתים מחוברים" Click="CompareServers_Click"/>
                                 <MenuItem Header="בדיקת ניטור שרת" Click="ServerMonitoring_Click"/>
                                 <MenuItem Header="אבחון שרת" Click="ServerDiagnostics_Click"/>
                             </ContextMenu>

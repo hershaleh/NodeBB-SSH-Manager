@@ -687,6 +687,18 @@ public partial class MainWindow : Window
             MessageBox.Show(this, result.Message, "בדיקת SSH נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
+    private void CompareServers_Click(object sender, RoutedEventArgs e)
+    {
+        var sessions = _sessionManager.Sessions.Where(session => session.IsConnected).ToArray();
+        if (sessions.Length < 2)
+        {
+            MessageBox.Show(this, "כדי להשוות שרתים, יש להתחבר לפחות לשני שרתים במקביל. אפשר להתחבר אליהם דרך רשימת השרתים.",
+                "השוואת שרתים", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        new ServerComparisonWindow(sessions) { Owner = this }.ShowDialog();
+    }
+
     private async void ServerMonitoring_Click(object sender, RoutedEventArgs e)
     {
         var session = await GetSelectedSessionAsync();
