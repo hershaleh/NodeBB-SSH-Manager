@@ -506,7 +506,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
 }
 
 
-public sealed record HistoryDisplayItem(string Timestamp, string Action, string Target, string Result, string ResultColor, string Summary);\n\npublic sealed class PluginCard(string name, string kindLabel)
+public sealed record HistoryDisplayItem(string Timestamp, string Action, string Target, string Result, string ResultColor, string Summary);
+
+public sealed class PluginCard(string name, string kindLabel)
 {
     public string Name { get; } = name;
     public string KindLabel { get; } = kindLabel;
