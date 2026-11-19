@@ -57,16 +57,16 @@
                 </Border>
                 <Border Grid.Column="4" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="פורומים פעילים" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
-                        <TextBlock Text="—" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
-                        <TextBlock Text="יתעדכן לאחר גילוי NodeBB" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                        <TextBlock Text="פרטי התחברות שמורים" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock x:Name="SavedCredentialCountText" Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
+                        <TextBlock Text="מוצפנים באמצעות Windows DPAPI" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
                 <Border Grid.Column="6" Style="{StaticResource CardBorderStyle}">
                     <StackPanel>
-                        <TextBlock Text="התראות" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
-                        <TextBlock Text="0" FontSize="30" FontWeight="Bold" Margin="0,9,0,2"/>
-                        <TextBlock Text="אין התראות חדשות" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
+                        <TextBlock Text="שרת נבחר" Foreground="{StaticResource MutedBrush}" FontSize="12"/>
+                        <TextBlock x:Name="SelectedServerText" Text="—" FontSize="17" FontWeight="Bold" Margin="0,9,0,2" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock x:Name="SelectedServerStatusText" Text="בחר שרת מהרשימה" Foreground="{StaticResource MutedBrush}" FontSize="11"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -93,6 +93,13 @@
                     </StackPanel>
 
                     <DockPanel x:Name="ServerListPanel" Visibility="Collapsed">
+                        <StackPanel DockPanel.Dock="Top" Margin="0,0,0,12">
+                            <TextBox x:Name="ServerSearchBox" Height="36" Padding="10,7" FontSize="13"
+                                     ToolTip="חיפוש לפי שם שרת, כתובת או משתמש"
+                                     TextChanged="ServerSearchBox_TextChanged"/>
+                            <TextBlock x:Name="VisibleServerCountText" Foreground="{StaticResource MutedBrush}"
+                                       FontSize="11" Margin="2,5,0,0" Text="0 שרתים מוצגים"/>
+                        </StackPanel>
                         <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,14">
                             <Button x:Name="ConnectButton" Content="התחבר" Click="Connect_Click" Padding="14,8" Margin="0,0,7,7" Background="#4263EB" Foreground="White" BorderThickness="0"/>
                             <Button x:Name="DisconnectButton" Content="התנתק" Click="Disconnect_Click" Padding="14,8" Margin="0,0,7,7"/>

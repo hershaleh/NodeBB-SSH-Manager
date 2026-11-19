@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Data;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
@@ -20,6 +21,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         ServersList.ItemsSource = _profiles;
+        CollectionViewSource.GetDefaultView(_profiles).Filter = FilterServerProfile;
         LoadProfiles();
         DiagnosticLogService.Instance.Info("MainWindow", "DashboardLoaded", "Main dashboard loaded.");
         Closed += (_, _) =>
@@ -124,6 +126,32 @@ public partial class MainWindow : Window
     {
         UpdateServerActions();
         RefreshDashboard();
+    }
+
+    private bool FilterServerProfile(object item)
+    {
+        if (item is not ServerProfile profile) return false;
+        var query = ServerSearchBox?.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(query)) return true;
+        return profile.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || profile.Host.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || profile.Username.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || profile.Port.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void ServerSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        CollectionViewSource.GetDefaultView(_profiles).Refresh();
+        UpdateVisibleServerCount();
+    }
+
+    private void UpdateVisibleServerCount()
+    {
+        if (VisibleServerCountText is null) return;
+        var visible = CollectionViewSource.GetDefaultView(_profiles).Cast<object>().Count();
+        VisibleServerCountText.Text = visible == _profiles.Count
+            ? $"{visible} שרתים מוצגים"
+            : $"מוצגים {visible} מתוך {_profiles.Count} שרתים";
     }
 
     private void UpdateServerActions()
@@ -446,8 +474,22 @@ public partial class MainWindow : Window
         ServerCountText.Text = _profiles.Count.ToString();
         ServerTotalText.Text = $"{_profiles.Count} שרתים";
         ConnectedCountText.Text = _sessionManager.ConnectedCount.ToString();
+        SavedCredentialCountText.Text = _profiles.Count(p => p.HasSavedCredential).ToString();
+        if (ServersList.SelectedItem is ServerProfile selected)
+        {
+            SelectedServerText.Text = selected.Name;
+            SelectedServerStatusText.Text = _sessionManager.TryGet(selected.Id, out _)
+                ? "מחובר באמצעות SSH"
+                : $"{selected.Host}:{selected.Port} · לא מחובר";
+        }
+        else
+        {
+            SelectedServerText.Text = "—";
+            SelectedServerStatusText.Text = "בחר שרת מהרשימה";
+        }
         EmptyState.Visibility = _profiles.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         ServerListPanel.Visibility = _profiles.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+        UpdateVisibleServerCount();
         UpdateServerActions();
     }
 
