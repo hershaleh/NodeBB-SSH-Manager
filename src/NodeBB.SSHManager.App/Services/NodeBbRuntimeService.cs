@@ -119,7 +119,7 @@ printf 'MANUAL|CLI\n'
             "OPENRC" => PrivilegedCommand($"rc-service {identifier} {action}"),
             "SYSV" => PrivilegedCommand($"if command -v service >/dev/null 2>&1; then service {identifier} {action}; else /etc/init.d/{identifier} {action}; fi"),
             "SUPERVISOR" => PrivilegedCommand($"supervisorctl {action} {identifier}"),
-            "PM2" => $"pm2 {(action == "start" ? "restart" : action)} {identifier}",
+            "PM2" => $"pm2 {action} {identifier}",
             "DOCKER" => $"docker {action} {identifier}",
             "PODMAN" => $"podman {action} {identifier}",
             "MANUAL" => $"cd {path} && ./nodebb {action}",

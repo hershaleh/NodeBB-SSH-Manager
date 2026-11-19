@@ -148,7 +148,12 @@ public partial class NodeBbManagerWindow : Window
             MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
         }
-        catch (Exception ex) { StatusText.Text = "שגיאה: " + ex.Message; }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("NodeBBManagerUI", "LifecycleActionFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שגיאה: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "פעולת NodeBB נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
         finally { SetBusy(false, StatusText.Text); }
     }
 
