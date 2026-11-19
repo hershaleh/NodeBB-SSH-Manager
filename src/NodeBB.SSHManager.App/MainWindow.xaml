@@ -113,6 +113,7 @@
                             <ContextMenu FlowDirection="RightToLeft">
                                 <MenuItem Header="ייבוא פרופילי שרתים" Click="ImportProfiles_Click"/>
                                 <MenuItem Header="ייצוא פרופילי שרתים" Click="ExportProfiles_Click"/>
+                                <MenuItem Header="היסטוריית פעולות מכל השרתים" Click="AllServerHistory_Click"/>
                                 <Separator/>
                                 <MenuItem Header="דוח אבחון האפליקציה" Click="Diagnostics_Click"/>
                                 <MenuItem Header="בדיקת ניטור שרת" Click="ServerMonitoring_Click"/>

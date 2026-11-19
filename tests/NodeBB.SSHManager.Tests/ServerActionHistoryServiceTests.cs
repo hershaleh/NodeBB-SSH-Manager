@@ -56,6 +56,28 @@ public sealed class ServerActionHistoryServiceTests : IDisposable
     }
 
 
+
+    [Fact]
+    public void GetRecent_ReturnsNewestEntriesAcrossAllServers()
+    {
+        _service.Add(Entry("host-a", 22, "ישן", true) with { Timestamp = DateTimeOffset.UtcNow.AddMinutes(-5) });
+        _service.Add(Entry("host-b", 2200, "חדש", false) with { Timestamp = DateTimeOffset.UtcNow });
+
+        var recent = _service.GetRecent();
+
+        Assert.Equal(2, recent.Count);
+        Assert.Equal("חדש", recent[0].Action);
+        Assert.Equal("host-b", recent[0].ServerHost);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2001)]
+    public void GetRecent_RejectsOutOfRangeCount(int count)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => _service.GetRecent(count));
+    }
+
     [Fact]
     public void ExportCsv_QuotesAndEscapesFieldsAndKeepsHebrewHeaders()
     {

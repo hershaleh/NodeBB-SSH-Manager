@@ -537,6 +537,11 @@ public partial class MainWindow : Window
         new SystemServicesWindow(session) { Owner = this }.ShowDialog();
     }
 
+    private void AllServerHistory_Click(object sender, RoutedEventArgs e)
+    {
+        new ServerActionHistoryOverviewWindow { Owner = this }.ShowDialog();
+    }
+
     private void Diagnostics_Click(object sender, RoutedEventArgs e)
     {
         new DiagnosticsWindow { Owner = this }.ShowDialog();

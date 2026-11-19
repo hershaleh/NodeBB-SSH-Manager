@@ -39,6 +39,18 @@ public sealed class ServerActionHistoryService
                 .ToArray();
     }
 
+
+    public IReadOnlyList<ServerActionHistoryEntry> GetRecent(int count = 200)
+    {
+        if (count is < 1 or > MaxEntriesTotal)
+            throw new ArgumentOutOfRangeException(nameof(count), "כמות הרשומות חייבת להיות בין 1 ל־2000.");
+        lock (Sync)
+            return ReadEntries()
+                .OrderByDescending(entry => entry.Timestamp)
+                .Take(count)
+                .ToArray();
+    }
+
     public void Add(ServerActionHistoryEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
