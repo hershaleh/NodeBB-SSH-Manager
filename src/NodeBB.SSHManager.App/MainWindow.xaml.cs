@@ -134,6 +134,39 @@ public partial class MainWindow : Window
         ServerSearchBox.Focus();
     }
 
+    private void ServersList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (ServersList.SelectedItem is not ServerProfile profile) return;
+        _ = OpenServerManagerAsync(profile);
+    }
+
+    private async Task OpenServerManagerAsync(ServerProfile profile)
+    {
+        var session = await EnsureConnectedAsync(profile);
+        if (session is null) return;
+        new NodeBbManagerWindow(session) { Owner = this }.ShowDialog();
+        RefreshDashboard();
+    }
+
+    private void ServerContextMenu_Opened(object sender, RoutedEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.ContextMenu menu) return;
+        if (menu.PlacementTarget is not System.Windows.DependencyObject target) return;
+        var container = System.Windows.Controls.ItemsControl.ContainerFromElement(ServersList, target)
+            as System.Windows.Controls.ListBoxItem;
+        if (container?.DataContext is ServerProfile profile)
+            ServersList.SelectedItem = profile;
+    }
+
+    private void GlobalMenu_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.ContextMenu is { } menu)
+        {
+            menu.PlacementTarget = element;
+            menu.IsOpen = true;
+        }
+    }
+
     private void ServersList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         UpdateServerActions();
