@@ -31,6 +31,9 @@ public sealed class ServerProfile
     public bool IsConnected { get; set; }
 
     [JsonIgnore]
+    public string ConnectionCheckLabel { get; set; } = "טרם נבדק";
+
+    [JsonIgnore]
     public string ConnectionStatusLabel => IsConnected ? "מחובר באמצעות SSH" : "לא מחובר";
 
     [JsonIgnore]

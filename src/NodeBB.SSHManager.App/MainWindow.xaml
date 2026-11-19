@@ -178,12 +178,13 @@
                             <TextBlock Text="לחיצה כפולה פותחת את סביבת הניהול של השרת" FontSize="11" Foreground="#8A97AA" Margin="0,3,0,0"/>
                         </StackPanel>
                         <Grid Grid.Column="1" VerticalAlignment="Center">
-                            <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="300"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                             <TextBox x:Name="ServerSearchBox" Height="39" Padding="13,8" FontSize="12"
                                      BorderBrush="#E1E7F0" BorderThickness="1" Background="#F8FAFD"
                                      ToolTip="חיפוש לפי שם שרת, כתובת או משתמש" TextChanged="ServerSearchBox_TextChanged"/>
                             <TextBlock x:Name="VisibleServerCountText" Grid.Column="1" Text="0 שרתים"
                                        Foreground="#8794A8" FontSize="10" VerticalAlignment="Center" Margin="12,0,2,0"/>
+                            <Button Grid.Column="2" Content="בדוק את כל השרתים" Style="{StaticResource QuietButton}" Margin="12,0,0,0" Padding="12,8" Click="CheckAllServers_Click"/>
                         </Grid>
                     </Grid>
                     <ListBox x:Name="ServersList" BorderThickness="0" Background="Transparent"
@@ -202,6 +203,7 @@
                                         <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold" Foreground="#202E45"/>
                                         <TextBlock Text="{Binding HostDisplay}" Foreground="#77869C" FontSize="12" Margin="0,4,0,0"/>
                                         <TextBlock Text="{Binding Username}" Foreground="#9AA5B5" FontSize="11" Margin="0,3,0,0"/>
+                                        <TextBlock Text="{Binding ConnectionCheckLabel}" Foreground="#71809A" FontSize="10" Margin="0,4,0,0"/>
                                     </StackPanel>
                                     <StackPanel Grid.Column="2" VerticalAlignment="Center" Margin="14,0">
                                         <Border Background="#EAF7F0" CornerRadius="11" Padding="10,5">
