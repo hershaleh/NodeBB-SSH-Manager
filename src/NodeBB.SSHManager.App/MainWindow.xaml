@@ -6,8 +6,8 @@
         FlowDirection="RightToLeft" FontFamily="Segoe UI">
     <Window.Resources>
         <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#14233B" Offset="0"/>
-            <GradientStop Color="#263F70" Offset="1"/>
+            <GradientStop Color="#111C31" Offset="0"/>
+            <GradientStop Color="#5268D9" Offset="1"/>
         </LinearGradientBrush>
         <Style x:Key="QuietButton" TargetType="Button">
             <Setter Property="Background" Value="#FFFFFF"/>
