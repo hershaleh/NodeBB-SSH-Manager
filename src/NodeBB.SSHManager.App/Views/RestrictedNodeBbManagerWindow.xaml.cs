@@ -9,6 +9,7 @@ namespace NodeBB.SSHManager.Views;
 public partial class RestrictedNodeBbManagerWindow : Window
 {
     private readonly RestrictedNodeBbCliService _service;
+    private readonly SshServerSession _session;
     private bool _busy;
     private string _lastOutput = "";
     private readonly ObservableCollection<PluginCard> _allPlugins = [];
@@ -16,6 +17,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     public RestrictedNodeBbManagerWindow(SshServerSession session, string initialHelp)
     {
         InitializeComponent();
+        _session = session;
         _service = new RestrictedNodeBbCliService(session);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}:{session.Profile.Port} · nodebb-plugins";
         TerminalOutputBox.Text = initialHelp;
@@ -456,7 +458,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         try
         {
             new ServerActionHistoryService().Add(new ServerActionHistoryEntry(
-                DateTimeOffset.UtcNow, _service.ServerName, _service.ServerHost, _service.ServerPort,
+                DateTimeOffset.UtcNow, _session.Profile.Name, _session.Profile.Host, _session.Profile.Port,
                 action, target, succeeded, summary));
             RefreshActionHistory();
         }
@@ -469,7 +471,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
     private void RefreshActionHistory()
     {
-        var entries = new ServerActionHistoryService().GetForServer(_service.ServerHost, _service.ServerPort);
+        var entries = new ServerActionHistoryService().GetForServer(_session.Profile.Host, _session.Profile.Port);
         HistoryCountText.Text = entries.Count == 0 ? "עדיין לא נשמרו פעולות" : $"נשמרו {entries.Count} פעולות אחרונות";
         HistoryItems.ItemsSource = entries.Select(entry => new HistoryDisplayItem(
             entry.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"),
@@ -485,7 +487,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         if (MessageBox.Show(this, "למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו.",
             "מחיקת היסטוריה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        new ServerActionHistoryService().ClearForServer(_service.ServerHost, _service.ServerPort);
+        new ServerActionHistoryService().ClearForServer(_session.Profile.Host, _session.Profile.Port);
         RefreshActionHistory();
     }
 

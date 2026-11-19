@@ -194,7 +194,7 @@
     <TabItem Header="פעולות והיסטוריה">
      <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,12">
-       <StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="סיכום הפעולה האחרונה" FontSize="18" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="SummaryTitle" Text="מוכן לניהול" FontSize="15" FontWeight="SemiBold" Foreground="#3659D9" Margin="0,12,0,4"/></StackPanel><Button Grid.Column="1" Content="רענון היסטוריה" Click="ClearHistory_Click" Visibility="Collapsed"/></Grid>
+       <StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="סיכום הפעולה האחרונה" FontSize="18" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="SummaryTitle" Text="מוכן לניהול" FontSize="15" FontWeight="SemiBold" Foreground="#3659D9" Margin="0,12,0,4"/></StackPanel></Grid>
         <TextBlock x:Name="SummaryText" Text="בחר פעולה במרכז הבקרה או במסך התוספים. התוצאות יוצגו כאן בעברית ברורה." FontSize="13" Foreground="#56667D" TextWrapping="Wrap" LineHeight="23"/>
         <Border Background="#F4F7FC" CornerRadius="12" Padding="12" Margin="0,14,0,0"><TextBlock Text="הפלט המקורי והפקודות הטכניות נשמרים בנפרד. להצגתם לחץ על «הצג טרמינל»." Foreground="#687991" FontSize="11" TextWrapping="Wrap"/></Border>
        </StackPanel>
