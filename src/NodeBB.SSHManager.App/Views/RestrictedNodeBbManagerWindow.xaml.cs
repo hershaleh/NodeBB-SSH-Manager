@@ -126,26 +126,56 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async Task RunAsync(Func<Task<(int ExitCode, string Output, string Error)>> operation, string label)
     {
         if (_busy) return;
-        var keepPluginView = label is "השבתה" or "הסרה" or "עדכון" or "הפעלה" or "רשימת תוספים";
+        var keepPluginView = label is "רשימת תוספים" or "התקנה" or "העלאת ZIP" or "עדכון"
+            or "הפעלה" or "השבתה" or "הסרה" or "מחיקת ZIP";
+        var refreshPlugins = label is "התקנה" or "עדכון" or "הפעלה" or "השבתה" or "הסרה";
         if (!keepPluginView) ManagerTabs.SelectedIndex = 2;
-        _busy = true; IsEnabled = false;
+        _busy = true;
+        IsEnabled = false;
         SummaryTitle.Text = label + " — בביצוע";
         SummaryText.Text = "הבקשה נשלחה לשרת. ממתין לתשובה...";
-        if (PluginActionStatus is not null && keepPluginView)
-            PluginActionStatus.Text = label + " מתבצע…";
+        if (keepPluginView) PluginActionStatus.Text = label + " מתבצע…";
         try
         {
             var result = await operation();
-            var raw = string.Join(Environment.NewLine + Environment.NewLine, new[] { result.Output.Trim(), result.Error.Trim() }.Where(v => !string.IsNullOrWhiteSpace(v)));
-            _lastOutput = $"[{label}] {(result.ExitCode == 0 ? "הסתיים בהצלחה" : $"נכשל (קוד {result.ExitCode})")}\r\n\r\n{(string.IsNullOrWhiteSpace(raw) ? "השרת לא החזיר פלט." : raw)}";
+            var raw = string.Join(Environment.NewLine + Environment.NewLine,
+                new[] { result.Output.Trim(), result.Error.Trim() }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+            _lastOutput = $"[{label}] {(result.ExitCode == 0 ? "הסתיים בהצלחה" : $"נכשל (קוד {result.ExitCode})")}\r\n\r\n"
+                + (string.IsNullOrWhiteSpace(raw) ? "השרת לא החזיר פלט." : raw);
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
             if (label == "רשימת תוספים") UpdatePluginCards(raw);
-            if (PluginActionStatus is not null && keepPluginView)
+            if (keepPluginView)
+            {
                 PluginActionStatus.Text = result.ExitCode == 0
-                    ? "✓ " + label + " הושלם. " + (label == "רשימת תוספים" ? "הרשימה עודכנה." : "אפשר להמשיך לנהל תוספים.")
+                    ? "✓ " + label + " הושלם."
                     : "⚠ " + label + " לא הושלם. " + TranslateError(raw);
-            if (keepPluginView) ManagerTabs.SelectedIndex = 1;
+                ManagerTabs.SelectedIndex = 1;
+            }
+            // Refresh cards after successful mutations, while preserving the original action output.
+            if (result.ExitCode == 0 && refreshPlugins)
+            {
+                try
+                {
+                    var refreshed = await _service.ListAsync();
+                    if (refreshed.ExitCode == 0)
+                    {
+                        var refreshedRaw = string.Join(Environment.NewLine,
+                            new[] { refreshed.Output, refreshed.Error }
+                                .Where(value => !string.IsNullOrWhiteSpace(value)));
+                        UpdatePluginCards(refreshedRaw);
+                        PluginActionStatus.Text += " רשימת התוספים עודכנה.";
+                    }
+                    else PluginActionStatus.Text += " הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.";
+                }
+                catch (Exception refreshError)
+                {
+                    PluginActionStatus.Text += " הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.";
+                    DiagnosticLogService.Instance.Warning("RestrictedCLI", "PluginRefreshAfterActionFailed",
+                        "Could not refresh plugin list after a successful action.", refreshError, "restricted server");
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -153,35 +183,17 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TerminalOutputBox.Text = _lastOutput;
             SummaryTitle.Text = label + " — הפעולה לא הושלמה";
             SummaryText.Text = TranslateError(ex.Message);
+            if (keepPluginView)
+            {
+                PluginActionStatus.Text = "⚠ " + label + " לא הושלם. " + TranslateError(ex.Message);
+                ManagerTabs.SelectedIndex = 1;
+            }
             DiagnosticLogService.Instance.Error("RestrictedCLI", "UiActionFailed", ex);
         }
         finally
         {
             _busy = false;
             IsEnabled = true;
-            if (label is "השבתה" or "הסרה")
-            {
-                ManagerTabs.SelectedIndex = 1;
-                try
-                {
-                    var refreshed = await _service.ListAsync();
-                    if (refreshed.ExitCode == 0)
-                    {
-                        var refreshedRaw = string.Join(Environment.NewLine,
-                            new[] { refreshed.Output, refreshed.Error }.Where(v => !string.IsNullOrWhiteSpace(v)));
-                        _lastOutput = "[רענון רשימת תוספים]" + Environment.NewLine + refreshedRaw.Trim();
-                        TerminalOutputBox.Text = _lastOutput;
-                        UpdatePluginCards(refreshedRaw);
-                    }
-                }
-                catch (Exception refreshError)
-                {
-                    if (PluginActionStatus is not null)
-                        PluginActionStatus.Text += " רענון הרשימה נכשל; אפשר לנסות שוב.";
-                    DiagnosticLogService.Instance.Warning("RestrictedCLI", "PluginRefreshAfterActionFailed",
-                        "Could not refresh plugin list after an action.", refreshError, "restricted server");
-                }
-            }
         }
     }
 
@@ -212,10 +224,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private static string SummarizeStatus(string raw)
     {
         var lower = raw.ToLowerInvariant();
+        // Check negative states first: "not running" also contains "running".
+        if (lower.Contains("not running") || lower.Contains("inactive") || lower.Contains("stopped")
+            || lower.Contains("failed") || lower.Contains("dead"))
+            return "לפי תשובת השרת, שירות NodeBB אינו פועל כרגע.";
         if (lower.Contains("active: active") || lower.Contains("active (running)") || lower.Contains("running"))
             return "לפי תשובת השרת, שירות NodeBB פועל כרגע.";
-        if (lower.Contains("inactive") || lower.Contains("stopped") || lower.Contains("not running"))
-            return "לפי תשובת השרת, שירות NodeBB אינו פועל כרגע.";
         return "בדיקת המצב הושלמה. לא ניתן לקבוע מהתשובה באופן חד־משמעי אם השירות פעיל; ניתן לעיין בפלט המקורי בטרמינל.";
     }
 

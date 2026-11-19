@@ -33,20 +33,29 @@
    </Setter>
   </Style>
   <Style TargetType="TabItem">
-   <Setter Property="Foreground" Value="#6D7B91"/>
+   <Setter Property="Foreground" Value="#687991"/>
    <Setter Property="FontSize" Value="12"/>
    <Setter Property="FontWeight" Value="SemiBold"/>
-   <Setter Property="Padding" Value="18,11"/>
-   <Setter Property="Margin" Value="0,0,6,0"/>
+   <Setter Property="Padding" Value="17,12"/>
+   <Setter Property="Margin" Value="0,0,7,0"/>
    <Setter Property="Template">
     <Setter.Value>
      <ControlTemplate TargetType="TabItem">
-      <Border x:Name="tabSurface" Background="Transparent" BorderBrush="Transparent" BorderThickness="0,0,0,2" Padding="{TemplateBinding Padding}">
+      <Border x:Name="tabSurface" Background="#F1F4F9" BorderBrush="Transparent"
+              BorderThickness="1" CornerRadius="11" Padding="{TemplateBinding Padding}">
        <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center"/>
       </Border>
       <ControlTemplate.Triggers>
-       <Trigger Property="IsSelected" Value="True"><Setter TargetName="tabSurface" Property="BorderBrush" Value="#4565D8"/><Setter Property="Foreground" Value="#263F9D"/></Trigger>
-       <Trigger Property="IsMouseOver" Value="True"><Setter Property="Foreground" Value="#344FC2"/></Trigger>
+       <Trigger Property="IsSelected" Value="True">
+        <Setter TargetName="tabSurface" Property="Background" Value="#E8EDFF"/>
+        <Setter TargetName="tabSurface" Property="BorderBrush" Value="#D5DEFF"/>
+        <Setter Property="Foreground" Value="#2948B8"/>
+       </Trigger>
+       <Trigger Property="IsMouseOver" Value="True">
+        <Setter TargetName="tabSurface" Property="Background" Value="#E9EEF7"/>
+        <Setter Property="Foreground" Value="#344FC2"/>
+       </Trigger>
+       <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value=".45"/></Trigger>
       </ControlTemplate.Triggers>
      </ControlTemplate>
     </Setter.Value>
