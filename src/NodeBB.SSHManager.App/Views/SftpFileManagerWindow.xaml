@@ -13,7 +13,7 @@
    <Button DockPanel.Dock="Left" Content="רענון" Click="Refresh_Click" Padding="16,8"/>
   </DockPanel>
   <DockPanel Grid.Row="1" Margin="0,0,0,10">
-   <TextBox x:Name="PathBox" Height="36" VerticalContentAlignment="Center" FlowDirection="LeftToRight" IsReadOnly="True"/>
+   <TextBox x:Name="PathBox" Height="36" VerticalContentAlignment="Center" FlowDirection="LeftToRight" ToolTip="נתיב מוחלט בשרת"/>\n   <Button Content="עבור" Click="Navigate_Click" Margin="8,0,0,0" Padding="14,5"/>
    <Button Content="למעלה" Click="Up_Click" Margin="8,0,0,0" Padding="14,5"/>
   </DockPanel>
   <ListView x:Name="FilesList" Grid.Row="2" MouseDoubleClick="FilesList_MouseDoubleClick">
@@ -26,7 +26,7 @@
   </ListView>
   <DockPanel Grid.Row="3" Margin="0,12,0,0">
    <StackPanel Orientation="Horizontal">
-    <Button Content="העלאת קובץ" Click="Upload_Click" Padding="14,8" Margin="0,0,8,0"/>
+    <Button Content="תיקייה חדשה" Click="CreateDirectory_Click" Padding="14,8" Margin="0,0,8,0"/>\n    <Button Content="שינוי שם" Click="Rename_Click" Padding="14,8" Margin="0,0,8,0"/>\n    <Button Content="העלאת קובץ" Click="Upload_Click" Padding="14,8" Margin="0,0,8,0"/>
     <Button Content="הורדת קובץ" Click="Download_Click" Padding="14,8" Margin="0,0,8,0"/>
     <Button Content="מחיקה" Click="Delete_Click" Padding="14,8" Background="#FFF0F0" Foreground="#B42318"/>
    </StackPanel>
