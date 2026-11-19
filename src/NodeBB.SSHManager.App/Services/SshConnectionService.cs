@@ -64,36 +64,16 @@ public sealed class SshConnectionService
             client.Connect();
 
             cancellationToken.ThrowIfCancellationRequested();
-            // Keep probe commands simple and separate. Some restricted SSH gateways reject
-            // shell command separators (such as ';') even when each command is permitted.
-            using var identityCommand = client.RunCommand("id -un");
-            if (identityCommand.ExitStatus != 0)
-            {
-                return new SshTestResult(
-                    SshTestStatus.Failed,
-                    string.IsNullOrWhiteSpace(identityCommand.Error)
-                        ? "החיבור נוצר, אך בדיקת זיהוי המשתמש נכשלה."
-                        : identityCommand.Error,
-                    observedFingerprint);
-            }
 
-            using var systemCommand = client.RunCommand("uname -s");
-            if (systemCommand.ExitStatus != 0)
-            {
-                return new SshTestResult(
-                    SshTestStatus.Failed,
-                    string.IsNullOrWhiteSpace(systemCommand.Error)
-                        ? "החיבור נוצר, אך בדיקת זיהוי מערכת ההפעלה נכשלה."
-                        : systemCommand.Error,
-                    observedFingerprint);
-            }
-
-            DiagnosticLogService.Instance.Info("SSH", "ConnectionTestSucceeded", "SSH connection and identity check succeeded.", profile.Name);
+            // A successful SSH authentication is sufficient for the connection test.
+            // Some hosting providers expose a restricted SSH command interface rather
+            // than a POSIX shell, so commands such as id/uname are not portable probes.
+            DiagnosticLogService.Instance.Info("SSH", "ConnectionTestSucceeded", "SSH authentication succeeded; remote shell capabilities were not probed.", profile.Name);
             return new SshTestResult(
                 SshTestStatus.Success,
-                "חיבור SSH ואימות המשתמש הצליחו.",
+                "האימות והחיבור לשרת SSH הצליחו. בדיקת פקודות שרת תתבצע בעת שימוש בכלי הניהול.",
                 observedFingerprint,
-                $"User: {identityCommand.Result.Trim()}\nSystem: {systemCommand.Result.Trim()}");
+                "SSH authentication successful.");
         }
         catch (Exception) when (observedFingerprint is not null
                                 && !string.Equals(
