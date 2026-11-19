@@ -122,6 +122,17 @@ public partial class MainWindow : Window
         }
     }
 
+    private void ServersNavigation_Click(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count == 0)
+        {
+            AddServer_Click(sender, e);
+            return;
+        }
+        ServerListPanel.BringIntoView();
+        ServerSearchBox.Focus();
+    }
+
     private void ServersList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         UpdateServerActions();

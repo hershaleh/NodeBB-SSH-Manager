@@ -153,22 +153,22 @@
                 <TextBlock Grid.Row="1" Text="ניהול" Foreground="#8292AA" FontSize="10" FontWeight="Bold" Margin="12,0,0,10"/>
                 <StackPanel Grid.Row="2">
                     <Button Style="{StaticResource NavButtonStyle}" Background="#2B3D5A"><StackPanel Orientation="Horizontal"><TextBlock Text="▦" FontSize="17" Width="30" Foreground="White"/><TextBlock Text="סקירה כללית" Foreground="White"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="▣" FontSize="17" Width="30"/><TextBlock Text="השרתים שלי"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◈" FontSize="17" Width="30"/><TextBlock Text="ניהול NodeBB"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⌘" FontSize="17" Width="30"/><TextBlock Text="תוספים ועיצובים"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="▤" FontSize="17" Width="30"/><TextBlock Text="מנהל קבצים"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◫" FontSize="17" Width="30"/><TextBlock Text="מסדי נתונים"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◷" FontSize="17" Width="30"/><TextBlock Text="גיבויים"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⌁" FontSize="17" Width="30"/><TextBlock Text="ניטור ואבחון"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ServersNavigation_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="▣" FontSize="17" Width="30"/><TextBlock Text="השרתים שלי"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="◈" FontSize="17" Width="30"/><TextBlock Text="ניהול NodeBB"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="⌘" FontSize="17" Width="30"/><TextBlock Text="תוספים ועיצובים"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="OpenFiles_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="▤" FontSize="17" Width="30"/><TextBlock Text="מנהל קבצים"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="◫" FontSize="17" Width="30"/><TextBlock Text="מסדי נתונים"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="◷" FontSize="17" Width="30"/><TextBlock Text="גיבויים"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ServerMonitoring_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="⌁" FontSize="17" Width="30"/><TextBlock Text="ניטור ואבחון"/></StackPanel></Button>
                     <Button Style="{StaticResource NavButtonStyle}" Click="SystemServices_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="שירותי מערכת"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⬡" FontSize="17" Width="30"/><TextBlock Text="אבטחה"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="≡" FontSize="17" Width="30"/><TextBlock Text="לוגים"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="&gt;_" FontSize="15" Width="30"/><TextBlock Text="מסוף SSH"/></StackPanel></Button>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="◴" FontSize="17" Width="30"/><TextBlock Text="משימות אוטומטיות"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="⬡" FontSize="17" Width="30"/><TextBlock Text="אבטחה"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="ManageNodeBb_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="≡" FontSize="17" Width="30"/><TextBlock Text="לוגים"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" Click="OpenTerminal_Click"><StackPanel Orientation="Horizontal"><TextBlock Text="&gt;_" FontSize="15" Width="30"/><TextBlock Text="מסוף SSH"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" IsEnabled="False" ToolTip="יכולת זו עדיין בפיתוח"><StackPanel Orientation="Horizontal"><TextBlock Text="◴" FontSize="17" Width="30"/><TextBlock Text="משימות אוטומטיות · בהמשך"/></StackPanel></Button>
                 </StackPanel>
                 <StackPanel Grid.Row="3">
                     <Border Height="1" Background="#34435A" Margin="5,0,5,13"/>
-                    <Button Style="{StaticResource NavButtonStyle}"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="הגדרות"/></StackPanel></Button>
+                    <Button Style="{StaticResource NavButtonStyle}" IsEnabled="False" ToolTip="ההגדרות המרכזיות עדיין בפיתוח"><StackPanel Orientation="Horizontal"><TextBlock Text="⚙" FontSize="17" Width="30"/><TextBlock Text="הגדרות · בהמשך"/></StackPanel></Button>
                     <TextBlock Text="גרסה 0.1.0 · Preview" Foreground="#8190A6" FontSize="10" Margin="12,12,0,0"/>
                 </StackPanel>
             </Grid>
