@@ -84,7 +84,7 @@
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel VerticalAlignment="Center">
-     <TextBlock Text="NODEBB  /  SERVER CONTROL" FlowDirection="LeftToRight" Foreground="#9DB3D7" FontSize="10" FontWeight="Bold" CharacterSpacing="1.4"/>
+     <TextBlock Text="NODEBB  /  SERVER CONTROL" FlowDirection="LeftToRight" Foreground="#9DB3D7" FontSize="10" FontWeight="Bold"/>
      <TextBlock Text="מרכז ניהול NodeBB" FontSize="28" FontWeight="Bold" Foreground="White" Margin="0,7,0,4"/>
      <TextBlock x:Name="ServerLabel" Foreground="#D0D9E8" FontSize="12"/>
     </StackPanel>
