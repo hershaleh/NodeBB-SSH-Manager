@@ -20,6 +20,7 @@ public partial class AddServerWindow : Window
         Title = "עריכת שרת";
         DialogTitle.Text = "עריכת פרופיל שרת";
         NameBox.Text = profile.Name;
+        GroupBox.Text = profile.Group;
         HostBox.Text = profile.Host;
         PortBox.Text = profile.Port.ToString();
         UsernameBox.Text = profile.Username;
@@ -45,6 +46,13 @@ public partial class AddServerWindow : Window
         var name = NameBox.Text.Trim();
         var host = HostBox.Text.Trim();
         var username = UsernameBox.Text.Trim();
+        var group = GroupBox.Text.Trim();
+
+        if (group.Length > 80 || group.Any(char.IsControl))
+        {
+            MessageBox.Show(this, "שם הקבוצה יכול להכיל עד 80 תווים ואינו יכול להכיל תווי בקרה.", "שם קבוצה לא תקין", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
 
         if (string.IsNullOrWhiteSpace(name)
             || string.IsNullOrWhiteSpace(host)
@@ -79,6 +87,7 @@ public partial class AddServerWindow : Window
                 && _original.Port == port
                     ? _original.KnownHostFingerprint : null,
             Name = name,
+            Group = group,
             Host = host,
             Port = port,
             Username = username,

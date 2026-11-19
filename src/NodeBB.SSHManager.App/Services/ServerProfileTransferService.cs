@@ -18,7 +18,7 @@ public sealed class ServerProfileTransferService
         // establish trust in an SSH host key supplied by that same file.
         var portable = snapshot.Select(p => new ServerProfile
         {
-            Name = p.Name, Host = p.Host, Port = p.Port, Username = p.Username,
+            Name = p.Name, Group = p.Group, Host = p.Host, Port = p.Port, Username = p.Username,
             AuthenticationType = p.AuthenticationType, PrivateKeyPath = p.PrivateKeyPath
         }).ToList();
         return JsonSerializer.Serialize(portable, Options);
@@ -52,6 +52,8 @@ public sealed class ServerProfileTransferService
         {
             if (p is null || p.Id == Guid.Empty || !ids.Add(p.Id))
                 throw new InvalidDataException("קובץ הפרופילים מכיל רשומה ריקה או מזהה כפול.");
+            if (p.Group is null || p.Group.Length > 80 || p.Group.Any(char.IsControl))
+                throw new InvalidDataException("אחד מפרופילי השרת מכיל שם קבוצה לא תקין.");
             if (string.IsNullOrWhiteSpace(p.Name) || p.Name.Length > 120
                 || string.IsNullOrWhiteSpace(p.Host) || p.Host.Length > 253
                 || p.Host.Any(char.IsWhiteSpace) || p.Host.Contains(';') || p.Host.Contains('|')

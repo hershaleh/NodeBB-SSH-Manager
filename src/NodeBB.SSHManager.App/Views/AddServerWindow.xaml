@@ -18,6 +18,8 @@
             <StackPanel>
                 <TextBlock Text="שם לזיהוי" FontWeight="SemiBold"/>
                 <TextBox x:Name="NameBox" Padding="10" Margin="0,6,0,14"/>
+                <TextBlock Text="קבוצה (לא חובה)" FontWeight="SemiBold"/>
+                <TextBox x:Name="GroupBox" Padding="10" Margin="0,6,0,14" ToolTip="למשל: ייצור, בדיקות, לקוחות או פרויקטים"/>
                 <TextBlock Text="כתובת שרת או IP" FontWeight="SemiBold"/>
                 <TextBox x:Name="HostBox" Padding="10" Margin="0,6,0,14"/>
                 <Grid>

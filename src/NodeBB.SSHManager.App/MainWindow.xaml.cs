@@ -17,6 +17,7 @@ public partial class MainWindow : Window
     private readonly CredentialVaultService _credentialVault = new();
     private readonly ServerProfileTransferService _profileTransfer = new();
     private readonly ObservableCollection<ServerProfile> _profiles = [];
+    private bool _updatingGroupFilter;
 
     public MainWindow()
     {
@@ -25,6 +26,7 @@ public partial class MainWindow : Window
         var profilesView = CollectionViewSource.GetDefaultView(_profiles);
         profilesView.Filter = FilterServerProfile;
         profilesView.SortDescriptions.Add(new SortDescription(nameof(ServerProfile.IsFavorite), ListSortDirection.Descending));
+        RefreshGroupFilterOptions();
         LoadProfiles();
         DiagnosticLogService.Instance.Info("MainWindow", "DashboardLoaded", "Main dashboard loaded.");
         Closed += (_, _) =>
@@ -303,12 +305,43 @@ public partial class MainWindow : Window
     private bool FilterServerProfile(object item)
     {
         if (item is not ServerProfile profile) return false;
+        var selectedGroup = GroupFilterBox?.SelectedItem as string;
+        if (!string.IsNullOrWhiteSpace(selectedGroup) && selectedGroup != "כל הקבוצות"
+            && !string.Equals(profile.Group, selectedGroup, StringComparison.OrdinalIgnoreCase)) return false;
         var query = ServerSearchBox?.Text?.Trim();
         if (string.IsNullOrWhiteSpace(query)) return true;
         return profile.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
             || profile.Host.Contains(query, StringComparison.OrdinalIgnoreCase)
             || profile.Username.Contains(query, StringComparison.OrdinalIgnoreCase)
             || profile.Port.ToString().Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private void GroupFilter_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (_updatingGroupFilter) return;
+        var view = CollectionViewSource.GetDefaultView(_profiles);
+        view.Refresh();
+        if (ServersList.SelectedItem is ServerProfile selected && !view.Cast<ServerProfile>().Any(p => p.Id == selected.Id))
+            ServersList.SelectedItem = null;
+        UpdateVisibleServerCount();
+    }
+
+    private void RefreshGroupFilterOptions()
+    {
+        if (GroupFilterBox is null) return;
+        var previous = GroupFilterBox.SelectedItem as string ?? "כל הקבוצות";
+        var groups = _profiles.Select(p => p.Group?.Trim()).Where(g => !string.IsNullOrWhiteSpace(g))
+            .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(g => g, StringComparer.CurrentCultureIgnoreCase).ToArray();
+        _updatingGroupFilter = true;
+        try
+        {
+            GroupFilterBox.Items.Clear();
+            GroupFilterBox.Items.Add("כל הקבוצות");
+            foreach (var group in groups) GroupFilterBox.Items.Add(group);
+            GroupFilterBox.SelectedItem = GroupFilterBox.Items.Cast<string>()
+                .FirstOrDefault(g => string.Equals(g, previous, StringComparison.OrdinalIgnoreCase)) ?? "כל הקבוצות";
+        }
+        finally { _updatingGroupFilter = false; }
     }
 
     private void ServerSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -704,6 +737,8 @@ public partial class MainWindow : Window
             profile.HasSavedCredential = _credentialVault.Has(profile.Id);
             profile.IsConnected = _sessionManager.TryGet(profile.Id, out _);
         }
+        RefreshGroupFilterOptions();
+        CollectionViewSource.GetDefaultView(_profiles).Refresh();
         ServersList.Items.Refresh();
         ServerCountText.Text = _profiles.Count.ToString();
         ServerTotalText.Text = $"{_profiles.Count} שרתים";

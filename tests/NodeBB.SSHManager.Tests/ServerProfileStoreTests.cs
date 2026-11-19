@@ -33,6 +33,7 @@ public sealed class ServerProfileStoreTests : IDisposable
         var loaded = Assert.Single(store.Load());
         Assert.Equal(profile.Id, loaded.Id);
         Assert.Equal(profile.Name, loaded.Name);
+        Assert.Equal(profile.Group, loaded.Group);
         Assert.Equal(profile.Host, loaded.Host);
         Assert.Equal(profile.Port, loaded.Port);
         Assert.Equal(profile.Username, loaded.Username);
@@ -88,6 +89,7 @@ public sealed class ServerProfileStoreTests : IDisposable
 
         Assert.NotEqual(original.Id, duplicate.Id);
         Assert.Equal("Duplicate", duplicate.Name);
+        Assert.Equal(original.Group, duplicate.Group);
         Assert.Equal(original.Host, duplicate.Host);
         Assert.Equal(original.Port, duplicate.Port);
         Assert.Equal(original.Username, duplicate.Username);
@@ -131,6 +133,15 @@ public sealed class ServerProfileStoreTests : IDisposable
 
         Assert.Throws<InvalidDataException>(() => store.Save([invalid]));
         Assert.Equal("Original", Assert.Single(store.Load()).Name);
+    }
+
+    [Fact]
+    public void Save_RejectsInvalidGroupName()
+    {
+        var profile = CreateProfile();
+        profile.Group = new string('x', 81);
+        Assert.Throws<InvalidDataException>(() => new ServerProfileStore(FilePath).Save([profile]));
+        Assert.False(File.Exists(FilePath));
     }
 
     [Fact]
@@ -192,6 +203,7 @@ public sealed class ServerProfileStoreTests : IDisposable
     private static ServerProfile CreateProfile(string name = "Test server") => new()
     {
         Name = name,
+        Group = "Production",
         Host = "forum.example.org",
         Port = 22,
         Username = "nodebb",

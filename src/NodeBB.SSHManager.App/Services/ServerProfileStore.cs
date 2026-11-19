@@ -116,6 +116,8 @@ public sealed class ServerProfileStore
                 throw new InvalidDataException("רשימת השרתים מכילה רשומה ריקה.");
             if (profile.Id == Guid.Empty || !ids.Add(profile.Id))
                 throw new InvalidDataException("לכל שרת חייב להיות מזהה ייחודי ותקין.");
+            if (profile.Group is null || profile.Group.Length > 80 || profile.Group.Any(char.IsControl))
+                throw new InvalidDataException("שם הקבוצה אינו תקין (עד 80 תווים).");
             if (string.IsNullOrWhiteSpace(profile.Name) || profile.Name.Length > 120
                 || string.IsNullOrWhiteSpace(profile.Host) || profile.Host.Length > 253
                 || string.IsNullOrWhiteSpace(profile.Username) || profile.Username.Length > 128)
