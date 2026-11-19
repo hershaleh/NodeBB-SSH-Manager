@@ -251,7 +251,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var found = RestrictedNodeBbCliService.ExtractPluginPackageNames(raw);
         _allPlugins.Clear();
         foreach (var name in found)
-            _allPlugins.Add(new PluginCard(name, name.Contains("theme", StringComparison.OrdinalIgnoreCase) ? "ערכת עיצוב" : "תוסף"));
+            _allPlugins.Add(new PluginCard(name, RestrictedNodeBbCliService.GetPackageKindLabel(name)));
         ApplyPluginFilter();
         PluginCountText.Text = found.Count == 0 ? "לא זוהו שמות חבילות בתשובת השרת" : $"נמצאו {found.Count} פריטים שהשרת דיווח עליהם כמותקנים ופעילים";
     }
@@ -262,12 +262,71 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         if (PluginCards is null || PluginSearchBox is null) return;
         var query = PluginSearchBox.Text.Trim();
-        var filtered = _allPlugins.Where(p => p.Name.Contains(query, StringComparison.OrdinalIgnoreCase)).ToList();
+        var kind = PluginKindFilter?.SelectedIndex ?? 0;
+        var filtered = _allPlugins.Where(p =>
+            p.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+            && (kind == 0 || (kind == 1 && p.KindLabel == "תוסף") || (kind == 2 && p.KindLabel == "ערכת עיצוב"))).ToList();
         PluginCards.ItemsSource = filtered;
         PluginEmptyState.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PluginCards.Visibility = filtered.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         PluginEmptyTitle.Text = _allPlugins.Count == 0 ? "עדיין לא נטענה רשימת התוספים" : "לא נמצאו תוצאות לחיפוש";
         PluginEmptyDescription.Text = _allPlugins.Count == 0 ? "לחץ על «רענון מהשרת» כדי להציג את התוספים." : "נסה מונח חיפוש אחר.";
+    }
+
+    private void PluginKindFilter_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (PluginCards is not null) ApplyPluginFilter();
+    }
+
+    private void CopyPluginList_Click(object sender, RoutedEventArgs e)
+    {
+        var names = _allPlugins.Select(plugin => plugin.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (names.Length == 0)
+        {
+            PluginActionStatus.Text = "אין רשימת תוספים להעתקה. רענן תחילה מהשרת.";
+            return;
+        }
+        try
+        {
+            Clipboard.SetText(string.Join(Environment.NewLine, names));
+            PluginActionStatus.Text = $"הועתקו {names.Length} שמות חבילות ללוח.";
+        }
+        catch (Exception ex)
+        {
+            PluginActionStatus.Text = "לא ניתן להעתיק את רשימת התוספים.";
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "CopyPluginListFailed",
+                "Could not copy plugin package list to clipboard.", ex, ServerLabel.Text);
+        }
+    }
+
+    private void ExportPluginList_Click(object sender, RoutedEventArgs e)
+    {
+        var names = _allPlugins.Select(plugin => plugin.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (names.Length == 0)
+        {
+            PluginActionStatus.Text = "אין רשימת תוספים לייצוא. רענן תחילה מהשרת.";
+            return;
+        }
+        var dialog = new SaveFileDialog
+        {
+            Title = "ייצוא רשימת תוספי NodeBB",
+            Filter = "קובץ טקסט (*.txt)|*.txt",
+            FileName = "nodebb-packages.txt",
+            AddExtension = true,
+            DefaultExt = ".txt"
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        try
+        {
+            File.WriteAllText(dialog.FileName, string.Join(Environment.NewLine, names), new System.Text.UTF8Encoding(true));
+            PluginActionStatus.Text = $"הרשימה יוצאה בהצלחה ({names.Length} פריטים).";
+        }
+        catch (Exception ex)
+        {
+            PluginActionStatus.Text = "ייצוא הרשימה נכשל. בדוק הרשאות כתיבה ליעד.";
+            DiagnosticLogService.Instance.Warning("RestrictedCLI", "ExportPluginListFailed",
+                "Could not export plugin package list.", ex, ServerLabel.Text);
+        }
     }
 
     private string SelectedPlugin(object sender)

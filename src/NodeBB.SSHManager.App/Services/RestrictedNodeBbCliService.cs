@@ -22,6 +22,16 @@ public sealed class RestrictedNodeBbCliService
     private readonly SshServerSession _session;
     public RestrictedNodeBbCliService(SshServerSession session) => _session = session;
 
+    public static string GetPackageKindLabel(string? packageName)
+    {
+        var value = (packageName ?? string.Empty).Trim();
+        var packagePart = value.Contains('/') ? value[(value.LastIndexOf('/') + 1)..] : value;
+        return packagePart.StartsWith("nodebb-theme-", StringComparison.OrdinalIgnoreCase)
+            || packagePart.StartsWith("theme-", StringComparison.OrdinalIgnoreCase)
+            ? "ערכת עיצוב"
+            : "תוסף";
+    }
+
     public static IReadOnlyList<string> ExtractPluginPackageNames(string? raw)
     {
         var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);

@@ -39,6 +39,15 @@ public sealed class RestrictedNodeBbCliServiceTests
     public void ExtractPluginPackageNames_RecognizesSupportedPackageFormats(string output, int expectedCount) =>
         Assert.Equal(expectedCount, RestrictedNodeBbCliService.ExtractPluginPackageNames(output).Count);
 
+    [Theory]
+    [InlineData("nodebb-plugin-spoilers", "תוסף")]
+    [InlineData("@nodebb/plugin-write-api", "תוסף")]
+    [InlineData("nodebb-theme-harmony", "ערכת עיצוב")]
+    [InlineData("@nodebb/theme-harmony", "ערכת עיצוב")]
+    [InlineData("@scope/nodebb-theme-modern", "ערכת עיצוב")]
+    public void GetPackageKindLabel_ClassifiesPluginAndThemePackages(string packageName, string expected) =>
+        Assert.Equal(expected, RestrictedNodeBbCliService.GetPackageKindLabel(packageName));
+
     [Fact]
     public void ExtractPluginPackageNames_DeduplicatesAndSortsCaseInsensitively()
     {
