@@ -23,6 +23,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         SummaryTitle.Text = "החיבור לשרת מוכן";
         SummaryText.Text = "אפשר לנהל תוספים, ליצור גיבוי, לבדוק את מצב הפורום ולהפעיל פעולות תחזוקה. המידע יוצג כאן בעברית.";
         UploadZipButton.Visibility = InstallSourceBox.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
+        RefreshActionHistory();
     }
 
     private async void List_Click(object sender, RoutedEventArgs e)
@@ -123,7 +124,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         await RunAsync(() => action(package, CancellationToken.None), label);
     }
 
-    private async Task RunAsync(Func<Task<(int ExitCode, string Output, string Error)>> operation, string label)
+    private async Task RunAsync(Func<Task<(int ExitCode, string Output, string Error)>> operation, string label, string? historyTarget = null)
     {
         if (_busy) return;
         var keepPluginView = label is "רשימת תוספים" or "התקנה" or "העלאת ZIP" or "עדכון"
@@ -147,6 +148,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
                 + (string.IsNullOrWhiteSpace(raw) ? "השרת לא החזיר פלט." : raw);
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
+            SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
             if (label == "רשימת תוספים") UpdatePluginCards(raw);
             if (keepPluginView)
             {
@@ -185,6 +187,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TerminalOutputBox.Text = _lastOutput;
             SummaryTitle.Text = label + " — הפעולה לא הושלמה";
             SummaryText.Text = TranslateError(ex.Message);
+            SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), false, SummaryText.Text);
             if (keepPluginView)
             {
                 PluginActionStatus.Text = "⚠ " + label + " לא הושלם. " + TranslateError(ex.Message);
@@ -402,7 +405,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             }
             var summary = $"הפעולה הסתיימה עבור {selected.Length} פריטים. הצלחות: {selected.Length - failures}; כישלונות: {failures}.";
             return (failures == 0 ? 0 : 1, summary, string.Join(Environment.NewLine + Environment.NewLine, outputs));
-        }, label);
+        }, label, string.Join(", ", selected));
     }
 
     private string SelectedPlugin(object sender)
@@ -441,6 +444,51 @@ public partial class RestrictedNodeBbManagerWindow : Window
         ManagerTabs.SelectedIndex = 1;
     }
 
+    private string ResolveHistoryTarget(string label)
+    {
+        return label is "התקנה" or "עדכון" or "הפעלה" or "השבתה" or "הסרה" or "מחיקת ZIP" or "העלאת ZIP"
+            ? TargetBox.Text.Trim()
+            : string.Empty;
+    }
+
+    private void SaveHistory(string action, string target, bool succeeded, string summary)
+    {
+        try
+        {
+            new ServerActionHistoryService().Add(new ServerActionHistoryEntry(
+                DateTimeOffset.UtcNow, _service.ServerName, _service.ServerHost, _service.ServerPort,
+                action, target, succeeded, summary));
+            RefreshActionHistory();
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Warning("ActionHistory", "SaveFailed",
+                "Could not save the local server action history.", ex, ServerLabel.Text);
+        }
+    }
+
+    private void RefreshActionHistory()
+    {
+        var entries = new ServerActionHistoryService().GetForServer(_service.ServerHost, _service.ServerPort);
+        HistoryCountText.Text = entries.Count == 0 ? "עדיין לא נשמרו פעולות" : $"נשמרו {entries.Count} פעולות אחרונות";
+        HistoryItems.ItemsSource = entries.Select(entry => new HistoryDisplayItem(
+            entry.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"),
+            entry.Action,
+            string.IsNullOrWhiteSpace(entry.Target) ? "—" : entry.Target,
+            entry.Succeeded ? "הצליח" : "נכשל",
+            entry.Succeeded ? "#18794E" : "#B42318",
+            entry.Summary)).ToArray();
+        HistoryEmptyState.Visibility = entries.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void ClearHistory_Click(object sender, RoutedEventArgs e)
+    {
+        if (MessageBox.Show(this, "למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו.",
+            "מחיקת היסטוריה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        new ServerActionHistoryService().ClearForServer(_service.ServerHost, _service.ServerPort);
+        RefreshActionHistory();
+    }
+
     private void ToggleTerminal_Click(object sender, RoutedEventArgs e)
     {
         TerminalPanel.Visibility = TerminalPanel.Visibility == Visibility.Visible
@@ -456,7 +504,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
 }
 
 
-public sealed class PluginCard(string name, string kindLabel)
+public sealed record HistoryDisplayItem(string Timestamp, string Action, string Target, string Result, string ResultColor, string Summary);\n\npublic sealed class PluginCard(string name, string kindLabel)
 {
     public string Name { get; } = name;
     public string KindLabel { get; } = kindLabel;
