@@ -36,6 +36,7 @@ public partial class MainWindow : Window
         try
         {
             foreach (var profile in _profileStore.Load()) _profiles.Add(profile);
+            if (_profiles.Count > 0) ServersList.SelectedItem = _profiles[0];
             RefreshDashboard();
         }
         catch (Exception ex)
@@ -152,7 +153,10 @@ public partial class MainWindow : Window
 
     private void ServerSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
     {
-        CollectionViewSource.GetDefaultView(_profiles).Refresh();
+        var view = CollectionViewSource.GetDefaultView(_profiles);
+        view.Refresh();
+        if (ServersList.SelectedItem is ServerProfile selected && !view.Cast<ServerProfile>().Any(p => p.Id == selected.Id))
+            ServersList.SelectedItem = null;
         UpdateVisibleServerCount();
     }
 
@@ -480,7 +484,10 @@ public partial class MainWindow : Window
     private void RefreshDashboard()
     {
         foreach (var profile in _profiles)
+        {
             profile.HasSavedCredential = _credentialVault.Has(profile.Id);
+            profile.IsConnected = _sessionManager.TryGet(profile.Id, out _);
+        }
         ServersList.Items.Refresh();
         ServerCountText.Text = _profiles.Count.ToString();
         ServerTotalText.Text = $"{_profiles.Count} שרתים";

@@ -120,6 +120,7 @@
                                             <StackPanel>
                                                 <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="Bold"/>
                                                 <TextBlock Text="{Binding HostDisplay}" Foreground="#778399" FontSize="12" Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding ConnectionStatusLabel}" Foreground="#667085" FontSize="11" Margin="0,3,0,0"/>
                                                 <TextBlock Text="{Binding Username}" Foreground="#778399" FontSize="11" Margin="0,3,0,0"/>
                                                 <TextBlock Text="{Binding SavedCredentialLabel}" Foreground="#778399" FontSize="10" Margin="0,3,0,0"/>
                                             </StackPanel>

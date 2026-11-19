@@ -26,6 +26,12 @@ public sealed class ServerProfile
     public string HostDisplay => $"{Host}:{Port}";
 
     [JsonIgnore]
+    public bool IsConnected { get; set; }
+
+    [JsonIgnore]
+    public string ConnectionStatusLabel => IsConnected ? "מחובר באמצעות SSH" : "לא מחובר";
+
+    [JsonIgnore]
     public bool HasSavedCredential { get; set; }
 
     [JsonIgnore]
