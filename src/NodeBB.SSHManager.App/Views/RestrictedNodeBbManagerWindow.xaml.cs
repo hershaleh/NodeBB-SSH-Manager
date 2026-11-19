@@ -127,8 +127,10 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         if (_busy) return;
         var keepPluginView = label is "רשימת תוספים" or "התקנה" or "העלאת ZIP" or "עדכון"
-            or "הפעלה" or "השבתה" or "הסרה" or "מחיקת ZIP";
-        var refreshPlugins = label is "התקנה" or "עדכון" or "הפעלה" or "השבתה" or "הסרה";
+            or "הפעלה" or "השבתה" or "הסרה" or "מחיקת ZIP"
+            or "עדכון מרובה" or "השבתה מרובה" or "הסרה מרובה";
+        var refreshPlugins = label is "התקנה" or "עדכון" or "הפעלה" or "השבתה" or "הסרה"
+            or "עדכון מרובה" or "השבתה מרובה" or "הסרה מרובה";
         if (!keepPluginView) ManagerTabs.SelectedIndex = 2;
         _busy = true;
         IsEnabled = false;
@@ -267,6 +269,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             p.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
             && (kind == 0 || (kind == 1 && p.KindLabel == "תוסף") || (kind == 2 && p.KindLabel == "ערכת עיצוב"))).ToList();
         PluginCards.ItemsSource = filtered;
+        UpdatePluginSelectionCount();
         PluginEmptyState.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PluginCards.Visibility = filtered.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
         PluginEmptyTitle.Text = _allPlugins.Count == 0 ? "עדיין לא נטענה רשימת התוספים" : "לא נמצאו תוצאות לחיפוש";
@@ -329,6 +332,79 @@ public partial class RestrictedNodeBbManagerWindow : Window
         }
     }
 
+    private void UpdatePluginSelectionCount()
+    {
+        var count = _allPlugins.Count(plugin => plugin.IsSelected);
+        PluginSelectionCount.Text = count == 0 ? "לא נבחרו פריטים" : $"נבחרו {count} פריטים";
+    }
+
+    private void SelectVisiblePlugins_Click(object sender, RoutedEventArgs e)
+    {
+        var visible = PluginCards.ItemsSource?.Cast<PluginCard>().ToArray() ?? [];
+        foreach (var plugin in visible) plugin.IsSelected = true;
+        PluginCards.Items.Refresh();
+        UpdatePluginSelectionCount();
+    }
+
+    private void ClearPluginSelection_Click(object sender, RoutedEventArgs e)
+    {
+        foreach (var plugin in _allPlugins) plugin.IsSelected = false;
+        PluginCards.Items.Refresh();
+        UpdatePluginSelectionCount();
+    }
+
+    private async void BulkUpdate_Click(object sender, RoutedEventArgs e) =>
+        await RunBulkPluginActionAsync("עדכון מרובה", _service.UpdateAsync);
+
+    private async void BulkDisable_Click(object sender, RoutedEventArgs e) =>
+        await RunBulkPluginActionAsync("השבתה מרובה", _service.DisableAsync);
+
+    private async void BulkRemove_Click(object sender, RoutedEventArgs e) =>
+        await RunBulkPluginActionAsync("הסרה מרובה", _service.RemoveAsync);
+
+    private async Task RunBulkPluginActionAsync(
+        string label,
+        Func<string, CancellationToken, Task<(int ExitCode, string Output, string Error)>> action)
+    {
+        var selected = _allPlugins.Where(plugin => plugin.IsSelected)
+            .Select(plugin => plugin.Name)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        if (selected.Length == 0)
+        {
+            PluginActionStatus.Text = "בחר לפחות פריט אחד בכרטיסי התוספים.";
+            return;
+        }
+
+        var destructive = label == "הסרה מרובה";
+        var warning = destructive
+            ? "הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה."
+            : "הפעולה תתבצע על כל החבילות שנבחרו, אחת אחרי השנייה. השרת מבצע גיבוי אוטומטי לפני כל שינוי.";
+        if (MessageBox.Show(this,
+            $"{label} עבור {selected.Length} פריטים?\n\n{string.Join(Environment.NewLine, selected)}\n\n{warning}",
+            "אישור פעולה מרובה", MessageBoxButton.YesNo,
+            destructive ? MessageBoxImage.Warning : MessageBoxImage.Question) != MessageBoxResult.Yes)
+            return;
+
+        await RunAsync(async () =>
+        {
+            var outputs = new List<string>();
+            var failures = 0;
+            foreach (var package in selected)
+            {
+                var result = await action(package, CancellationToken.None);
+                var details = string.Join(Environment.NewLine,
+                    new[] { result.Output.Trim(), result.Error.Trim() }
+                        .Where(value => !string.IsNullOrWhiteSpace(value)));
+                outputs.Add($"[{(result.ExitCode == 0 ? "הצלחה" : "כישלון")}] {package}" +
+                    (string.IsNullOrWhiteSpace(details) ? string.Empty : Environment.NewLine + details));
+                if (result.ExitCode != 0) failures++;
+            }
+            var summary = $"הפעולה הסתיימה עבור {selected.Length} פריטים. הצלחות: {selected.Length - failures}; כישלונות: {failures}.";
+            return (failures == 0 ? 0 : 1, summary, string.Join(Environment.NewLine + Environment.NewLine, outputs));
+        }, label);
+    }
+
     private string SelectedPlugin(object sender)
     {
         if (sender is System.Windows.Controls.Button button && button.Tag is string name) { TargetBox.Text = name; return name; }
@@ -380,4 +456,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
 }
 
 
-public sealed record PluginCard(string Name, string KindLabel);
+public sealed class PluginCard(string name, string kindLabel)
+{
+    public string Name { get; } = name;
+    public string KindLabel { get; } = kindLabel;
+    public bool IsSelected { get; set; }
+}

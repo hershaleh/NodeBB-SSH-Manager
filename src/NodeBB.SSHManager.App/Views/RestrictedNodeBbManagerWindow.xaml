@@ -146,7 +146,7 @@
         <TextBlock Grid.Row="2" Text="קובץ ZIP מועלה ישירות לשרת (עד 25MB). לאחר ההעלאה אפשר להתקין אותו מכאן." Foreground="#7C8AA0" FontSize="11" Margin="0,8,0,0"/>
        </Grid>
       </Border>
-      <Grid Grid.Row="2"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+      <Grid Grid.Row="2"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
        <Grid Grid.Row="0" Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="150"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
         <TextBox x:Name="PluginSearchBox" Height="38" Padding="12" VerticalContentAlignment="Center" FontSize="12" ToolTip="חיפוש לפי שם חבילה" TextChanged="PluginSearchBox_TextChanged"/>
         <ComboBox x:Name="PluginKindFilter" Grid.Column="1" Height="38" Margin="9,0,0,0" Padding="8" SelectedIndex="0" SelectionChanged="PluginKindFilter_SelectionChanged">
@@ -155,16 +155,27 @@
         <Button Grid.Column="2" Content="העתקת הרשימה" Click="CopyPluginList_Click" Padding="11,8" Margin="9,0,0,0"/>
         <Button Grid.Column="3" Content="ייצוא TXT" Click="ExportPluginList_Click" Padding="11,8" Margin="7,0,0,0"/>
        </Grid>
-       <Grid Grid.Row="1">
+       <Border Grid.Row="1" Background="#EEF2FF" BorderBrush="#DCE4FF" BorderThickness="1" CornerRadius="13" Padding="10,8" Margin="0,0,0,11">
+        <DockPanel LastChildFill="False">
+         <TextBlock x:Name="PluginSelectionCount" Text="לא נבחרו פריטים" Foreground="#40558D" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,12,0"/>
+         <Button Content="בחירת כל המוצגים" Click="SelectVisiblePlugins_Click" Padding="10,6" Margin="0,0,7,0"/>
+         <Button Content="ניקוי בחירה" Click="ClearPluginSelection_Click" Padding="10,6" Margin="0,0,7,0"/>
+         <Button Content="עדכון נבחרים" Click="BulkUpdate_Click" Padding="10,6" Margin="0,0,7,0" Background="#3659D9" Foreground="White" BorderThickness="0"/>
+         <Button Content="השבתת נבחרים" Click="BulkDisable_Click" Padding="10,6" Margin="0,0,7,0"/>
+         <Button Content="הסרת נבחרים" Click="BulkRemove_Click" Padding="10,6" Foreground="#B42318"/>
+        </DockPanel>
+       </Border>
+       <Grid Grid.Row="2">
         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
          <ItemsControl x:Name="PluginCards"><ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Horizontal" ItemWidth="286" ItemHeight="206"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
           <ItemsControl.ItemTemplate><DataTemplate>
            <Border Background="White" BorderBrush="#E1E7F0" BorderThickness="1" CornerRadius="17" Padding="17" Margin="0,0,13,13">
             <Border.Effect><DropShadowEffect Color="#203451" BlurRadius="16" ShadowDepth="2" Opacity=".07"/></Border.Effect>
             <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-              <Border Background="#EEF2FF" CornerRadius="10" Width="38" Height="38" HorizontalAlignment="Left"><TextBlock Text="✦" Foreground="#4A63C8" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
-              <Border Grid.Column="1" Background="#E8F7EF" CornerRadius="10" Padding="9,5" VerticalAlignment="Top"><TextBlock Text="פעיל" Foreground="#18794E" FontSize="10" FontWeight="Bold"/></Border>
+             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="בחירת התוסף לפעולה מרובה"/>
+              <Border Grid.Column="1" Background="#EEF2FF" CornerRadius="10" Width="38" Height="38" HorizontalAlignment="Left"><TextBlock Text="✦" Foreground="#4A63C8" FontSize="21" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
+              <Border Grid.Column="2" Background="#E8F7EF" CornerRadius="10" Padding="9,5" VerticalAlignment="Top"><TextBlock Text="פעיל" Foreground="#18794E" FontSize="10" FontWeight="Bold"/></Border>
              </Grid>
              <StackPanel Grid.Row="1" Margin="0,13,0,10"><TextBlock Text="{Binding Name}" FontSize="14" FontWeight="Bold" Foreground="#24344D" TextWrapping="Wrap" MaxHeight="42"/><TextBlock Text="{Binding KindLabel}" FontSize="11" Foreground="#78879C" Margin="0,5,0,0"/><TextBlock Text="מותקן וזמין בפורום" FontSize="11" Foreground="#9AA5B5" Margin="0,7,0,0"/></StackPanel>
              <UniformGrid Grid.Row="2" Columns="4"><Button Content="העתקת שם" Tag="{Binding Name}" Click="PluginCopy_Click" Padding="5,7" Margin="0,0,5,0" FontSize="10"/><Button Content="עדכון" Tag="{Binding Name}" Click="PluginUpdate_Click" Padding="7,7" Margin="0,0,5,0" FontSize="10"/><Button Content="השבתה" Tag="{Binding Name}" Click="PluginDisable_Click" Padding="7,7" Margin="0,0,5,0" FontSize="10"/><Button Content="הסרה" Tag="{Binding Name}" Click="PluginRemove_Click" Padding="7,7" FontSize="10" Foreground="#B42318"/></UniformGrid>
