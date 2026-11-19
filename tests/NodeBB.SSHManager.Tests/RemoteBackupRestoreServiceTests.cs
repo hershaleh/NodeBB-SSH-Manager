@@ -11,6 +11,7 @@ namespace NodeBB.SSHManager.Tests;
 public sealed class RemoteBackupRestoreServiceTests
 {
     private const string Work = "/tmp/nodebb-file-restore-0123456789abcdef0123456789abcdef";
+    private const string ValidConfig = "{\"database\":\"mongo\",\"mongo\":{\"host\":\"127.0.0.1\",\"port\":27017,\"database\":\"nodebb\"}}";
 
     [Fact]
     public void BuildRestoreScript_UsesStagingRollbackAndDatabaseIdentityGuard()
@@ -57,7 +58,7 @@ public sealed class RemoteBackupRestoreServiceTests
     [InlineData("public/../../etc/passwd")]
     [InlineData("public\\uploads\\file")]
     [InlineData("C:/Windows/win.ini")]
-    [InlineData("public/uploads/bad\nname")]
+    [InlineData("public/uploads/bad\\nname")]
     public void NormalizeArchivePath_RejectsTraversalAndPlatformSpecificPaths(string path) =>
         Assert.Throws<InvalidDataException>(() => RemoteBackupRestoreService.NormalizeArchivePath(path));
 
@@ -75,32 +76,78 @@ public sealed class RemoteBackupRestoreServiceTests
     [Fact]
     public async Task ValidateEssentialArchive_AcceptsExpectedContentsAndRejectsTraversal()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "NodeBBFileRestoreTests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
+        var directory = CreateTempDirectory();
         var good = Path.Combine(directory, "good.tar.gz");
         var bad = Path.Combine(directory, "bad.tar.gz");
         try
         {
-            await CreateArchiveAsync(good, "config.json", "{\"database\":\"mongo\",\"mongo\":{\"host\":\"127.0.0.1\",\"port\":27017,\"database\":\"nodebb\"}}");
+            await CreateArchiveAsync(good, ("config.json", TarEntryType.RegularFile, ValidConfig));
             var info = await RemoteBackupRestoreService.ValidateEssentialArchiveAsync(good);
             Assert.Equal("mongo", info.DatabaseType);
             Assert.False(info.ContainsUploads);
 
-            await CreateArchiveAsync(bad, "../config.json", "{}");
+            await CreateArchiveAsync(bad, ("../config.json", TarEntryType.RegularFile, "{}"));
             await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(bad));
         }
         finally { Directory.Delete(directory, true); }
     }
 
-    private static async Task CreateArchiveAsync(string path, string entryName, string contents)
+    [Fact]
+    public async Task ValidateEssentialArchive_RejectsMissingOrUnsupportedDatabaseConfiguration()
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var missing = Path.Combine(directory, "missing.tar.gz");
+            await CreateArchiveAsync(missing, ("public/uploads/photo.jpg", TarEntryType.RegularFile, "image"));
+            await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(missing));
+
+            var unsupported = Path.Combine(directory, "unsupported.tar.gz");
+            await CreateArchiveAsync(unsupported, ("config.json", TarEntryType.RegularFile, "{\"database\":\"sqlite\"}"));
+            await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(unsupported));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateEssentialArchive_RejectsDuplicatePathsAndUnexpectedFiles()
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var duplicate = Path.Combine(directory, "duplicate.tar.gz");
+            await CreateArchiveAsync(duplicate,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("config.json", TarEntryType.RegularFile, ValidConfig));
+            await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(duplicate));
+
+            var unexpected = Path.Combine(directory, "unexpected.tar.gz");
+            await CreateArchiveAsync(unexpected,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("node_modules/unexpected.js", TarEntryType.RegularFile, "not allowed"));
+            await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(unexpected));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    private static string CreateTempDirectory()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBFileRestoreTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        return directory;
+    }
+
+    private static async Task CreateArchiveAsync(string path, params (string Name, TarEntryType Type, string Contents)[] entries)
     {
         await using var file = File.Create(path);
         await using var gzip = new GZipStream(file, CompressionLevel.Optimal);
         using var writer = new TarWriter(gzip, TarEntryFormat.Pax, leaveOpen: true);
-        var entry = new PaxTarEntry(TarEntryType.RegularFile, entryName)
+        foreach (var item in entries)
         {
-            DataStream = new MemoryStream(Encoding.UTF8.GetBytes(contents))
-        };
-        writer.WriteEntry(entry);
+            var entry = new PaxTarEntry(item.Type, item.Name);
+            if (item.Type is TarEntryType.RegularFile or TarEntryType.V7RegularFile)
+                entry.DataStream = new MemoryStream(Encoding.UTF8.GetBytes(item.Contents));
+            writer.WriteEntry(entry);
+        }
     }
 }
