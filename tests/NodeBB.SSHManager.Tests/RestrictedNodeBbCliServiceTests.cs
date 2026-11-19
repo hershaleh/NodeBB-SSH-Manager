@@ -1,3 +1,4 @@
+using Xunit;
 using NodeBB.SSHManager.Services;
 
 namespace NodeBB.SSHManager.Tests;
