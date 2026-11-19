@@ -97,6 +97,84 @@ public partial class SftpFileManagerWindow : Window
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await LoadDirectoryAsync(_currentPath);
+
+    private async void Navigate_Click(object sender, RoutedEventArgs e)
+    {
+        var requested = PathBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(requested)) { StatusText.Text = "הזן נתיב מוחלט."; return; }
+        await LoadDirectoryAsync(requested);
+    }
+
+    private async void CreateDirectory_Click(object sender, RoutedEventArgs e)
+    {
+        var name = PromptForName("יצירת תיקייה", "שם התיקייה החדשה:");
+        if (name is null) return;
+        try
+        {
+            var remotePath = SftpPathSafety.Combine(_currentPath, name);
+            await WithSftpLockAsync(() =>
+            {
+                if (_client.Exists(remotePath)) throw new IOException("כבר קיים פריט בשם הזה.");
+                _client.CreateDirectory(remotePath);
+                return true;
+            });
+            DiagnosticLogService.Instance.Info("SFTP", "DirectoryCreated", $"Created remote directory {remotePath}.", _session.Profile.Name);
+            await LoadDirectoryAsync(_currentPath);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "DirectoryCreateFailed", ex, _session.Profile.Name);
+            StatusText.Text = "יצירת התיקייה נכשלה: " + ex.Message;
+        }
+    }
+
+    private async void Rename_Click(object sender, RoutedEventArgs e)
+    {
+        if (FilesList.SelectedItem is not RemoteFileItem item) { StatusText.Text = "בחר פריט לשינוי שם."; return; }
+        var newName = PromptForName("שינוי שם", "השם החדש:", item.Name);
+        if (newName is null || string.Equals(newName, item.Name, StringComparison.Ordinal)) return;
+        try
+        {
+            var destination = SftpPathSafety.Combine(_currentPath, newName);
+            await WithSftpLockAsync(() =>
+            {
+                var source = SftpPathSafety.NormalizeAbsolutePath(item.FullPath);
+                if (_client.Exists(destination)) throw new IOException("כבר קיים פריט בשם החדש.");
+                if (item.IsDirectory) _client.RenameFile(source, destination);
+                else _client.RenameFile(source, destination);
+                return true;
+            });
+            DiagnosticLogService.Instance.Info("SFTP", "RemoteRenameCompleted", $"Renamed {item.FullPath} to {destination}.", _session.Profile.Name);
+            await LoadDirectoryAsync(_currentPath);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("SFTP", "RemoteRenameFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שינוי השם נכשל: " + ex.Message;
+        }
+    }
+
+    private string? PromptForName(string title, string label, string initialValue = "")
+    {
+        var dialog = new Window
+        {
+            Title = title, Owner = this, Width = 430, Height = 175,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            ResizeMode = ResizeMode.NoResize, FlowDirection = FlowDirection.RightToLeft
+        };
+        var panel = new System.Windows.Controls.StackPanel { Margin = new Thickness(16) };
+        panel.Children.Add(new System.Windows.Controls.TextBlock { Text = label, Margin = new Thickness(0, 0, 0, 8) });
+        var input = new System.Windows.Controls.TextBox { Text = initialValue, Height = 32, VerticalContentAlignment = VerticalAlignment.Center };
+        panel.Children.Add(input);
+        var buttons = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 14, 0, 0) };
+        var ok = new System.Windows.Controls.Button { Content = "אישור", Width = 90, IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        var cancel = new System.Windows.Controls.Button { Content = "ביטול", Width = 90, IsCancel = true };
+        ok.Click += (_, _) => { try { SftpPathSafety.ValidateName(input.Text.Trim()); dialog.DialogResult = true; dialog.Close(); } catch (Exception ex) { MessageBox.Show(dialog, ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning); } };
+        buttons.Children.Add(ok); buttons.Children.Add(cancel); panel.Children.Add(buttons);
+        dialog.Content = panel;
+        dialog.Loaded += (_, _) => { input.Focus(); input.SelectAll(); };
+        return dialog.ShowDialog() == true ? input.Text.Trim() : null;
+    }
     private async void Up_Click(object sender, RoutedEventArgs e)
     {
         var parent = _currentPath.TrimEnd('/');
