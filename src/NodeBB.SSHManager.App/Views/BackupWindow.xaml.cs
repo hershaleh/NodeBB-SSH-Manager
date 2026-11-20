@@ -177,6 +177,7 @@ public partial class BackupWindow : Window
                 DestinationDirectory = ScheduleDirectoryBox.Text.Trim(),
                 BackupKind = kind,
                 RetentionCount = keepCount,
+                IncludeDatabase = ScheduleIncludeDatabaseCheckBox.IsChecked == true,
                 Frequency = frequency,
                 DayOfWeek = day,
                 LocalTime = ScheduleTimeBox.Text.Trim()

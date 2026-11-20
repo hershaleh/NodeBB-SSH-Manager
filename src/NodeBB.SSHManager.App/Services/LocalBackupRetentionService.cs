@@ -7,11 +7,7 @@ public static class LocalBackupRetentionService
         if (profileId == Guid.Empty)
             throw new ArgumentException("מזהה פרופיל שרת תקין נדרש לצורך הפרדת גיבויים.", nameof(profileId));
 
-        var safeName = string.Concat((serverName ?? string.Empty)
-            .Select(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_' ? ch : '-'))
-            .Trim('-', '_');
-        if (string.IsNullOrWhiteSpace(safeName)) safeName = "server";
-        if (safeName.Length > 48) safeName = safeName[..48].Trim('-', '_');
+        var safeName = BuildSafeServerName(serverName);
         var kindToken = kind switch
         {
             RemoteBackupKind.FullInstallation => "full",
@@ -19,9 +15,28 @@ public static class LocalBackupRetentionService
             _ => throw new ArgumentOutOfRangeException(nameof(kind))
         };
 
-        // The stable profile identifier prevents two different server profiles with the
-        // same display name from sharing a retention namespace.
-        return $"NodeBB-{safeName}-{profileId:N}"[..($"NodeBB-{safeName}-{profileId:N}".Length)] + $"-{kindToken}";
+        // A stable profile identifier isolates retention even when display names collide.
+        return "NodeBB-" + safeName + "-" + profileId.ToString("N") + "-" + kindToken;
+    }
+
+    public static string BuildDatabaseFilePrefix(string serverName, Guid profileId, string databaseType)
+    {
+        if (profileId == Guid.Empty)
+            throw new ArgumentException("מזהה פרופיל שרת תקין נדרש לצורך הפרדת גיבויים.", nameof(profileId));
+        var type = (databaseType ?? string.Empty).Trim().ToLowerInvariant();
+        if (type is not ("mongo" or "postgres" or "redis"))
+            throw new ArgumentOutOfRangeException(nameof(databaseType), "סוג מסד הנתונים אינו נתמך לגיבוי מתוזמן.");
+        return "NodeBB-" + BuildSafeServerName(serverName) + "-" + profileId.ToString("N") + "-database-" + type;
+    }
+
+    private static string BuildSafeServerName(string? serverName)
+    {
+        var safeName = string.Concat((serverName ?? string.Empty)
+            .Select(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_' ? ch : '-'))
+            .Trim('-', '_');
+        if (string.IsNullOrWhiteSpace(safeName)) safeName = "server";
+        if (safeName.Length > 48) safeName = safeName[..48].Trim('-', '_');
+        return string.IsNullOrWhiteSpace(safeName) ? "server" : safeName;
     }
 
     public static int ApplyRetention(string directory, string filePrefix, int keepCount)

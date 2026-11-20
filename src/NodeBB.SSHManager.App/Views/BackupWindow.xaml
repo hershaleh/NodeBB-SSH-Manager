@@ -150,6 +150,8 @@
                                 <PasswordBox x:Name="ScheduleEncryptionConfirmBox" Height="40"/>
                             </StackPanel>
                         </Grid>
+                        <CheckBox x:Name="ScheduleIncludeDatabaseCheckBox" Content="כלול גם גיבוי מסד נתונים (קובץ מוצפן נפרד)" Margin="0,10,0,0" Foreground="#26354D"/>
+                        <TextBlock Text="גיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB. גיבויי מסד הנתונים נשמרים בנפרד ומשוחזרים דרך מנהל מסד הנתונים." Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
                         <TextBlock Text="מדיניות השמירה שלמעלה תחול גם על הגיבויים המתוזמנים. יש לשמור את סיסמת ההצפנה בנפרד; בלעדיה לא ניתן יהיה לשחזר את הגיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
                         <Button Content="יצירת תזמון גיבוי" Click="CreateScheduledBackup_Click" Background="#17865D" Foreground="White" BorderThickness="0" Padding="15,11"/>
                         <TextBlock Text="תזמונים קיימים להתקנה זו" FontWeight="SemiBold" Margin="0,14,0,6"/>

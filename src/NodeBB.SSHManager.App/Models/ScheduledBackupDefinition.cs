@@ -15,6 +15,7 @@ public sealed class ScheduledBackupDefinition
     public string DestinationDirectory { get; set; } = "";
     public RemoteBackupKind BackupKind { get; set; }
     public int RetentionCount { get; set; }
+    public bool IncludeDatabase { get; set; }
     public ScheduledBackupFrequency Frequency { get; set; } = ScheduledBackupFrequency.Daily;
     public DayOfWeek DayOfWeek { get; set; } = DayOfWeek.Monday;
     public string LocalTime { get; set; } = "03:00";
@@ -27,7 +28,7 @@ public sealed class ScheduledBackupDefinition
         {
             var cadence = Frequency == ScheduledBackupFrequency.Daily ? "כל יום" : "כל שבוע · " + DayOfWeek;
             var kind = BackupKind == RemoteBackupKind.FullInstallation ? "גיבוי מלא" : "הגדרות והעלאות";
-            return cadence + " בשעה " + LocalTime + " · " + kind;
+            return cadence + " בשעה " + LocalTime + " · " + kind + (IncludeDatabase ? " · כולל מסד נתונים" : "");
         }
     }
 

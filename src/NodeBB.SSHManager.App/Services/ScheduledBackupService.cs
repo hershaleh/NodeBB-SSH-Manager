@@ -323,8 +323,47 @@ public static class ScheduledBackupRunner
             var removed = schedule.RetentionCount > 0
                 ? LocalBackupRetentionService.ApplyRetention(schedule.DestinationDirectory, prefix, schedule.RetentionCount)
                 : 0;
-            DiagnosticLogService.Instance.Info("ScheduledBackup", "ScheduledBackupCompleted",
-                "An encrypted scheduled backup completed; older retained files removed: " + removed, profile.Name);
+            DiagnosticLogService.Instance.Info("ScheduledBackup", "InstallationBackupCompleted",
+                "Encrypted NodeBB file backup completed; older retained files removed: " + removed, profile.Name);
+
+            if (schedule.IncludeDatabase)
+            {
+                var databaseInfo = await new NodeBbDatabaseService(session).ReadConfigurationAsync(installation);
+                var databaseType = databaseInfo.Type.Trim().ToLowerInvariant();
+                var databasePrefix = LocalBackupRetentionService.BuildDatabaseFilePrefix(profile.Name, profile.Id, databaseType);
+                var databasePlain = Path.Combine(tempRoot, "scheduled-db-" + Guid.NewGuid().ToString("N") + ".dump");
+                var databaseDestination = Path.Combine(schedule.DestinationDirectory,
+                    databasePrefix + "-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + "-" + Guid.NewGuid().ToString("N") + ".nbbbackup");
+                try
+                {
+                    switch (databaseType)
+                    {
+                        case "mongo":
+                            await new MongoDatabaseBackupService(session).DownloadBackupAsync(installation, databasePlain);
+                            break;
+                        case "postgres":
+                            await new PostgresDatabaseBackupService(session).DownloadBackupAsync(installation, databasePlain);
+                            break;
+                        case "redis":
+                            await new RedisDatabaseBackupService(session).DownloadBackupAsync(installation, databasePlain);
+                            break;
+                        default:
+                            throw new InvalidOperationException("סוג מסד הנתונים שהוגדר ב-NodeBB אינו נתמך לגיבוי מתוזמן: " + databaseInfo.Type);
+                    }
+
+                    await BackupEncryptionService.EncryptFileAsync(databasePlain, databaseDestination, encryptionPassword);
+                    var databaseRemoved = schedule.RetentionCount > 0
+                        ? LocalBackupRetentionService.ApplyRetention(schedule.DestinationDirectory, databasePrefix, schedule.RetentionCount)
+                        : 0;
+                    DiagnosticLogService.Instance.Info("ScheduledBackup", "DatabaseBackupCompleted",
+                        "Encrypted " + databaseType + " database backup completed; older retained files removed: " + databaseRemoved,
+                        profile.Name);
+                }
+                finally
+                {
+                    try { if (File.Exists(databasePlain)) File.Delete(databasePlain); } catch { }
+                }
+            }
         }
         catch (Exception ex)
         {

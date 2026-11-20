@@ -67,6 +67,27 @@ public sealed class LocalBackupRetentionServiceTests
     }
 
     [Fact]
+    public void DatabasePrefixIsIsolatedByProfileAndDatabaseType()
+    {
+        var profileId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var mongo = LocalBackupRetentionService.BuildDatabaseFilePrefix("Production Server", profileId, "mongo");
+        var postgres = LocalBackupRetentionService.BuildDatabaseFilePrefix("Production Server", profileId, "postgres");
+        var otherProfile = LocalBackupRetentionService.BuildDatabaseFilePrefix("Production Server",
+            Guid.Parse("22222222-2222-2222-2222-222222222222"), "mongo");
+        Assert.NotEqual(mongo, postgres);
+        Assert.NotEqual(mongo, otherProfile);
+        Assert.EndsWith("-database-mongo", mongo);
+        Assert.EndsWith("-database-postgres", postgres);
+    }
+
+    [Fact]
+    public void RejectsUnsupportedDatabasePrefixType()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LocalBackupRetentionService.BuildDatabaseFilePrefix("Production", Guid.NewGuid(), "sqlite"));
+    }
+
+    [Fact]
     public void RejectsDirectorySeparatorsInPrefix()
     {
         Assert.Throws<ArgumentException>(() => LocalBackupRetentionService.ApplyRetention(".", "folder\\backup", 1));

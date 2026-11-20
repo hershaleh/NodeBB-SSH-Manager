@@ -21,6 +21,7 @@ public sealed class ScheduledBackupStoreTests
             schedule.Frequency = ScheduledBackupFrequency.Weekly;
             schedule.DayOfWeek = DayOfWeek.Friday;
             schedule.LocalTime = "02:45";
+            schedule.IncludeDatabase = true;
             store.Save(schedule);
 
             var file = Directory.GetFiles(directory, "*.schedule").Single();
@@ -37,6 +38,7 @@ public sealed class ScheduledBackupStoreTests
             Assert.Equal(schedule.Frequency, loaded.Frequency);
             Assert.Equal(schedule.DayOfWeek, loaded.DayOfWeek);
             Assert.Equal(schedule.LocalTime, loaded.LocalTime);
+            Assert.Equal(schedule.IncludeDatabase, loaded.IncludeDatabase);
             Assert.Single(store.LoadAll());
 
             store.Delete(schedule.Id);
