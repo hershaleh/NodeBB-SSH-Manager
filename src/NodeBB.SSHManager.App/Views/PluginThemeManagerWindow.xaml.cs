@@ -94,13 +94,14 @@ public partial class PluginThemeManagerWindow : Window
         try
         {
             var result = await _service.ExecuteAsync(_installation, packageName, action);
-            var details = string.IsNullOrWhiteSpace(result.Output) ? result.Error : result.Output;
+            var details = string.Join(Environment.NewLine + Environment.NewLine,
+                new[] { result.Output.Trim(), result.Error.Trim() }.Where(value => !string.IsNullOrWhiteSpace(value)));
             StatusText.Text = result.ExitCode == 0
                 ? "הפעולה הסתיימה בהצלחה."
                 : $"הפעולה נכשלה (קוד {result.ExitCode}).";
             MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
-            if (result.ExitCode == 0 && action is PackageAction.Install or PackageAction.Update or PackageAction.Remove)
+            if (result.ExitCode == 0)
                 await RefreshAsync();
         }
         catch (Exception ex)
