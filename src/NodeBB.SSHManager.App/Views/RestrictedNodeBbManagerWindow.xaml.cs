@@ -586,7 +586,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var package = SelectedPlugin(sender);
         if (string.IsNullOrWhiteSpace(package)) return;
         if (MessageBox.Show(this, $"האם לבצע {label} עבור {package}? השרת מפעיל גיבוי אוטומטי לפני שינוי.", "אישור פעולה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        await RunAsync(() => action(package, CancellationToken.None), label);
+        // Pass the selected package explicitly so successful enable/disable actions
+        // update the per-server confirmed-state cache even when TargetBox is empty.
+        await RunAsync(() => action(package, CancellationToken.None), label, package);
         ManagerTabs.SelectedIndex = 1;
     }
 
