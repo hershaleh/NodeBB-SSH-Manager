@@ -40,9 +40,26 @@ public sealed class ScheduledBackupDefinition
                 ScheduledBackupRunStatus.Failed => "נכשל " + (LastRunUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? ""),
                 _ => "טרם הופעל"
             };
+            var nextRun = GetNextRunLocal(DateTime.Now).ToString("dd/MM/yyyy HH:mm");
             return cadence + " בשעה " + LocalTime + " · " + kind +
-                (IncludeDatabase ? " · כולל מסד נתונים" : "") + " · ריצה אחרונה: " + lastRun;
+                (IncludeDatabase ? " · כולל מסד נתונים" : "") + " · הבא: " + nextRun +
+                " · ריצה אחרונה: " + lastRun;
         }
+    }
+
+    public DateTime GetNextRunLocal(DateTime localNow)
+    {
+        if (!TimeOnly.TryParseExact(LocalTime, "HH:mm", CultureInfo.InvariantCulture,
+                DateTimeStyles.None, out var time))
+            throw new InvalidDataException("שעת התזמון אינה תקינה.");
+
+        var candidate = localNow.Date.Add(time.ToTimeSpan());
+        if (Frequency == ScheduledBackupFrequency.Daily)
+            return candidate <= localNow ? candidate.AddDays(1) : candidate;
+
+        var daysUntil = ((int)DayOfWeek - (int)localNow.DayOfWeek + 7) % 7;
+        candidate = candidate.AddDays(daysUntil);
+        return candidate <= localNow ? candidate.AddDays(7) : candidate;
     }
 
     public void Validate()

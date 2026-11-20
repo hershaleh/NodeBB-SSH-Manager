@@ -155,7 +155,13 @@
                         <TextBlock Text="מדיניות השמירה שלמעלה תחול גם על הגיבויים המתוזמנים. יש לשמור את סיסמת ההצפנה בנפרד; בלעדיה לא ניתן יהיה לשחזר את הגיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
                         <Button Content="יצירת תזמון גיבוי" Click="CreateScheduledBackup_Click" Background="#17865D" Foreground="White" BorderThickness="0" Padding="15,11"/>
                         <TextBlock Text="תזמונים קיימים להתקנה זו" FontWeight="SemiBold" Margin="0,14,0,6"/>
-                        <ListBox x:Name="ScheduledBackupsList" Height="104" DisplayMemberPath="DisplayLabel"/>
+                        <ListBox x:Name="ScheduledBackupsList" Height="112" ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DisplayLabel}" TextWrapping="Wrap" Margin="4,3"/>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                         <Grid Margin="0,8,0,0">
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <Button Content="הפעלת הגיבוי כעת" Click="RunScheduledBackupNow_Click" Padding="12,9" Background="#EAF0FF" Foreground="#3447A5"/>

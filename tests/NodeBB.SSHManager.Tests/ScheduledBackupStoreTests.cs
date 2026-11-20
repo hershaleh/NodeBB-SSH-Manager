@@ -82,6 +82,38 @@ public sealed class ScheduledBackupStoreTests
     }
 
     [Fact]
+    public void DailyScheduleCalculatesNextRunInLocalTime()
+    {
+        var schedule = CreateValid();
+        schedule.Frequency = ScheduledBackupFrequency.Daily;
+        schedule.LocalTime = "03:00";
+        var now = new DateTime(2026, 11, 20, 1, 30, 0, DateTimeKind.Local);
+        Assert.Equal(new DateTime(2026, 11, 20, 3, 0, 0, DateTimeKind.Local), schedule.GetNextRunLocal(now));
+    }
+
+    [Fact]
+    public void WeeklyScheduleCalculatesNextSelectedWeekday()
+    {
+        var schedule = CreateValid();
+        schedule.Frequency = ScheduledBackupFrequency.Weekly;
+        schedule.DayOfWeek = DayOfWeek.Friday;
+        schedule.LocalTime = "03:00";
+        var now = new DateTime(2026, 11, 16, 4, 0, 0, DateTimeKind.Local);
+        Assert.Equal(new DateTime(2026, 11, 20, 3, 0, 0, DateTimeKind.Local), schedule.GetNextRunLocal(now));
+    }
+
+    [Fact]
+    public void WeeklyScheduleMovesToNextWeekWhenTimeHasPassed()
+    {
+        var schedule = CreateValid();
+        schedule.Frequency = ScheduledBackupFrequency.Weekly;
+        schedule.DayOfWeek = DayOfWeek.Friday;
+        schedule.LocalTime = "03:00";
+        var now = new DateTime(2026, 11, 20, 4, 0, 0, DateTimeKind.Local);
+        Assert.Equal(new DateTime(2026, 11, 27, 3, 0, 0, DateTimeKind.Local), schedule.GetNextRunLocal(now));
+    }
+
+    [Fact]
     public void DisplayLabelMarksAbandonedRunningScheduleAsInterrupted()
     {
         var schedule = CreateValid();
