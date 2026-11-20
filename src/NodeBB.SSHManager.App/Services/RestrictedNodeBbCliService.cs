@@ -36,7 +36,7 @@ public sealed class RestrictedNodeBbCliService
     {
         var allowed = new HashSet<string>(candidates ?? [], StringComparer.OrdinalIgnoreCase);
         var found = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (Match match in Regex.Matches(raw ?? string.Empty, @"(?m)^\\[הצלחה\\]\\s+([^\\r\\n]+)"))
+        foreach (Match match in Regex.Matches(raw ?? string.Empty, @"(?m)^\[הצלחה\]\s+([^\r\n]+)"))
         {
             var package = match.Groups[1].Value.Trim();
             if (allowed.Contains(package)) found.Add(package);

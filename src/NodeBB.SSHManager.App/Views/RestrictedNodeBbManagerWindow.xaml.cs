@@ -163,7 +163,6 @@ public partial class RestrictedNodeBbManagerWindow : Window
                 + (string.IsNullOrWhiteSpace(raw) ? "השרת לא החזיר פלט." : raw);
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
-            SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
             var affectedPackages = (historyTarget ?? ResolveHistoryTarget(label))
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
             var successfulPackages = affectedPackages;
@@ -171,6 +170,15 @@ public partial class RestrictedNodeBbManagerWindow : Window
             {
                 successfulPackages = RestrictedNodeBbCliService.ExtractSuccessfulPackageNames(raw, affectedPackages).ToArray();
             }
+            var isBulkAction = label is "עדכון מרובה" or "השבתה מרובה" or "הסרה מרובה";
+            var partialSuccess = isBulkAction && result.ExitCode != 0 && successfulPackages.Length > 0;
+            if (partialSuccess)
+            {
+                var failedCount = Math.Max(0, affectedPackages.Length - successfulPackages.Length);
+                SummaryTitle.Text = label + " — הושלם חלקית";
+                SummaryText.Text = $"הפעולה הצליחה עבור {successfulPackages.Length} מתוך {affectedPackages.Length} חבילות. {failedCount} פעולות נכשלו; בדוק את הפלט המלא לפני ניסיון חוזר.";
+            }
+            SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
             if (result.ExitCode == 0 || successfulPackages.Length > 0)
             {
                 if (label is "השבתה" or "השבתה מרובה")
@@ -193,7 +201,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
             {
                 PluginActionStatus.Text = result.ExitCode == 0
                     ? "✓ " + label + " הושלם."
-                    : "⚠ " + label + " לא הושלם. " + TranslateError(raw);
+                    : partialSuccess
+                        ? $"⚠ {label} הושלם חלקית: {successfulPackages.Length} הצלחות, {affectedPackages.Length - successfulPackages.Length} כישלונות."
+                        : "⚠ " + label + " לא הושלם. " + TranslateError(raw);
                 ManagerTabs.SelectedIndex = 1;
             }
             // Refresh cards after successful mutations, while preserving the original action output.

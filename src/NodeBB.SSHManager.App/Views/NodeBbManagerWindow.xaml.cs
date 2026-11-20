@@ -24,10 +24,10 @@ public partial class NodeBbManagerWindow : Window
     }
 
     private void InstallationsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    { if (InstallationsList.SelectedItem is NodeBbInstallation item) { if (InstallationPicker.SelectedItem != item) InstallationPicker.SelectedItem = item; } UpdateActionAvailability(); }
+    { if (InstallationsList.SelectedItem is NodeBbInstallation item) { if (!Equals(InstallationPicker.SelectedItem, item)) InstallationPicker.SelectedItem = item; } UpdateActionAvailability(); }
 
     private void InstallationPicker_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    { if (InstallationPicker.SelectedItem is NodeBbInstallation item) { if (InstallationsList.SelectedItem != item) InstallationsList.SelectedItem = item; SelectedInstallationText.Text = $"{item.Path}  ·  {item.Version}"; } }
+    { if (InstallationPicker.SelectedItem is NodeBbInstallation item) { if (!Equals(InstallationsList.SelectedItem, item)) InstallationsList.SelectedItem = item; SelectedInstallationText.Text = $"{item.Path}  ·  {item.Version}"; } }
 
     private void UpdateActionAvailability()
     {
