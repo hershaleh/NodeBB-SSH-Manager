@@ -644,7 +644,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            if (prompt.RememberSecret && !string.IsNullOrEmpty(prompt.Secret))
+            if (prompt.RememberSecret)
             {
                 _credentialVault.Set(profile.Id, prompt.Secret);
                 profile.HasSavedCredential = true;

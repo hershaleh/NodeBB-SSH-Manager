@@ -136,8 +136,8 @@ public sealed class ScheduledBackupService
             ?? throw new InvalidOperationException("פרופיל השרת של התזמון אינו קיים עוד.");
         if (string.IsNullOrWhiteSpace(profile.KnownHostFingerprint))
             throw new InvalidOperationException("לא ניתן לתזמן גיבוי לפני אימות ושמירת טביעת האצבע של שרת SSH.");
-        if (profile.AuthenticationType == SshAuthenticationType.Password && string.IsNullOrWhiteSpace(_vault.Get(profile.Id)))
-            throw new InvalidOperationException("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר לשרת ולבחור בשמירת פרטי ההתחברות בכספת Windows.");
+        if (_vault.Get(profile.Id) is null)
+            throw new InvalidOperationException("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר לשרת ולבחור בשמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.");
 
         Directory.CreateDirectory(schedule.DestinationDirectory);
         _vault.Set(schedule.Id, encryptionPassword);
@@ -148,6 +148,7 @@ public sealed class ScheduledBackupService
         }
         catch
         {
+            try { WindowsScheduledTaskService.Remove(schedule.Id); } catch { }
             try { _store.Delete(schedule.Id); } catch { }
             try { _vault.Remove(schedule.Id); } catch { }
             throw;
@@ -243,10 +244,8 @@ public static class ScheduledBackupRunner
             throw new InvalidOperationException("גיבוי מתוזמן נעצר: טביעת האצבע של שרת SSH אינה מוגדרת.");
 
         var vault = new CredentialVaultService();
-        var sshSecret = vault.Get(profile.Id);
-        if (profile.AuthenticationType == SshAuthenticationType.Password && string.IsNullOrWhiteSpace(sshSecret))
-            throw new InvalidOperationException("גיבוי מתוזמן נעצר: פרטי ההתחברות לשרת אינם שמורים בכספת Windows.");
-        sshSecret ??= string.Empty;
+        var sshSecret = vault.Get(profile.Id)
+            ?? throw new InvalidOperationException("גיבוי מתוזמן נעצר: פרטי ההתחברות לשרת אינם שמורים בכספת Windows.");
         var encryptionPassword = vault.Get(schedule.Id)
             ?? throw new InvalidOperationException("סיסמת ההצפנה של הגיבוי המתוזמן אינה זמינה בכספת Windows.");
 

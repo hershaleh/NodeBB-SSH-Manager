@@ -12,7 +12,7 @@ public sealed class CredentialVaultService
     public CredentialVaultService(string? storagePath = null) => StoragePath = storagePath ?? Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Credentials", "vault.dat");
 
-    public bool Has(Guid profileId) => !string.IsNullOrEmpty(Get(profileId));
+    public bool Has(Guid profileId) => Get(profileId) is not null;
 
     public string? Get(Guid profileId)
     {
@@ -50,7 +50,7 @@ public sealed class CredentialVaultService
     public void Set(Guid profileId, string secret)
     {
         if (profileId == Guid.Empty) throw new ArgumentException("A valid profile ID is required.", nameof(profileId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(secret);
+        ArgumentNullException.ThrowIfNull(secret);
         lock (Sync) { var entries = ReadAll(); entries[profileId] = secret; WriteAll(entries); }
     }
 

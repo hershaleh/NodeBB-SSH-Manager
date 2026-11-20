@@ -44,9 +44,21 @@ public sealed class CredentialVaultServiceTests
     }
 
     [Fact]
-    public void Set_RejectsEmptySecrets()
+    public void SetGetAndHas_StoresEmptySecretForUnencryptedPrivateKeys()
     {
-        var vault = new CredentialVaultService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "vault.dat"));
-        Assert.Throws<ArgumentException>(() => vault.Set(Guid.NewGuid(), ""));
+        if (!OperatingSystem.IsWindows()) return;
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBVaultTests", Guid.NewGuid().ToString("N"));
+        var path = Path.Combine(directory, "vault.dat");
+        var vault = new CredentialVaultService(path);
+        var profileId = Guid.NewGuid();
+        try
+        {
+            vault.Set(profileId, "");
+            Assert.Equal("", vault.Get(profileId));
+            Assert.True(vault.Has(profileId));
+            vault.Remove(profileId);
+            Assert.False(vault.Has(profileId));
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 }

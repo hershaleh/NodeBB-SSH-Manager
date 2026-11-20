@@ -149,11 +149,10 @@ public partial class BackupWindow : Window
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (_session.Profile.AuthenticationType == SshAuthenticationType.Password &&
-            string.IsNullOrWhiteSpace(_credentialVault.Get(_session.Profile.Id)))
+        if (_credentialVault.Get(_session.Profile.Id) is null)
         {
             MessageBox.Show(this,
-                "כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows.",
+                "כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.",
                 "נדרשים פרטי התחברות שמורים", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -197,6 +196,11 @@ public partial class BackupWindow : Window
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleCreateFailed", ex, _session.Profile.Name);
             MessageBox.Show(this, ex.Message, "יצירת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            ScheduleEncryptionPasswordBox.Clear();
+            ScheduleEncryptionConfirmBox.Clear();
         }
     }
 
