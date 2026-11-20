@@ -27,7 +27,7 @@ public sealed class ScheduledBackupDefinition
         get
         {
             var cadence = Frequency == ScheduledBackupFrequency.Daily ? "כל יום" : "כל שבוע · " + DayOfWeek;
-            var kind = BackupKind == RemoteBackupKind.FullInstallation ? "גיבוי מלא" : "הגדרות והעלאות";
+            var kind = BackupKind == RemoteBackupKind.FullInstallation ? "קובצי התקנה מלאים" : "הגדרות והעלאות";
             return cadence + " בשעה " + LocalTime + " · " + kind + (IncludeDatabase ? " · כולל מסד נתונים" : "");
         }
     }

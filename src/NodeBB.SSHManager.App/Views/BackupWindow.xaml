@@ -96,7 +96,7 @@
                 <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
                         <TextBlock Text="גיבוי מתוזמן אוטומטי" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
-                        <TextBlock Text="הגיבוי יופעל דרך מתזמן המשימות של Windows גם כשהתוכנה סגורה, כל עוד המשתמש מחובר ל-Windows. גיבוי מתוזמן מוצפן תמיד; סיסמתו נשמרת בכספת Windows המוגנת למשתמש הנוכחי." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                        <TextBlock Text="הגיבוי יופעל דרך מתזמן המשימות של Windows גם כשהתוכנה סגורה, כל עוד המשתמש מחובר ל-Windows. קובצי ההתקנה אינם כוללים מסד נתונים אלא אם סומנה האפשרות המתאימה. גיבוי מתוזמן מוצפן תמיד; סיסמתו נשמרת בכספת Windows המוגנת למשתמש הנוכחי." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel>
@@ -128,7 +128,7 @@
                             <StackPanel Grid.Column="2">
                                 <TextBlock Text="סוג הגיבוי" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
                                 <ComboBox x:Name="ScheduleKindComboBox" SelectedIndex="0" Padding="10" Height="40">
-                                    <ComboBoxItem Content="גיבוי התקנה מלא" Tag="FullInstallation"/>
+                                    <ComboBoxItem Content="קובצי התקנה מלאים (ללא מסד נתונים)" Tag="FullInstallation"/>
                                     <ComboBoxItem Content="הגדרות והעלאות בלבד" Tag="ConfigurationAndUploads"/>
                                 </ComboBox>
                             </StackPanel>
@@ -151,12 +151,16 @@
                             </StackPanel>
                         </Grid>
                         <CheckBox x:Name="ScheduleIncludeDatabaseCheckBox" Content="כלול גם גיבוי מסד נתונים (קובץ מוצפן נפרד)" Margin="0,10,0,0" Foreground="#26354D"/>
-                        <TextBlock Text="גיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB. גיבויי מסד הנתונים נשמרים בנפרד ומשוחזרים דרך מנהל מסד הנתונים." Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                        <TextBlock Text="גיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB. גיבויי MongoDB ו-PostgreSQL ניתנים לשחזור דרך מנהל מסד הנתונים; שחזור Redis דורש הליך Redis נפרד." Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
                         <TextBlock Text="מדיניות השמירה שלמעלה תחול גם על הגיבויים המתוזמנים. יש לשמור את סיסמת ההצפנה בנפרד; בלעדיה לא ניתן יהיה לשחזר את הגיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
                         <Button Content="יצירת תזמון גיבוי" Click="CreateScheduledBackup_Click" Background="#17865D" Foreground="White" BorderThickness="0" Padding="15,11"/>
                         <TextBlock Text="תזמונים קיימים להתקנה זו" FontWeight="SemiBold" Margin="0,14,0,6"/>
                         <ListBox x:Name="ScheduledBackupsList" Height="76" DisplayMemberPath="DisplayLabel"/>
-                        <Button Content="הסרת התזמון הנבחר" Click="DeleteScheduledBackup_Click" HorizontalAlignment="Stretch" Margin="0,8,0,0" Padding="12,9"/>
+                        <Grid Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <Button Content="הפעלת הגיבוי כעת" Click="RunScheduledBackupNow_Click" Padding="12,9" Background="#EAF0FF" Foreground="#3447A5"/>
+                            <Button Grid.Column="2" Content="הסרת התזמון הנבחר" Click="DeleteScheduledBackup_Click" Padding="12,9"/>
+                        </Grid>
                     </StackPanel>
                 </Border>
                 <Border Style="{StaticResource SectionCard}">

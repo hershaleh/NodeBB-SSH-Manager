@@ -39,6 +39,7 @@ public sealed class ScheduledBackupStoreTests
             Assert.Equal(schedule.DayOfWeek, loaded.DayOfWeek);
             Assert.Equal(schedule.LocalTime, loaded.LocalTime);
             Assert.Equal(schedule.IncludeDatabase, loaded.IncludeDatabase);
+            Assert.Contains("כולל מסד נתונים", loaded.DisplayLabel);
             Assert.Single(store.LoadAll());
 
             store.Delete(schedule.Id);

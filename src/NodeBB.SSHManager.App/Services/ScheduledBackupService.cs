@@ -294,6 +294,24 @@ public static class ScheduledBackupRunner
 {
     public static async Task RunAsync(Guid scheduleId)
     {
+        using var mutex = new Mutex(false, "Local\\NodeBB-SSHManager-ScheduledBackup-" + scheduleId.ToString("N"));
+        var acquired = false;
+        try
+        {
+            try { acquired = mutex.WaitOne(0); }
+            catch (AbandonedMutexException) { acquired = true; }
+            if (!acquired)
+                throw new InvalidOperationException("גיבוי מתוזמן זה כבר פועל. לא הופעלה ריצה מקבילה כדי למנוע התנגשות בגיבויים ובמדיניות השמירה.");
+            await RunCoreAsync(scheduleId);
+        }
+        finally
+        {
+            if (acquired) mutex.ReleaseMutex();
+        }
+    }
+
+    private static async Task RunCoreAsync(Guid scheduleId)
+    {
         var schedule = new ScheduledBackupStore().Load(scheduleId);
         var profile = new ServerProfileStore().Load().SingleOrDefault(x => x.Id == schedule.ProfileId)
             ?? throw new InvalidOperationException("פרופיל השרת של הגיבוי המתוזמן אינו קיים.");

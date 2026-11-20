@@ -205,6 +205,34 @@ public partial class BackupWindow : Window
         }
     }
 
+    private async void RunScheduledBackupNow_Click(object sender, RoutedEventArgs e)
+    {
+        if (ScheduledBackupsList.SelectedItem is not ScheduledBackupDefinition schedule)
+        {
+            MessageBox.Show(this, "בחר תזמון להפעלה.", "לא נבחר תזמון", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (sender is System.Windows.Controls.Button button) button.IsEnabled = false;
+        StatusText.Text = "מפעיל גיבוי מתוזמן כעת...";
+        try
+        {
+            await ScheduledBackupRunner.RunAsync(schedule.Id);
+            StatusText.Text = "הגיבוי המתוזמן הושלם בהצלחה.";
+            MessageBox.Show(this, "הגיבוי הושלם. קובצי הגיבוי נשמרו כשהם מוצפנים בתיקייה שהוגדרה בתזמון.",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("ScheduledBackup", "ManualScheduledRunFailed", ex, _session.Profile.Name);
+            StatusText.Text = "הפעלת הגיבוי המתוזמן נכשלה: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "הפעלת גיבוי נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (sender is System.Windows.Controls.Button actionButton) actionButton.IsEnabled = true;
+        }
+    }
+
     private void DeleteScheduledBackup_Click(object sender, RoutedEventArgs e)
     {
         if (ScheduledBackupsList.SelectedItem is not ScheduledBackupDefinition schedule)
