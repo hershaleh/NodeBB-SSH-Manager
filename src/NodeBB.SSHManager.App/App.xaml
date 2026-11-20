@@ -1,7 +1,7 @@
 <Application x:Class="NodeBB.SSHManager.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
+>
     <Application.Resources>
         <!-- New visual language: Obsidian / Glacier -->
         <Color x:Key="CanvasColor">#F3F6FB</Color>

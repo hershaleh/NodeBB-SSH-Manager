@@ -1,5 +1,6 @@
 using System.Windows;
 using Microsoft.Win32;
+using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
 
 namespace NodeBB.SSHManager.Views;
@@ -9,6 +10,8 @@ public partial class BackupWindow : Window
     private readonly RemoteBackupService _service;
     private readonly NodeBbInstallation _installation;
     private readonly SshServerSession _session;
+    private readonly CredentialVaultService _credentialVault = new();
+    private readonly ScheduledBackupService _scheduledBackupService = new();
 
     public BackupWindow(SshServerSession session, NodeBbInstallation installation)
     {
@@ -18,6 +21,8 @@ public partial class BackupWindow : Window
         _service = new RemoteBackupService(session);
         InstallationLabel.Text = $"{session.Profile.Name} · {_installation.Path}";
         EncryptionFields.Visibility = EncryptBackupCheckBox.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        ScheduleDirectoryBox.Text = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "NodeBB Backups");
+        RefreshScheduledBackups();
     }
 
     private async void FullBackup_Click(object sender, RoutedEventArgs e) =>
@@ -108,6 +113,115 @@ public partial class BackupWindow : Window
         }
     }
 
+
+    private void RefreshScheduledBackups()
+    {
+        try
+        {
+            ScheduledBackupsList.ItemsSource = _scheduledBackupService.GetSchedules(_session.Profile.Id, _installation.Path);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleListLoadFailed", ex, _session.Profile.Name);
+            StatusText.Text = "לא ניתן לטעון את רשימת הגיבויים המתוזמנים: " + ex.Message;
+        }
+    }
+
+    private void BrowseScheduleFolder_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFolderDialog { Title = "בחירת תיקיית גיבויים מתוזמנים", Multiselect = false };
+        if (Directory.Exists(ScheduleDirectoryBox.Text)) dialog.FolderName = ScheduleDirectoryBox.Text;
+        if (dialog.ShowDialog(this) == true) ScheduleDirectoryBox.Text = dialog.FolderName;
+    }
+
+    private void CreateScheduledBackup_Click(object sender, RoutedEventArgs e)
+    {
+        var password = ScheduleEncryptionPasswordBox.Password;
+        if (password.Length < 12)
+        {
+            MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (!string.Equals(password, ScheduleEncryptionConfirmBox.Password, StringComparison.Ordinal))
+        {
+            MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        if (_session.Profile.AuthenticationType == SshAuthenticationType.Password &&
+            string.IsNullOrWhiteSpace(_credentialVault.Get(_session.Profile.Id)))
+        {
+            MessageBox.Show(this,
+                "כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows.",
+                "נדרשים פרטי התחברות שמורים", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
+            var frequencyTag = (ScheduleFrequencyComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+            var kindTag = (ScheduleKindComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+            var dayTag = (ScheduleDayComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+            if (!Enum.TryParse<ScheduledBackupFrequency>(frequencyTag, out var frequency) ||
+                !Enum.TryParse<RemoteBackupKind>(kindTag, out var kind) ||
+                !Enum.TryParse<DayOfWeek>(dayTag, out var day))
+                throw new InvalidDataException("יש לבחור תדירות, יום וסוג גיבוי תקינים.");
+
+            var keepText = (RetentionComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
+            var keepCount = int.TryParse(keepText, out var parsedKeep) ? parsedKeep : 0;
+            var schedule = new ScheduledBackupDefinition
+            {
+                ProfileId = _session.Profile.Id,
+                ProfileName = _session.Profile.Name,
+                InstallationPath = _installation.Path,
+                DestinationDirectory = ScheduleDirectoryBox.Text.Trim(),
+                BackupKind = kind,
+                RetentionCount = keepCount,
+                Frequency = frequency,
+                DayOfWeek = day,
+                LocalTime = ScheduleTimeBox.Text.Trim()
+            };
+            var executable = Environment.ProcessPath
+                ?? throw new InvalidOperationException("לא ניתן לזהות את קובץ ההפעלה הנוכחי.");
+            _scheduledBackupService.Create(schedule, password, executable);
+            ScheduleEncryptionPasswordBox.Clear();
+            ScheduleEncryptionConfirmBox.Clear();
+            RefreshScheduledBackups();
+            StatusText.Text = "תזמון הגיבוי נוצר בהצלחה במתזמן המשימות של Windows.";
+            MessageBox.Show(this,
+                "התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון.",
+                "התזמון נשמר", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleCreateFailed", ex, _session.Profile.Name);
+            MessageBox.Show(this, ex.Message, "יצירת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void DeleteScheduledBackup_Click(object sender, RoutedEventArgs e)
+    {
+        if (ScheduledBackupsList.SelectedItem is not ScheduledBackupDefinition schedule)
+        {
+            MessageBox.Show(this, "בחר תזמון להסרה.", "לא נבחר תזמון", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (MessageBox.Show(this, "להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו.",
+            "אישור הסרת תזמון", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+        try
+        {
+            _scheduledBackupService.Remove(schedule.Id);
+            RefreshScheduledBackups();
+            StatusText.Text = "התזמון הוסר. גיבויים קיימים נשמרו.";
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleRemoveFailed", ex, _session.Profile.Name);
+            MessageBox.Show(this, ex.Message, "הסרת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
 
     private async void RestoreEssential_Click(object sender, RoutedEventArgs e)
     {

@@ -95,6 +95,70 @@
                 </Border>
                 <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
+                        <TextBlock Text="גיבוי מתוזמן אוטומטי" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
+                        <TextBlock Text="הגיבוי יופעל דרך מתזמן המשימות של Windows גם כשהתוכנה סגורה, כל עוד המשתמש מחובר ל-Windows. גיבוי מתוזמן מוצפן תמיד; סיסמתו נשמרת בכספת Windows המוגנת למשתמש הנוכחי." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="תדירות" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="ScheduleFrequencyComboBox" SelectedIndex="0" Padding="10" Height="40">
+                                    <ComboBoxItem Content="כל יום" Tag="Daily"/>
+                                    <ComboBoxItem Content="פעם בשבוע" Tag="Weekly"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="שעה (שעון מקומי)" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <TextBox x:Name="ScheduleTimeBox" Text="03:00" Height="40"/>
+                            </StackPanel>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="יום בשבוע (לתזמון שבועי)" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="ScheduleDayComboBox" SelectedIndex="0" Padding="10" Height="40">
+                                    <ComboBoxItem Content="יום ראשון" Tag="Sunday"/>
+                                    <ComboBoxItem Content="יום שני" Tag="Monday"/>
+                                    <ComboBoxItem Content="יום שלישי" Tag="Tuesday"/>
+                                    <ComboBoxItem Content="יום רביעי" Tag="Wednesday"/>
+                                    <ComboBoxItem Content="יום חמישי" Tag="Thursday"/>
+                                    <ComboBoxItem Content="יום שישי" Tag="Friday"/>
+                                    <ComboBoxItem Content="שבת" Tag="Saturday"/>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="סוג הגיבוי" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <ComboBox x:Name="ScheduleKindComboBox" SelectedIndex="0" Padding="10" Height="40">
+                                    <ComboBoxItem Content="גיבוי התקנה מלא" Tag="FullInstallation"/>
+                                    <ComboBoxItem Content="הגדרות והעלאות בלבד" Tag="ConfigurationAndUploads"/>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="תיקיית יעד מקומית" Foreground="#64748B" FontSize="11" Margin="0,10,0,5"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                            <TextBox x:Name="ScheduleDirectoryBox" IsReadOnly="True" Height="40"/>
+                            <Button Grid.Column="1" Content="בחירת תיקייה" Click="BrowseScheduleFolder_Click" Margin="8,0,0,0"/>
+                        </Grid>
+                        <Grid Margin="0,10,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="סיסמת הצפנה (לפחות 12 תווים)" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <PasswordBox x:Name="ScheduleEncryptionPasswordBox" Height="40"/>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="אימות סיסמה" Foreground="#64748B" FontSize="11" Margin="0,0,0,5"/>
+                                <PasswordBox x:Name="ScheduleEncryptionConfirmBox" Height="40"/>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="מדיניות השמירה שלמעלה תחול גם על הגיבויים המתוזמנים. יש לשמור את סיסמת ההצפנה בנפרד; בלעדיה לא ניתן יהיה לשחזר את הגיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
+                        <Button Content="יצירת תזמון גיבוי" Click="CreateScheduledBackup_Click" Background="#17865D" Foreground="White" BorderThickness="0" Padding="15,11"/>
+                        <TextBlock Text="תזמונים קיימים להתקנה זו" FontWeight="SemiBold" Margin="0,14,0,6"/>
+                        <ListBox x:Name="ScheduledBackupsList" Height="76" DisplayMemberPath="DisplayLabel"/>
+                        <Button Content="הסרת התזמון הנבחר" Click="DeleteScheduledBackup_Click" HorizontalAlignment="Stretch" Margin="0,8,0,0" Padding="12,9"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource SectionCard}">
+                    <StackPanel>
                         <TextBlock Text="שחזור גיבוי הגדרות והעלאות" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
                         <TextBlock Text="השחזור יכול להחליף את config.json ואת public/uploads אם נכללה בארכיון. מסד הנתונים וקובצי package/lock אינם משוחזרים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,13"/>
                         <TextBlock Text="סיסמת הגיבוי (רק אם הקובץ מוצפן)" Style="{StaticResource FieldLabel}"/>
