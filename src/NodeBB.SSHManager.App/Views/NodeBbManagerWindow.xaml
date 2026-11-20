@@ -14,7 +14,9 @@
    <Setter Property="Cursor" Value="Hand"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
     <Border x:Name="tile" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}"
-      BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="17" Padding="{TemplateBinding Padding}">
+      BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="17" Padding="{TemplateBinding Padding}"
+      RenderTransformOrigin=".5,.5">
+     <Border.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Border.RenderTransform>
      <Border.Effect><DropShadowEffect Color="#203451" BlurRadius="17" ShadowDepth="2" Opacity=".06"/></Border.Effect>
      <ContentPresenter/>
     </Border>
