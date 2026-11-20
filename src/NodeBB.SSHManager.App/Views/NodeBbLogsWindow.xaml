@@ -1,25 +1,62 @@
 <Window x:Class="NodeBB.SSHManager.Views.NodeBbLogsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="לוגים של NodeBB" Width="1040" Height="720" MinWidth="760" MinHeight="520"
-        WindowStartupLocation="CenterOwner" Background="#101827" FlowDirection="RightToLeft">
-    <Grid Margin="18">
+        Title="לוגים של NodeBB" Width="1120" Height="760" MinWidth="780" MinHeight="540"
+        WindowStartupLocation="CenterOwner" Background="#0B1220" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Window.Resources>
+        <Style x:Key="ToolbarButton" TargetType="Button">
+            <Setter Property="Padding" Value="15,9"/><Setter Property="Background" Value="#202D42"/>
+            <Setter Property="Foreground" Value="#E6EDF7"/><Setter Property="BorderBrush" Value="#34445D"/>
+            <Setter Property="BorderThickness" Value="1"/><Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="26">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="יומן NodeBB" FontSize="23" FontWeight="Bold" Foreground="#E6EDF7"/>
-            <TextBlock x:Name="InstallationLabel" Foreground="#9AAAC0" Margin="0,5,0,0"/>
-        </StackPanel>
-        <DockPanel Grid.Row="1" Margin="0,14,0,10">
-            <Button x:Name="RefreshButton" Content="רענון" Click="Refresh_Click" Padding="14,8" Margin="0,0,8,0"/>
-            <Button Content="העתקת תצוגה" Click="Copy_Click" Padding="14,8" Margin="0,0,12,0"/>
-            <TextBox x:Name="SearchBox" Width="260" Height="34" Padding="8" VerticalContentAlignment="Center"
-                     ToolTip="סינון לפי טקסט" TextChanged="Search_TextChanged"/>
-            <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#9AAAC0"/>
-        </DockPanel>
-        <TextBox x:Name="LogTextBox" Grid.Row="2" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
-                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
-                 Background="#0B1220" Foreground="#C7F7D4" BorderBrush="#26364D"
-                 FontFamily="Consolas" FontSize="12" Padding="12" FlowDirection="LeftToRight"/>
-        <TextBlock Grid.Row="3" Text="מוצגות עד 500 השורות האחרונות מקובץ הלוג שהוגדר ב-config.json (ברירת מחדל: logs/output.log)." Foreground="#9AAAC0" FontSize="11" Margin="0,10,0,0"/>
+        <Border Background="#17243B" BorderBrush="#2B3B55" BorderThickness="1" CornerRadius="18" Padding="21" Margin="0,0,0,17">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="יומן פעילות NodeBB" FontSize="24" FontWeight="Bold" Foreground="#F1F5FB"/>
+                    <TextBlock x:Name="InstallationLabel" Foreground="#9FB0C8" FontSize="11" Margin="0,7,0,0"/>
+                    <TextBlock Text="תצוגת קריאה בלבד · עד 500 שורות אחרונות" Foreground="#7589A8" FontSize="10" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="54" Height="54" CornerRadius="15" Background="#263957">
+                    <TextBlock Text="≋" FontSize="29" Foreground="#AFC0FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+        <Grid Grid.Row="1" Margin="0,0,0,13">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="12"/><ColumnDefinition Width="280"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Button x:Name="RefreshButton" Content="↻  רענון לוגים" Click="Refresh_Click" Style="{StaticResource ToolbarButton}" Background="#4F63D9" BorderThickness="0"/>
+            <Button Grid.Column="1" Visibility="Collapsed"/>
+            <TextBox x:Name="SearchBox" Grid.Column="2" Height="39" Padding="12,8" VerticalContentAlignment="Center"
+                     ToolTip="סינון לפי טקסט" TextChanged="Search_TextChanged" Background="#17243B"
+                     Foreground="#E6EDF7" BorderBrush="#34445D" CaretBrush="White"/>
+            <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                <Button Content="העתקת תצוגה" Click="Copy_Click" Style="{StaticResource ToolbarButton}" Margin="10,0,0,0"/>
+                <TextBlock x:Name="StatusText" Foreground="#A6B5CA" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="11"/>
+            </StackPanel>
+        </Grid>
+        <Border Grid.Row="2" Background="#080E19" BorderBrush="#26364D" BorderThickness="1" CornerRadius="15" Padding="14">
+            <Grid>
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                <DockPanel Margin="2,0,2,10">
+                    <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="8" Height="8" Fill="#F87171" Margin="0,0,6,0"/>
+                        <Ellipse Width="8" Height="8" Fill="#FBBF24" Margin="0,0,6,0"/>
+                        <Ellipse Width="8" Height="8" Fill="#34D399"/>
+                    </StackPanel>
+                    <TextBlock Text="NODEBB / OUTPUT.LOG" Foreground="#71839E" FontFamily="Consolas" FontSize="10" Margin="12,0,0,0"/>
+                </DockPanel>
+                <TextBox x:Name="LogTextBox" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                         VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"
+                         Background="#080E19" Foreground="#BCE7C8" BorderThickness="0"
+                         FontFamily="Cascadia Mono, Consolas" FontSize="12" Padding="5"
+                         FlowDirection="LeftToRight" SelectionBrush="#385B83"/>
+            </Grid>
+        </Border>
+        <TextBlock Grid.Row="3" Text="מקור: קובץ הלוג שהוגדר ב-config.json (ברירת מחדל: logs/output.log). הלוגים אינם משנים את השרת."
+                   Foreground="#7589A8" FontSize="10" Margin="2,12,2,0"/>
     </Grid>
 </Window>

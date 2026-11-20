@@ -1,31 +1,67 @@
 <Window x:Class="NodeBB.SSHManager.Views.SecurityAuditWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="בדיקת אבטחה" Width="1040" Height="700" MinWidth="760" MinHeight="520"
-        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
-    <Grid Margin="22">
+        Title="בדיקת אבטחה" Width="1120" Height="760" MinWidth="800" MinHeight="540"
+        WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Window.Resources>
+        <Style TargetType="ListViewItem">
+            <Setter Property="Padding" Value="9,8"/><Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="BorderBrush" Value="#EDF1F6"/><Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Background" Value="White"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#F5F7FC"/></Trigger>
+                <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#E8EDFF"/></Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="26">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="בדיקת אבטחת השרת" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
-            <TextBlock x:Name="InstallationLabel" Foreground="#778399" Margin="0,5,0,0"/>
-            <TextBlock Text="בדיקה לקריאה בלבד. התוכנה אינה משנה הגדרות אבטחה או הרשאות." Foreground="#17633B" Margin="0,8,0,0"/>
-        </StackPanel>
-        <DockPanel Grid.Row="1" Margin="0,16,0,12">
-            <Button x:Name="RefreshButton" Content="הרצת בדיקה מחדש" Click="Refresh_Click" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0"/>
-            <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
-        </DockPanel>
-        <Border Grid.Row="2" Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="10">
-            <ListView x:Name="FindingsList" BorderThickness="0">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="רמה" Width="105" DisplayMemberBinding="{Binding Severity}"/>
-                        <GridViewColumn Header="בדיקה" Width="210" DisplayMemberBinding="{Binding Item}"/>
-                        <GridViewColumn Header="מצב נוכחי" Width="250" DisplayMemberBinding="{Binding CurrentValue}"/>
-                        <GridViewColumn Header="המלצה" Width="400" DisplayMemberBinding="{Binding Recommendation}"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+        <Border Background="#17243B" CornerRadius="19" Padding="21" Margin="0,0,0,17">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="מרכז אבטחת השרת" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock x:Name="InstallationLabel" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
+                    <TextBlock Text="סריקה לקריאה בלבד · ללא שינוי הגדרות, הרשאות או שירותים" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="54" Height="54" Background="#293B5C" CornerRadius="15">
+                    <TextBlock Text="⬡" FontSize="28" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
         </Border>
-        <TextBlock Grid.Row="3" Text="הדוח מספק אינדיקציות בלבד. יש לבדוק ידנית כל המלצה לפני שינוי תצורת SSH, חומת אש או הרשאות." Foreground="#778399" Margin="0,12,0,0" TextWrapping="Wrap"/>
+        <Grid Grid.Row="1" Margin="0,0,0,13">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Button x:Name="RefreshButton" Content="⌕  הרצת בדיקה מחדש" Click="Refresh_Click" Padding="17,10"
+                    Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Border Grid.Column="1" Background="#E8EEF8" CornerRadius="11" Padding="13,9" Margin="12,0,0,0">
+                <TextBlock x:Name="StatusText" Foreground="#42536D" FontSize="11" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+        <Border Grid.Row="2" Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="16" Padding="13">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="8,4,8,13">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="100"/><ColumnDefinition Width="190"/><ColumnDefinition Width="230"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="רמת חומרה" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Text="תחום בדיקה" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="2" Text="ממצא" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="3" Text="המלצה" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                </Grid>
+                <ListView x:Name="FindingsList" BorderThickness="0" Background="Transparent">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="רמה" Width="105" DisplayMemberBinding="{Binding Severity}"/>
+                            <GridViewColumn Header="בדיקה" Width="210" DisplayMemberBinding="{Binding Item}"/>
+                            <GridViewColumn Header="מצב נוכחי" Width="250" DisplayMemberBinding="{Binding CurrentValue}"/>
+                            <GridViewColumn Header="המלצה" Width="400" DisplayMemberBinding="{Binding Recommendation}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+        <Border Grid.Row="3" Background="#FFF5E8" BorderBrush="#F3D6A7" BorderThickness="1" CornerRadius="11" Padding="12" Margin="0,12,0,0">
+            <TextBlock Text="הדוח מספק אינדיקציות בלבד. יש לבדוק ידנית כל המלצה לפני שינוי תצורת SSH, חומת אש או הרשאות."
+                       Foreground="#8A4B08" FontSize="10" TextWrapping="Wrap"/>
+        </Border>
     </Grid>
 </Window>

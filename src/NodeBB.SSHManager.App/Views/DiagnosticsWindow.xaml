@@ -1,27 +1,75 @@
 <Window x:Class="NodeBB.SSHManager.Views.DiagnosticsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="אבחון ויומני פעילות" Width="720" Height="520" MinWidth="600" MinHeight="420"
-        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
-    <Grid Margin="24">
+        Title="אבחון ויומני פעילות" Width="800" Height="620" MinWidth="620" MinHeight="480"
+        WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Grid Margin="28">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="אבחון ויומני פעילות" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
-            <TextBlock Text="כלי לאיסוף מידע שיסייע באיתור ובתיקון תקלות." Foreground="#778399" Margin="0,6,0,0"/>
-        </StackPanel>
-        <Border Grid.Row="1" Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,18,0,18">
-            <StackPanel>
-                <TextBlock Text="מה ייכלל בדוח?" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Text="• יומן אירועים ושגיאות של התוכנה&#10;• תאריך ושעה, רכיב, פעולה ופרטי חריגה&#10;• גרסת התוכנה, Windows ו-.NET&#10;• שגיאות חוזרות והפעולות שקדמו להן" Margin="0,12,0,16" Foreground="#43516A" LineHeight="24"/>
-                <Border Background="#EAF7EF" CornerRadius="8" Padding="12">
-                    <TextBlock Text="פרטיות: הדוח אינו כולל סיסמאות, מפתחות פרטיים, פרופילי שרתים או תוכן קבצים מרוחקים. מידע רגיש עובר הסתרה לפני הייצוא. הדוח נשמר אצלך בלבד; אין שליחה אוטומטית." TextWrapping="Wrap" Foreground="#17633B"/>
+        <Border Background="#17243B" CornerRadius="19" Padding="22">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="מרכז האבחון" FontSize="25" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="איסוף מידע טכני לצורך איתור תקלות" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
+                    <TextBlock Text="הדוח נוצר מקומית ונשאר בשליטתך" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17">
+                    <TextBlock Text="⌕" FontSize="31" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock x:Name="StatusText" Text="מוכן לייצוא." Foreground="#778399" Margin="0,16,0,0"/>
-            </StackPanel>
+            </Grid>
         </Border>
+        <StackPanel Grid.Row="1" Margin="0,18,0,18">
+            <TextBlock Text="תוכן דוח האבחון" FontSize="17" FontWeight="Bold" Foreground="#23324A" Margin="2,0,0,11"/>
+            <Border Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="16" Padding="18">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="42"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Border Background="#EEF1FF" CornerRadius="12" Width="38" Height="38">
+                            <TextBlock Text="≋" FontSize="22" Foreground="#5267D9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="יומני אירועים ושגיאות" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="רכיבים, פעולות, תאריכים ופרטי חריגה" FontSize="10" Foreground="#8793A5"/>
+                        </StackPanel>
+                    </Grid>
+                    <Separator Background="#EDF1F6"/>
+                    <Grid Margin="0,12,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="42"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Border Background="#E9F7F1" CornerRadius="12" Width="38" Height="38">
+                            <TextBlock Text="▣" FontSize="20" Foreground="#17865D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="מידע על סביבת העבודה" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="גרסת התוכנה, Windows וגרסת ‎.NET" FontSize="10" Foreground="#8793A5"/>
+                        </StackPanel>
+                    </Grid>
+                    <Separator Background="#EDF1F6"/>
+                    <Grid Margin="0,12,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="42"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Border Background="#FFF5E8" CornerRadius="12" Width="38" Height="38">
+                            <TextBlock Text="!" FontSize="20" FontWeight="Bold" Foreground="#A56A16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="דפוסים ושגיאות חוזרות" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="מידע שיכול לסייע להבין מה קדם לתקלה" FontSize="10" Foreground="#8793A5"/>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+            <Border Background="#EAF7EF" BorderBrush="#D2ECDD" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,13,0,0">
+                <StackPanel>
+                    <TextBlock Text="פרטיות ואבטחה" FontSize="13" FontWeight="Bold" Foreground="#17633B"/>
+                    <TextBlock Text="הדוח אינו כולל סיסמאות, מפתחות פרטיים, פרופילי שרתים או תוכן קבצים מרוחקים. מידע רגיש עובר הסתרה לפני הייצוא. אין שליחה אוטומטית — הדוח נשמר אצלך בלבד." TextWrapping="Wrap" Foreground="#28734D" FontSize="11" LineHeight="18" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#E8EEF8" CornerRadius="11" Padding="12" Margin="0,13,0,0">
+                <TextBlock x:Name="StatusText" Text="מוכן לייצוא." Foreground="#42536D" FontSize="11"/>
+            </Border>
+        </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="ייצוא דוח אבחון ZIP" Click="Export_Click" Padding="18,10" Background="#4263EB" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
-            <Button Content="סגור" Click="Close_Click" Padding="18,10" Margin="10,0,0,0"/>
+            <Button Content="יצירת דוח אבחון ZIP" Click="Export_Click" Padding="19,11" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Button Content="סגור" Click="Close_Click" Padding="19,11" Margin="10,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>
