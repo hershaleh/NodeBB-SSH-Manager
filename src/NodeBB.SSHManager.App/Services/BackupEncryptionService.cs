@@ -39,6 +39,8 @@ public static class BackupEncryptionService
         Directory.CreateDirectory(directory);
         var cipherTemp = fullDestination + "." + Guid.NewGuid().ToString("N") + ".cipher.tmp";
         var outputTemp = fullDestination + "." + Guid.NewGuid().ToString("N") + ".partial";
+        var aesKey = key.AsSpan(0, 32).ToArray();
+        byte[]? tag = null;
 
         try
         {
@@ -47,7 +49,7 @@ public static class BackupEncryptionService
                 aes.KeySize = 256;
                 aes.Mode = CipherMode.CBC;
                 aes.Padding = PaddingMode.PKCS7;
-                aes.Key = key.AsSpan(0, 32).ToArray();
+                aes.Key = aesKey;
                 aes.IV = iv;
                 await using var input = new FileStream(fullSource, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, true);
                 await using var cipherOutput = new FileStream(cipherTemp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize, true);
@@ -59,7 +61,7 @@ public static class BackupEncryptionService
                 await cipherOutput.FlushAsync(cancellationToken);
             }
 
-            var tag = await ComputeTagAsync(header, cipherTemp, key.AsMemory(32, 32), cancellationToken);
+            tag = await ComputeTagAsync(header, cipherTemp, key.AsMemory(32, 32), cancellationToken);
             await using (var output = new FileStream(outputTemp, FileMode.CreateNew, FileAccess.Write, FileShare.None, BufferSize, true))
             {
                 await output.WriteAsync(header, cancellationToken);
@@ -69,10 +71,11 @@ public static class BackupEncryptionService
                 await output.FlushAsync(cancellationToken);
             }
             File.Move(outputTemp, fullDestination, true);
-            CryptographicOperations.ZeroMemory(tag);
         }
         finally
         {
+            CryptographicOperations.ZeroMemory(aesKey);
+            if (tag is not null) CryptographicOperations.ZeroMemory(tag);
             CryptographicOperations.ZeroMemory(key);
             try { if (File.Exists(cipherTemp)) File.Delete(cipherTemp); } catch { }
             try { if (File.Exists(outputTemp)) File.Delete(outputTemp); } catch { }
@@ -93,6 +96,9 @@ public static class BackupEncryptionService
         Directory.CreateDirectory(directory);
         var outputTemp = fullDestination + "." + Guid.NewGuid().ToString("N") + ".partial";
         var key = Array.Empty<byte>();
+        var aesKey = Array.Empty<byte>();
+        byte[]? expectedTag = null;
+        byte[]? storedTag = null;
 
         try
         {
@@ -111,18 +117,19 @@ public static class BackupEncryptionService
             if (cipherLength <= 0) throw new InvalidDataException("אין נתונים בקובץ הגיבוי.");
 
             key = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, HashAlgorithmName.SHA256, KeyLength);
-            var expectedTag = await ComputeTagFromStreamAsync(header, input, cipherLength, key.AsMemory(32, 32), cancellationToken);
-            var storedTag = new byte[TagLength];
+            expectedTag = await ComputeTagFromStreamAsync(header, input, cipherLength, key.AsMemory(32, 32), cancellationToken);
+            storedTag = new byte[TagLength];
             await input.ReadExactlyAsync(storedTag, cancellationToken);
             if (!CryptographicOperations.FixedTimeEquals(expectedTag, storedTag))
                 throw new CryptographicException("הסיסמה שגויה או שקובץ הגיבוי שונה או פגום.");
 
             input.Position = HeaderLength;
             using var aes = Aes.Create();
+            aesKey = key.AsSpan(0, 32).ToArray();
             aes.KeySize = 256;
             aes.Mode = CipherMode.CBC;
             aes.Padding = PaddingMode.PKCS7;
-            aes.Key = key.AsSpan(0, 32).ToArray();
+            aes.Key = aesKey;
             aes.IV = iv;
             await using (var limited = new LimitedReadStream(input, cipherLength))
             await using (var crypto = new CryptoStream(limited, aes.CreateDecryptor(), CryptoStreamMode.Read))
@@ -132,12 +139,13 @@ public static class BackupEncryptionService
                 await output.FlushAsync(cancellationToken);
             }
             File.Move(outputTemp, fullDestination, true);
-            CryptographicOperations.ZeroMemory(expectedTag);
-            CryptographicOperations.ZeroMemory(storedTag);
         }
         finally
         {
             if (key.Length > 0) CryptographicOperations.ZeroMemory(key);
+            if (aesKey.Length > 0) CryptographicOperations.ZeroMemory(aesKey);
+            if (expectedTag is not null) CryptographicOperations.ZeroMemory(expectedTag);
+            if (storedTag is not null) CryptographicOperations.ZeroMemory(storedTag);
             try { if (File.Exists(outputTemp)) File.Delete(outputTemp); } catch { }
         }
     }
@@ -145,31 +153,41 @@ public static class BackupEncryptionService
     private static async Task<byte[]> ComputeTagAsync(byte[] header, string cipherPath, ReadOnlyMemory<byte> macKey,
         CancellationToken cancellationToken)
     {
-        using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKey.ToArray());
-        hmac.AppendData(header);
-        await using var input = new FileStream(cipherPath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, true);
-        var buffer = new byte[BufferSize];
-        int read;
-        while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
-            hmac.AppendData(buffer.AsSpan(0, read));
-        return hmac.GetHashAndReset();
+        var macKeyBytes = macKey.ToArray();
+        try
+        {
+            using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKeyBytes);
+            hmac.AppendData(header);
+            await using var input = new FileStream(cipherPath, FileMode.Open, FileAccess.Read, FileShare.Read, BufferSize, true);
+            var buffer = new byte[BufferSize];
+            int read;
+            while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
+                hmac.AppendData(buffer.AsSpan(0, read));
+            return hmac.GetHashAndReset();
+        }
+        finally { CryptographicOperations.ZeroMemory(macKeyBytes); }
     }
 
     private static async Task<byte[]> ComputeTagFromStreamAsync(byte[] header, Stream input, long cipherLength,
         ReadOnlyMemory<byte> macKey, CancellationToken cancellationToken)
     {
-        using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKey.ToArray());
-        hmac.AppendData(header);
-        var buffer = new byte[BufferSize];
-        var remaining = cipherLength;
-        while (remaining > 0)
+        var macKeyBytes = macKey.ToArray();
+        try
         {
-            var read = await input.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, remaining)), cancellationToken);
-            if (read == 0) throw new EndOfStreamException("קובץ הגיבוי נקטע לפני סופו.");
-            hmac.AppendData(buffer.AsSpan(0, read));
-            remaining -= read;
+            using var hmac = IncrementalHash.CreateHMAC(HashAlgorithmName.SHA256, macKeyBytes);
+            hmac.AppendData(header);
+            var buffer = new byte[BufferSize];
+            var remaining = cipherLength;
+            while (remaining > 0)
+            {
+                var read = await input.ReadAsync(buffer.AsMemory(0, (int)Math.Min(buffer.Length, remaining)), cancellationToken);
+                if (read == 0) throw new EndOfStreamException("קובץ הגיבוי נקטע לפני סופו.");
+                hmac.AppendData(buffer.AsSpan(0, read));
+                remaining -= read;
+            }
+            return hmac.GetHashAndReset();
         }
-        return hmac.GetHashAndReset();
+        finally { CryptographicOperations.ZeroMemory(macKeyBytes); }
     }
 
     private static void ValidatePassword(string password)
