@@ -51,7 +51,7 @@ public sealed class RestrictedNodeBbCliServiceTests
     [Fact]
     public void ExtractSuccessfulPackageNames_RecognizesOnlySuccessfulRequestedPackages()
     {
-        const string output = "[הצלחה] nodebb-plugin-alpha\\ninstalled\\n[כישלון] nodebb-plugin-beta\\nerror\\n[הצלחה] nodebb-plugin-alpha";
+        const string output = "[הצלחה] nodebb-plugin-alpha\ninstalled\n[כישלון] nodebb-plugin-beta\nerror\n[הצלחה] nodebb-plugin-alpha";
         var result = RestrictedNodeBbCliService.ExtractSuccessfulPackageNames(
             output, new[] { "nodebb-plugin-alpha", "nodebb-plugin-beta", "nodebb-plugin-gamma" });
         Assert.Equal(new[] { "nodebb-plugin-alpha" }, result);
@@ -60,7 +60,7 @@ public sealed class RestrictedNodeBbCliServiceTests
     [Fact]
     public void ExtractSuccessfulPackageNames_IsCaseInsensitiveAndIgnoresUnrequestedPackages()
     {
-        const string output = "[הצלחה] NODEBB-PLUGIN-ALPHA\\n[הצלחה] nodebb-plugin-outsider";
+        const string output = "[הצלחה] NODEBB-PLUGIN-ALPHA\n[הצלחה] nodebb-plugin-outsider";
         var result = RestrictedNodeBbCliService.ExtractSuccessfulPackageNames(
             output, new[] { "nodebb-plugin-alpha" });
         Assert.Equal(new[] { "NODEBB-PLUGIN-ALPHA" }, result);
