@@ -1,55 +1,93 @@
 <Window x:Class="NodeBB.SSHManager.Views.ServerMonitoringWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ניטור שרת" Width="900" Height="700" MinWidth="700" MinHeight="520"
-        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
-    <Grid Margin="22">
+        Title="ניטור שרת" Width="1040" Height="820" MinWidth="760" MinHeight="600"
+        WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Window.Resources>
+        <Style x:Key="MetricCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E4EAF3"/>
+            <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="17"/>
+            <Setter Property="Padding" Value="18"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="28">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="ניטור מצב השרת" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
-            <TextBlock x:Name="ServerLabel" Foreground="#778399" Margin="0,5,0,0"/>
-        </StackPanel>
-        <DockPanel Grid.Row="1" Margin="0,16,0,12">
-            <Button x:Name="RefreshButton" Content="רענון נתונים" Click="Refresh_Click" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0" Margin="0,0,12,0"/>
-            <CheckBox x:Name="AutoRefreshCheckBox" Content="רענון אוטומטי" VerticalAlignment="Center" Checked="AutoRefresh_Checked" Unchecked="AutoRefresh_Unchecked" Margin="0,0,8,0"/>
-            <ComboBox x:Name="AutoRefreshIntervalComboBox" Width="105" Height="30" VerticalContentAlignment="Center" SelectionChanged="AutoRefreshInterval_SelectionChanged" Margin="0,0,12,0">
+        <Border Background="#17243B" CornerRadius="20" Padding="22" Margin="0,0,0,18">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="ניטור ובקרת בריאות" FontSize="25" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock x:Name="ServerLabel" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
+                    <TextBlock Text="מדדי מערכת, משאבים ותהליכים בזמן אמת" Foreground="#8FA3C1" FontSize="11" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17">
+                    <TextBlock Text="⌁" FontSize="32" Foreground="#AEBBFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+        <WrapPanel Grid.Row="1" Margin="0,0,0,16" VerticalAlignment="Center">
+            <Button x:Name="RefreshButton" Content="↻  רענון נתונים" Click="Refresh_Click" Padding="16,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold" Margin="0,0,12,0"/>
+            <Border Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="12" Padding="12,7" Margin="0,0,9,0">
+                <CheckBox x:Name="AutoRefreshCheckBox" Content="רענון אוטומטי" VerticalAlignment="Center" Checked="AutoRefresh_Checked" Unchecked="AutoRefresh_Unchecked" FontSize="11"/>
+            </Border>
+            <ComboBox x:Name="AutoRefreshIntervalComboBox" Width="115" Height="38" VerticalContentAlignment="Center" SelectionChanged="AutoRefreshInterval_SelectionChanged" Margin="0,0,12,0">
                 <ComboBoxItem Content="30 שניות" Tag="30"/>
                 <ComboBoxItem Content="דקה" Tag="60"/>
                 <ComboBoxItem Content="5 דקות" Tag="300"/>
             </ComboBox>
-            <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
-        </DockPanel>
-        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <Border Background="#E8EEF8" CornerRadius="10" Padding="12,9">
+                <TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="#42536D" FontSize="11"/>
+            </Border>
+        </WrapPanel>
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Padding="0,0,5,0">
             <StackPanel>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
-                    <StackPanel>
-                        <TextBlock Text="זמן פעילות" Foreground="#778399"/>
-                        <TextBlock x:Name="UptimeText" FontSize="19" FontWeight="SemiBold" Margin="0,6,0,0" Text="—"/>
-                    </StackPanel>
-                </Border>
-                <Grid Margin="0,0,0,12">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                    <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18">
-                        <StackPanel><TextBlock Text="עומס מערכת" Foreground="#778399"/><TextBlock x:Name="LoadText" FontSize="17" FontWeight="SemiBold" Margin="0,6,0,0" Text="—"/></StackPanel>
+                <TextBlock Text="מדדי מערכת" FontSize="16" FontWeight="Bold" Foreground="#23324A" Margin="2,0,0,11"/>
+                <Grid Margin="0,0,0,14">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource MetricCard}">
+                        <StackPanel>
+                            <TextBlock Text="זמן פעילות" Foreground="#718096" FontSize="11"/>
+                            <TextBlock x:Name="UptimeText" FontSize="20" FontWeight="Bold" Foreground="#24334C" Margin="0,9,0,0" Text="—" TextWrapping="Wrap"/>
+                            <TextBlock Text="מאז הפעלת המערכת" Foreground="#9AA6B8" FontSize="10" Margin="0,6,0,0"/>
+                        </StackPanel>
                     </Border>
-                    <Border Grid.Column="2" Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18">
-                        <StackPanel><TextBlock Text="זיכרון" Foreground="#778399"/><TextBlock x:Name="MemoryText" FontSize="17" FontWeight="SemiBold" Margin="0,6,0,0" Text="—"/></StackPanel>
+                    <Border Grid.Column="2" Style="{StaticResource MetricCard}">
+                        <StackPanel>
+                            <TextBlock Text="עומס מערכת" Foreground="#718096" FontSize="11"/>
+                            <TextBlock x:Name="LoadText" FontSize="20" FontWeight="Bold" Foreground="#4F63D9" Margin="0,9,0,0" Text="—" TextWrapping="Wrap"/>
+                            <TextBlock Text="מדדי CPU ועומס" Foreground="#9AA6B8" FontSize="10" Margin="0,6,0,0"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="4" Style="{StaticResource MetricCard}">
+                        <StackPanel>
+                            <TextBlock Text="זיכרון" Foreground="#718096" FontSize="11"/>
+                            <TextBlock x:Name="MemoryText" FontSize="20" FontWeight="Bold" Foreground="#17865D" Margin="0,9,0,0" Text="—" TextWrapping="Wrap"/>
+                            <TextBlock Text="שימוש בזיכרון RAM" Foreground="#9AA6B8" FontSize="10" Margin="0,6,0,0"/>
+                        </StackPanel>
                     </Border>
                 </Grid>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
-                    <StackPanel><TextBlock Text="נפח דיסקים" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="DiskText" TextWrapping="Wrap" Margin="0,8,0,0" Foreground="#43516A"/></StackPanel>
-                </Border>
-                <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,14">
                     <StackPanel>
-                        <TextBlock Text="התראות בריאות השרת" FontWeight="SemiBold" FontSize="16"/>
-                        <TextBlock x:Name="HealthAlertsText" TextWrapping="Wrap" Margin="0,8,0,0"/>
+                        <TextBlock Text="אחסון ודיסקים" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
+                        <TextBlock x:Name="DiskText" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#43516A" FontSize="12" LineHeight="19"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#101827" CornerRadius="12" Padding="18">
-                    <StackPanel><TextBlock Text="תהליכים מובילים לפי CPU" Foreground="#DCE7F8" FontWeight="SemiBold" FontSize="16"/><TextBlock x:Name="ProcessesText" TextWrapping="Wrap" Margin="0,10,0,0" Foreground="#C7F7D4" FontFamily="Consolas" FontSize="12"/></StackPanel>
+                <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="17" Padding="18" Margin="0,0,0,14">
+                    <StackPanel>
+                        <TextBlock Text="התראות בריאות השרת" FontWeight="Bold" FontSize="15" Foreground="#85540D"/>
+                        <TextBlock x:Name="HealthAlertsText" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#76531B" FontSize="12" LineHeight="19"/>
+                    </StackPanel>
+                </Border>
+                <Border Background="#101827" CornerRadius="17" Padding="18" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="תהליכים מובילים לפי CPU" Foreground="#E5ECF8" FontWeight="Bold" FontSize="15"/>
+                        <TextBlock Text="תצוגת תהליכים כפי שדווחו על ידי מערכת ההפעלה" Foreground="#8395B2" FontSize="10" Margin="0,4,0,10"/>
+                        <TextBlock x:Name="ProcessesText" TextWrapping="Wrap" Foreground="#C7F7D4" FontFamily="Consolas" FontSize="12" LineHeight="19"/>
+                    </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>
-        <TextBlock Grid.Row="3" x:Name="CollectedAtText" Foreground="#778399" Margin="0,12,0,0"/>
+        <TextBlock Grid.Row="3" x:Name="CollectedAtText" Foreground="#7C899D" FontSize="10" Margin="0,12,0,0"/>
     </Grid>
 </Window>

@@ -1,35 +1,72 @@
 <Window x:Class="NodeBB.SSHManager.Views.BackupWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="גיבויים" Width="720" Height="690" MinWidth="600" MinHeight="560"
-        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
-    <Grid Margin="24">
+        Title="גיבויים" Width="900" Height="820" MinWidth="700" MinHeight="650"
+        WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Window.Resources>
+        <Style x:Key="SectionCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/><Setter Property="BorderBrush" Value="#E5EAF3"/>
+            <Setter Property="BorderThickness" Value="1"/><Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="Padding" Value="20"/><Setter Property="Margin" Value="0,0,0,14"/>
+        </Style>
+        <Style x:Key="ActionButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="#4F63D9"/><Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="17,11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#64748B"/><Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="28">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="גיבוי התקנת NodeBB" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
-            <TextBlock x:Name="InstallationLabel" Foreground="#778399" Margin="0,5,0,0"/>
-        </StackPanel>
-        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,20,0,20">
+        <Border Background="#17243B" CornerRadius="20" Padding="22" Margin="0,0,0,20">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="מרכז הגיבויים" Foreground="White" FontSize="25" FontWeight="Bold"/>
+                    <TextBlock x:Name="InstallationLabel" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
+                    <TextBlock Text="יצירה, הצפנה ושחזור של קובצי ההתקנה" Foreground="#8FA3C1" FontSize="11" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17" VerticalAlignment="Center">
+                    <TextBlock Text="◈" FontSize="30" Foreground="#AEBBFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
+        </Border>
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="0,0,5,0">
             <StackPanel>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,0,0,12">
+                <TextBlock Text="יצירת גיבוי" FontSize="17" FontWeight="Bold" Foreground="#1C2940" Margin="2,0,0,12"/>
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Border Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <Border Width="42" Height="42" Background="#EEF1FF" CornerRadius="13" HorizontalAlignment="Right">
+                                <TextBlock Text="▣" FontSize="21" Foreground="#5267D9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="גיבוי התקנה מלא" FontSize="16" FontWeight="Bold" Foreground="#1C2940" Margin="0,14,0,0"/>
+                            <TextBlock Text="ארכיון של כל תיקיית NodeBB, כולל קבצים ותלויות. מתאים לשמירת תמונת מצב מלאה; הקובץ עשוי להיות גדול." TextWrapping="Wrap" Foreground="#718096" FontSize="11" LineHeight="18" Margin="0,7,0,16"/>
+                            <Button Content="יצירת גיבוי מלא" Click="FullBackup_Click" Style="{StaticResource ActionButton}" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource SectionCard}">
+                        <StackPanel>
+                            <Border Width="42" Height="42" Background="#E9F7F1" CornerRadius="13" HorizontalAlignment="Right">
+                                <TextBlock Text="⌑" FontSize="22" Foreground="#17865D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock Text="גיבוי הגדרות והעלאות" FontSize="16" FontWeight="Bold" Foreground="#1C2940" Margin="0,14,0,0"/>
+                            <TextBlock Text="כולל config.json, קובצי package/lock וקובצי public/uploads שנמצאו. מסד הנתונים אינו נכלל." TextWrapping="Wrap" Foreground="#718096" FontSize="11" LineHeight="18" Margin="0,7,0,16"/>
+                            <Button Content="יצירת גיבוי ממוקד" Click="EssentialBackup_Click" HorizontalAlignment="Stretch" Padding="17,11"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                <TextBlock Text="הגדרות גיבוי ואבטחה" FontSize="17" FontWeight="Bold" Foreground="#1C2940" Margin="2,7,0,12"/>
+                <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
-                        <TextBlock Text="גיבוי מלא של תיקיית NodeBB" FontWeight="SemiBold" FontSize="16"/>
-                        <TextBlock Text="יוצר ארכיון של כל תיקיית ההתקנה, כולל קבצים ותלויות. הגיבוי עלול להיות גדול." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,12"/>
-                        <Button Content="יצירת גיבוי מלא" Click="FullBackup_Click" HorizontalAlignment="Left" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0"/>
-                    </StackPanel>
-                </Border>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18">
-                    <StackPanel>
-                        <TextBlock Text="גיבוי הגדרות והעלאות" FontWeight="SemiBold" FontSize="16"/>
-                        <TextBlock Text="כולל config.json, קובצי package/lock וקובצי public/uploads שנמצאו. אינו כולל את מסד הנתונים." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,12"/>
-                        <Button Content="יצירת גיבוי ממוקד" Click="EssentialBackup_Click" HorizontalAlignment="Left" Padding="16,9"/>
-                    </StackPanel>
-                </Border>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,14,0,0">
-                    <StackPanel>
-                        <TextBlock Text="מדיניות שמירת גיבויים" FontWeight="SemiBold"/>
-                        <TextBlock Text="הניקוי חל רק על גיבויים של השרת הזה ובאותו סוג גיבוי. ברירת המחדל אינה מוחקת גיבויים." Foreground="#778399" TextWrapping="Wrap" Margin="0,5,0,8"/>
-                        <ComboBox x:Name="RetentionComboBox" SelectedIndex="0" Padding="7">
+                        <TextBlock Text="מדיניות שמירת גיבויים" FontSize="14" FontWeight="SemiBold" Foreground="#26354D"/>
+                        <TextBlock Text="הניקוי חל רק על גיבויים של השרת הזה ובאותו סוג גיבוי. ברירת המחדל אינה מוחקת גיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,10"/>
+                        <ComboBox x:Name="RetentionComboBox" SelectedIndex="0" Padding="10" Height="40">
                             <ComboBoxItem Content="ללא מחיקה אוטומטית" Tag="0"/>
                             <ComboBoxItem Content="לשמור 5 גיבויים אחרונים" Tag="5"/>
                             <ComboBoxItem Content="לשמור 10 גיבויים אחרונים" Tag="10"/>
@@ -37,33 +74,44 @@
                         </ComboBox>
                     </StackPanel>
                 </Border>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="16" Margin="0,14,0,0">
+                <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
-                        <CheckBox x:Name="EncryptBackupCheckBox" Content="הצפן את קובץ הגיבוי (מומלץ)" IsChecked="True" Click="EncryptionOption_Changed" FontWeight="SemiBold"/>
-                        <StackPanel x:Name="EncryptionFields" Margin="0,10,0,0">
-                            <TextBlock Text="סיסמת הצפנה (לפחות 12 תווים)" Foreground="#778399" FontSize="11"/>
-                            <PasswordBox x:Name="EncryptionPasswordBox" Padding="9" Margin="0,4,0,8"/>
-                            <TextBlock Text="אימות סיסמה" Foreground="#778399" FontSize="11"/>
-                            <PasswordBox x:Name="EncryptionConfirmBox" Padding="9" Margin="0,4,0,0"/>
-                            <TextBlock Text="הסיסמה אינה נשמרת. בלעדיה לא ניתן יהיה לפענח את הגיבוי." Foreground="#9A5B13" FontSize="10" Margin="0,6,0,0"/>
+                        <CheckBox x:Name="EncryptBackupCheckBox" Content="הצפנת קובץ הגיבוי" IsChecked="True" Click="EncryptionOption_Changed" FontWeight="Bold" FontSize="14"/>
+                        <TextBlock Text="מומלץ להצפין גיבויים לפני שמירתם במחשב. הסיסמה אינה נשמרת, ובלעדיה לא ניתן יהיה לפענח את הקובץ." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,13"/>
+                        <StackPanel x:Name="EncryptionFields">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="סיסמת הצפנה (לפחות 12 תווים)" Style="{StaticResource FieldLabel}"/>
+                                    <PasswordBox x:Name="EncryptionPasswordBox" Padding="10" Height="40"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2">
+                                    <TextBlock Text="אימות סיסמה" Style="{StaticResource FieldLabel}"/>
+                                    <PasswordBox x:Name="EncryptionConfirmBox" Padding="10" Height="40"/>
+                                </StackPanel>
+                            </Grid>
                         </StackPanel>
                     </StackPanel>
                 </Border>
-                <Border Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="18" Margin="0,14,0,0">
+                <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
-                        <TextBlock Text="שחזור גיבוי הגדרות והעלאות" FontWeight="SemiBold" FontSize="16"/>
-                        <TextBlock Text="אפשר לשחזר גיבוי ממוקד של config.json והעלאות. מסד הנתונים אינו משתנה, וקובצי package/lock אינם משוחזרים." TextWrapping="Wrap" Foreground="#778399" Margin="0,7,0,10"/>
-                        <TextBlock Text="סיסמת הגיבוי (רק אם הקובץ מוצפן)" Foreground="#778399" FontSize="11"/>
-                        <PasswordBox x:Name="RestorePasswordBox" Padding="9" Margin="0,4,0,10"/>
-                        <Button x:Name="RestoreEssentialButton" Content="בחירת גיבוי ושחזור הגדרות והעלאות" Click="RestoreEssential_Click" HorizontalAlignment="Left" Padding="16,9" Background="#A23B3B" Foreground="White" BorderThickness="0"/>
+                        <TextBlock Text="שחזור גיבוי הגדרות והעלאות" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
+                        <TextBlock Text="השחזור יכול להחליף את config.json ואת public/uploads אם נכללה בארכיון. מסד הנתונים וקובצי package/lock אינם משוחזרים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,13"/>
+                        <TextBlock Text="סיסמת הגיבוי (רק אם הקובץ מוצפן)" Style="{StaticResource FieldLabel}"/>
+                        <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40" Margin="0,0,0,12"/>
+                        <Button x:Name="RestoreEssentialButton" Content="בחירת גיבוי ושחזור" Click="RestoreEssential_Click" HorizontalAlignment="Stretch" Padding="17,11" Background="#A83F4B" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
                     </StackPanel>
                 </Border>
-                <Border Background="#FFF4E5" CornerRadius="8" Padding="12" Margin="0,12,0,0">
-                    <TextBlock Text="חשוב: גיבויי קבצים אינם כוללים את תוכן מסד הנתונים. שחזור config.json מחזיר גם הגדרות חיבור ופרטי גישה, ולכן התוכנה מוודאת שסוג מסד הנתונים והשרת/מסד היעד תואמים להתקנה הנוכחית. ארכיון התקנה מלא אינו נתמך בשחזור זה. שמור תמיד גם גיבוי מסד נתונים נפרד." TextWrapping="Wrap" Foreground="#8A4B08"/>
+                <Border Background="#FFF5E8" BorderBrush="#F3D6A7" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,0,0,12">
+                    <TextBlock Text="חשוב: גיבויי קבצים אינם כוללים את תוכן מסד הנתונים. שחזור config.json מחזיר גם הגדרות חיבור ופרטי גישה, ולכן התוכנה מוודאת שסוג מסד הנתונים והשרת/מסד היעד תואמים להתקנה הנוכחית. ארכיון התקנה מלא אינו נתמך בשחזור זה. שמור תמיד גם גיבוי מסד נתונים נפרד." TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11" LineHeight="18"/>
                 </Border>
-                <TextBlock x:Name="StatusText" Foreground="#778399" Margin="0,14,0,0" TextWrapping="Wrap"/>
+                <Border Background="#EAF0FA" CornerRadius="12" Padding="12" Margin="0,0,0,10">
+                    <TextBlock x:Name="StatusText" Foreground="#42536D" TextWrapping="Wrap" FontSize="11"/>
+                </Border>
             </StackPanel>
         </ScrollViewer>
-        <Button Grid.Row="2" Content="סגור" Click="Close_Click" HorizontalAlignment="Left" Padding="18,9"/>
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="0,16,0,0">
+            <Button Content="סגור" Click="Close_Click" Padding="22,10"/>
+        </StackPanel>
     </Grid>
 </Window>

@@ -1,29 +1,50 @@
 <Window x:Class="NodeBB.SSHManager.Views.ServerDiagnosticsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="אבחון יכולות שרת" Width="820" Height="720" MinWidth="680" MinHeight="520"
-        WindowStartupLocation="CenterOwner" Background="#F4F6FA" FlowDirection="RightToLeft">
-    <Grid Margin="22">
+        Title="אבחון יכולות שרת" Width="940" Height="800" MinWidth="700" MinHeight="560"
+        WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
+        FontFamily="Segoe UI Variable, Segoe UI">
+    <Grid Margin="28">
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Text="מיפוי יכולות השרת" FontSize="24" FontWeight="Bold" Foreground="#182338"/>
-            <TextBlock x:Name="ServerLabel" Foreground="#778399" Margin="0,5,0,0"/>
-            <TextBlock Text="הבדיקה קוראת מידע בלבד ואינה משנה הגדרות או מפעילה שירותים." Foreground="#17633B" Margin="0,8,0,0"/>
-        </StackPanel>
-        <DockPanel Grid.Row="1" Margin="0,16,0,12">
-            <Button x:Name="RefreshButton" Content="סריקה מחדש" Click="Refresh_Click" Padding="16,9" Background="#4263EB" Foreground="White" BorderThickness="0"/>
-            <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#778399"/>
-        </DockPanel>
-        <Border Grid.Row="2" Background="White" BorderBrush="#E7EBF2" BorderThickness="1" CornerRadius="12" Padding="12">
-            <ListView x:Name="CapabilitiesList" BorderThickness="0">
-                <ListView.View>
-                    <GridView>
-                        <GridViewColumn Header="רכיב / יכולת" Width="230" DisplayMemberBinding="{Binding Name}"/>
-                        <GridViewColumn Header="זיהוי / גרסה" Width="500" DisplayMemberBinding="{Binding Value}"/>
-                    </GridView>
-                </ListView.View>
-            </ListView>
+        <Border Background="#17243B" CornerRadius="20" Padding="22" Margin="0,0,0,18">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="מיפוי יכולות השרת" FontSize="25" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock x:Name="ServerLabel" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
+                    <TextBlock Text="סריקה לקריאה בלבד של רכיבים, כלים וגרסאות שזוהו" Foreground="#8FA3C1" FontSize="11" Margin="0,4,0,0"/>
+                </StackPanel>
+                <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17">
+                    <TextBlock Text="⌕" FontSize="31" Foreground="#AEBBFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+            </Grid>
         </Border>
-        <TextBlock Grid.Row="3" x:Name="DetectedAtText" Foreground="#778399" Margin="0,12,0,0"/>
+        <DockPanel Grid.Row="1" Margin="0,0,0,14">
+            <Button x:Name="RefreshButton" Content="⌕  סריקה מחדש" Click="Refresh_Click" Padding="17,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Border Background="#E8F6EF" CornerRadius="10" Padding="12,9" Margin="12,0,0,0">
+                <TextBlock Text="בדיקה לקריאה בלבד · ללא שינוי בהגדרות או בשירותים" Foreground="#17633B" FontSize="11" VerticalAlignment="Center"/>
+            </Border>
+            <Border Background="#E8EEF8" CornerRadius="10" Padding="12,9" Margin="12,0,0,0">
+                <TextBlock x:Name="StatusText" Foreground="#42536D" FontSize="11" VerticalAlignment="Center"/>
+            </Border>
+        </DockPanel>
+        <Border Grid.Row="2" Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="18" Padding="15">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" Margin="3,0,3,12">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <TextBlock Text="רכיב / יכולת" Foreground="#64748B" FontWeight="Bold" FontSize="11"/>
+                    <TextBlock Grid.Column="1" Text="זיהוי / גרסה" Foreground="#64748B" FontWeight="Bold" FontSize="11"/>
+                </Grid>
+                <ListView x:Name="CapabilitiesList" BorderThickness="0" Background="Transparent">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="רכיב / יכולת" Width="260" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="זיהוי / גרסה" Width="540" DisplayMemberBinding="{Binding Value}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Border>
+        <TextBlock Grid.Row="3" x:Name="DetectedAtText" Foreground="#7C899D" FontSize="10" Margin="0,12,0,0"/>
     </Grid>
 </Window>
