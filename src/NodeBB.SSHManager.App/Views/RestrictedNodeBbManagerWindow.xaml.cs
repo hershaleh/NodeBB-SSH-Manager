@@ -164,17 +164,26 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TerminalOutputBox.Text = _lastOutput;
             ShowHebrewSummary(label, result.ExitCode, raw);
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
-            if (result.ExitCode == 0)
+            var affectedPackages = (historyTarget ?? ResolveHistoryTarget(label))
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var successfulPackages = affectedPackages;
+            if (label is "עדכון מרובה" or "השבתה מרובה" or "הסרה מרובה")
             {
-                var affectedPackages = (historyTarget ?? ResolveHistoryTarget(label))
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                successfulPackages = Regex.Matches(raw, @"(?m)^\\[הצלחה\\]\\s+([^\\r\\n]+)")
+                    .Select(match => match.Groups[1].Value.Trim())
+                    .Where(name => affectedPackages.Contains(name, StringComparer.OrdinalIgnoreCase))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+            }
+            if (result.ExitCode == 0 || successfulPackages.Length > 0)
+            {
                 if (label is "השבתה" or "השבתה מרובה")
-                    foreach (var package in affectedPackages) _confirmedDisabledPackages.Add(package);
+                    foreach (var package in successfulPackages) _confirmedDisabledPackages.Add(package);
                 else if (label is "הפעלה")
-                    foreach (var package in affectedPackages) _confirmedDisabledPackages.Remove(package);
+                    foreach (var package in successfulPackages) _confirmedDisabledPackages.Remove(package);
                 else if (label is "הסרה" or "הסרה מרובה")
                 {
-                    foreach (var package in affectedPackages)
+                    foreach (var package in successfulPackages)
                     {
                         _knownPluginPackages.Remove(package);
                         _confirmedDisabledPackages.Remove(package);
@@ -192,7 +201,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
                 ManagerTabs.SelectedIndex = 1;
             }
             // Refresh cards after successful mutations, while preserving the original action output.
-            if (result.ExitCode == 0 && refreshPlugins)
+            if ((result.ExitCode == 0 || successfulPackages.Length > 0) && refreshPlugins)
             {
                 try
                 {
