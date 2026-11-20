@@ -478,8 +478,20 @@ public partial class MainWindow : Window
             MessageBox.Show(this, "בחר שרת להסרה.", "לא נבחר שרת", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו. גם תזמוני הגיבוי שלו יוסרו; קובצי גיבוי קיימים לא יימחקו.",
-                "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this,
+            $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו. תזמוני הגיבוי שלו יוסרו, אך קובצי גיבוי קיימים יישמרו.",
+            "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        var scheduleCleanup = _scheduledBackupService.RemoveForProfile(selected.Id);
+        if (scheduleCleanup.Failed > 0)
+        {
+            RefreshDashboard();
+            MessageBox.Show(this,
+                $"הפרופיל לא הוסר. הוסרו {scheduleCleanup.Removed} תזמונים, אך {scheduleCleanup.Failed} משימות לא הוסרו. פרופיל השרת ופרטי ההתחברות נשמרו כדי שהתזמונים שנותרו יוכלו להמשיך לפעול.",
+                "לא ניתן להשלים את הסרת הפרופיל", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         _profiles.Remove(selected);
         if (!SaveProfiles())
         {
@@ -487,31 +499,41 @@ public partial class MainWindow : Window
             RefreshDashboard();
             return;
         }
-        // Remove scheduled tasks only after the profile deletion is durably stored.
-        // Existing backup files are intentionally preserved.
-        var scheduleCleanup = _scheduledBackupService.RemoveForProfile(selected.Id);
+
         _sessionManager.Disconnect(selected.Id);
         try { _credentialVault.Remove(selected.Id); }
         catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         RefreshDashboard();
-        if (scheduleCleanup.Failed > 0)
-            MessageBox.Show(this,
-                $"הפרופיל הוסר, אך לא ניתן היה להסיר {scheduleCleanup.Failed} משימות גיבוי מתוזמן. יש לבדוק את מתזמן המשימות של Windows. קובצי הגיבוי הקיימים נשמרו.",
-                "נדרשת בדיקה של תזמוני גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void ForgetCredential_Click(object sender, RoutedEventArgs e)
     {
         if (ServersList.SelectedItem is not ServerProfile selected) return;
         if (!_credentialVault.Has(selected.Id)) { UpdateServerActions(); return; }
-        if (MessageBox.Show(this, $"למחוק מהמחשב את פרטי ההתחברות השמורים עבור '{selected.Name}'? החיבור הפעיל, אם קיים, לא ינותק.", "מחיקת פרטי התחברות", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        var schedules = _scheduledBackupService.GetSchedules(selected.Id);
+        var confirmation = $"למחוק מהמחשב את פרטי ההתחברות השמורים עבור '{selected.Name}'? החיבור הפעיל, אם קיים, לא ינותק.";
+        if (schedules.Count > 0)
+            confirmation += $" הפעולה תסיר גם {schedules.Count} תזמוני גיבוי כדי שלא יישארו משימות שלא יוכלו להתחבר. קובצי גיבוי קיימים לא יימחקו.";
+        if (MessageBox.Show(this, confirmation, "מחיקת פרטי התחברות", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+        var cleanup = _scheduledBackupService.RemoveForProfile(selected.Id);
+        if (cleanup.Failed > 0)
+        {
+            MessageBox.Show(this,
+                $"לא נמחקו פרטי ההתחברות. הוסרו {cleanup.Removed} תזמונים, אך {cleanup.Failed} משימות לא הוסרו. פרטי ההתחברות נשמרו כדי שהתזמונים שנותרו יוכלו להמשיך לפעול.",
+                "לא ניתן להשלים את המחיקה", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
         try
         {
             _credentialVault.Remove(selected.Id);
             DiagnosticLogService.Instance.Info("CredentialVault", "CredentialForgotten", "Saved credential was explicitly removed.", selected.Name);
             RefreshDashboard();
-            MessageBox.Show(this, "פרטי ההתחברות השמורים נמחקו מהמחשב.", "המחיקה הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "פרטי ההתחברות השמורים והתזמונים התלויים בהם הוסרו מהמחשב. קובצי גיבוי קיימים נשמרו.",
+                "המחיקה הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {

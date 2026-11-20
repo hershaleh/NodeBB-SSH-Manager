@@ -8,6 +8,7 @@ namespace NodeBB.SSHManager.Services;
 public sealed class ScheduledBackupStore
 {
     private static readonly byte[] Entropy = "NodeBB.SSHManager.ScheduledBackups.v1"u8.ToArray();
+    private const long MaximumScheduleFileBytes = 64 * 1024;
     private readonly string _directory;
 
     public ScheduledBackupStore(string? directory = null)
@@ -25,10 +26,14 @@ public sealed class ScheduledBackupStore
         {
             try
             {
+                var info = new FileInfo(path);
+                if (info.Length is <= 0 or > MaximumScheduleFileBytes)
+                    throw new InvalidDataException("קובץ התזמון גדול מהמותר או ריק.");
                 var protectedBytes = File.ReadAllBytes(path);
-                var clear = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
+                byte[]? clear = null;
                 try
                 {
+                    clear = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
                     var schedule = JsonSerializer.Deserialize<ScheduledBackupDefinition>(clear)
                         ?? throw new InvalidDataException("קובץ תזמון ריק.");
                     schedule.Validate();
@@ -37,7 +42,7 @@ public sealed class ScheduledBackupStore
                 finally
                 {
                     CryptographicOperations.ZeroMemory(protectedBytes);
-                    CryptographicOperations.ZeroMemory(clear);
+                    if (clear is not null) CryptographicOperations.ZeroMemory(clear);
                 }
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or CryptographicException or JsonException or InvalidDataException)
@@ -53,10 +58,15 @@ public sealed class ScheduledBackupStore
     public ScheduledBackupDefinition Load(Guid id)
     {
         if (id == Guid.Empty) throw new ArgumentException("מזהה תזמון אינו תקין.", nameof(id));
-        var protectedBytes = File.ReadAllBytes(GetPath(id));
-        var clear = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
+        var path = GetPath(id);
+        var info = new FileInfo(path);
+        if (info.Length is <= 0 or > MaximumScheduleFileBytes)
+            throw new InvalidDataException("קובץ התזמון גדול מהמותר או ריק.");
+        var protectedBytes = File.ReadAllBytes(path);
+        byte[]? clear = null;
         try
         {
+            clear = ProtectedData.Unprotect(protectedBytes, Entropy, DataProtectionScope.CurrentUser);
             var schedule = JsonSerializer.Deserialize<ScheduledBackupDefinition>(clear)
                 ?? throw new InvalidDataException("קובץ התזמון ריק.");
             schedule.Validate();
@@ -66,7 +76,7 @@ public sealed class ScheduledBackupStore
         finally
         {
             CryptographicOperations.ZeroMemory(protectedBytes);
-            CryptographicOperations.ZeroMemory(clear);
+            if (clear is not null) CryptographicOperations.ZeroMemory(clear);
         }
     }
 
@@ -76,6 +86,11 @@ public sealed class ScheduledBackupStore
         schedule.Validate();
         Directory.CreateDirectory(_directory);
         var clear = JsonSerializer.SerializeToUtf8Bytes(schedule);
+        if (clear.Length > MaximumScheduleFileBytes)
+        {
+            CryptographicOperations.ZeroMemory(clear);
+            throw new InvalidDataException("קובץ התזמון גדול מהמותר.");
+        }
         byte[]? protectedBytes = null;
         var destination = GetPath(schedule.Id);
         var temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
@@ -119,6 +134,9 @@ public sealed class ScheduledBackupService
         _profiles = profiles ?? new ServerProfileStore();
     }
 
+    public IReadOnlyList<ScheduledBackupDefinition> GetSchedules(Guid profileId) =>
+        _store.LoadAll().Where(x => x.ProfileId == profileId).ToArray();
+
     public IReadOnlyList<ScheduledBackupDefinition> GetSchedules(Guid profileId, string installationPath) =>
         _store.LoadAll().Where(x => x.ProfileId == profileId &&
             string.Equals(x.InstallationPath, installationPath, StringComparison.Ordinal)).ToArray();
@@ -137,6 +155,7 @@ public sealed class ScheduledBackupService
         var duplicate = _store.LoadAll().Any(existing =>
             existing.ProfileId == schedule.ProfileId &&
             string.Equals(existing.InstallationPath, schedule.InstallationPath, StringComparison.Ordinal) &&
+            string.Equals(existing.DestinationDirectory, schedule.DestinationDirectory, StringComparison.OrdinalIgnoreCase) &&
             existing.BackupKind == schedule.BackupKind &&
             existing.Frequency == schedule.Frequency &&
             string.Equals(existing.LocalTime, schedule.LocalTime, StringComparison.Ordinal) &&

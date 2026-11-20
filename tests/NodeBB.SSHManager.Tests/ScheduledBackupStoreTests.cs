@@ -45,6 +45,21 @@ public sealed class ScheduledBackupStoreTests
         finally { try { if (Directory.Exists(directory)) Directory.Delete(directory, true); } catch { } }
     }
 
+    [Fact]
+    public void LoadRejectsOversizedScheduleFile()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBScheduledBackupTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var id = Guid.NewGuid();
+        try
+        {
+            File.WriteAllBytes(Path.Combine(directory, id.ToString("N") + ".schedule"), new byte[64 * 1024 + 1]);
+            Assert.Throws<InvalidDataException>(() => new ScheduledBackupStore(directory).Load(id));
+            Assert.Empty(new ScheduledBackupStore(directory).LoadAll());
+        }
+        finally { try { if (Directory.Exists(directory)) Directory.Delete(directory, true); } catch { } }
+    }
+
     [Theory]
     [InlineData("25:00")]
     [InlineData("3:00")]
