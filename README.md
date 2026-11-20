@@ -15,9 +15,12 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - Interactive SSH terminal and SFTP browser with direct absolute-path navigation, directory creation, file/directory rename, upload, download and confirmation before deletion.
 - NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, Supervisor, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers.
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption.
+- Unattended scheduled file backups through Windows Task Scheduler (daily or weekly), with encrypted local storage of schedule settings and backup passwords using Windows DPAPI.
+- Optional encrypted scheduled database dumps for MongoDB, PostgreSQL or Redis, saved separately from NodeBB file archives; retention is isolated by server profile and backup type.
+- Scheduled backup controls in the backup window: run immediately, remove a schedule, view next run and last result, and prevent overlapping backup runs for the same server profile.
 - Safe restore of configuration/uploads archives only, with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation archive restore is intentionally not offered; package/lock files are not restored.
 - MongoDB database backup scoped to the NodeBB database.
-- Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance.
+- Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance. Scheduled Redis backups retain the same whole-server scope.
 - PostgreSQL custom-format database backup available from the database management window, using a protected temporary pgpass file; credentials are not passed as command-line arguments.
 - MongoDB restore with archive validation, dry-run, pre-restore dump, database scoping and rollback attempt.
 - PostgreSQL custom-dump restore with archive TOC validation, database-name matching, pre-restore dump, transactional object replacement and rollback attempt.
@@ -80,4 +83,4 @@ Development preview. Remote operations have not yet completed comprehensive live
 
 The application intentionally does not elevate privileges, bypass network filtering, or silently change server permissions. Some operations require a suitable remote utility and sufficient SSH account permissions; the application reports remote command errors rather than assuming success.
 
-Not yet implemented: unattended scheduled backups and retention policies, Redis restore, automated restore for database engines beyond the supported MongoDB/PostgreSQL workflows, and a full English/Hebrew language switch. Remote behavior still needs hands-on validation against the actual target server before production use. The first practical milestone is to validate connection, NodeBB lifecycle, SFTP, backups and diagnostics against the user's server; additional features should follow only if that test identifies a real need.
+Known limitations: Redis restore remains a manual operation; automated database restore is limited to the supported MongoDB/PostgreSQL workflows; a full English/Hebrew language switch is not implemented. Scheduled backups use the current Windows user's Task Scheduler context and run only while that user is logged on; they do not run as a background Windows service when the user is signed out. Remote behavior still needs hands-on validation against the actual target server before production use. The first practical milestone is to validate connection, NodeBB lifecycle, SFTP, backups and diagnostics against the user's server; additional features should follow only if that test identifies a real need.
