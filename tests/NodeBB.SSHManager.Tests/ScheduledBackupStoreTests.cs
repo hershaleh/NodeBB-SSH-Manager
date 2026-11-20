@@ -82,6 +82,23 @@ public sealed class ScheduledBackupStoreTests
     }
 
     [Fact]
+    public void DisplayLabelMarksAbandonedRunningScheduleAsInterrupted()
+    {
+        var schedule = CreateValid();
+        schedule.LastRunStatus = ScheduledBackupRunStatus.Running;
+        schedule.LastRunUtc = DateTime.UtcNow.AddDays(-2);
+        Assert.Contains("נקטע", schedule.DisplayLabel);
+    }
+
+    [Fact]
+    public void ValidateRejectsNullLastRunSummary()
+    {
+        var schedule = CreateValid();
+        schedule.LastRunSummary = null!;
+        Assert.Throws<InvalidDataException>(schedule.Validate);
+    }
+
+    [Fact]
     public void ValidateRejectsUnsupportedRetentionCount()
     {
         var schedule = CreateValid();

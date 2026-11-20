@@ -294,7 +294,10 @@ public static class ScheduledBackupRunner
 {
     public static async Task RunAsync(Guid scheduleId)
     {
-        using var gate = new Semaphore(1, 1, "Local\\NodeBB-SSHManager-ScheduledBackup-" + scheduleId.ToString("N"));
+        var scheduledDefinition = new ScheduledBackupStore().Load(scheduleId);
+        // Serialize all scheduled backups for the same server profile. Different NodeBB
+        // installations may share one database service, so per-schedule locks are insufficient.
+        using var gate = new Semaphore(1, 1, "Local\\NodeBB-SSHManager-ProfileBackup-" + scheduledDefinition.ProfileId.ToString("N"));
         var acquired = gate.WaitOne(0);
         if (!acquired)
             throw new InvalidOperationException("גיבוי מתוזמן זה כבר פועל. לא הופעלה ריצה מקבילה כדי למנוע התנגשות בגיבויים ובמדיניות השמירה.");

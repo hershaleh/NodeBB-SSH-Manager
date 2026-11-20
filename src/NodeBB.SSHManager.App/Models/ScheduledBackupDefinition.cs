@@ -34,6 +34,7 @@ public sealed class ScheduledBackupDefinition
             var kind = BackupKind == RemoteBackupKind.FullInstallation ? "קובצי התקנה מלאים" : "הגדרות והעלאות";
             var lastRun = LastRunStatus switch
             {
+                ScheduledBackupRunStatus.Running when LastRunUtc is { } started && DateTime.UtcNow - started > TimeSpan.FromHours(24) => "נקטע",
                 ScheduledBackupRunStatus.Running => "פועל כעת",
                 ScheduledBackupRunStatus.Succeeded => "הצליח " + (LastRunUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? ""),
                 ScheduledBackupRunStatus.Failed => "נכשל " + (LastRunUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? ""),
@@ -56,7 +57,7 @@ public sealed class ScheduledBackupDefinition
             throw new InvalidDataException("יש לבחור תיקיית יעד מקומית תקינה לגיבויים המתוזמנים.");
         if (!Enum.IsDefined(BackupKind) || !Enum.IsDefined(Frequency) || !Enum.IsDefined(DayOfWeek) || !Enum.IsDefined(LastRunStatus))
             throw new InvalidDataException("הגדרות סוג הגיבוי או התזמון אינן תקינות.");
-        if (LastRunSummary.Length > 160 || LastRunSummary.Any(char.IsControl))
+        if (LastRunSummary is null || LastRunSummary.Length > 160 || LastRunSummary.Any(char.IsControl))
             throw new InvalidDataException("סיכום הריצה האחרונה אינו תקין.");
         if (RetentionCount is not (0 or 5 or 10 or 20))
             throw new InvalidDataException("מדיניות שמירת הגיבויים אינה תקינה.");
