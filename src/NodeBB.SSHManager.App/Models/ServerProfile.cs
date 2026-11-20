@@ -41,7 +41,7 @@ public sealed class ServerProfile
     public bool HasSavedCredential { get; set; }
 
     [JsonIgnore]
-    public string SavedCredentialLabel => HasSavedCredential ? "סיסמה שמורה במחשב" : "לא נשמרה סיסמה";
+    public string SavedCredentialLabel => HasSavedCredential ? "פרטי התחברות שמורים במחשב" : "לא נשמרו פרטי התחברות";
 
     public ServerProfile CreateDuplicate(string name)
     {

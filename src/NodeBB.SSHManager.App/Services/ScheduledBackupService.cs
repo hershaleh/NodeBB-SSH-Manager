@@ -134,6 +134,16 @@ public sealed class ScheduledBackupService
 
         var profile = _profiles.Load().SingleOrDefault(x => x.Id == schedule.ProfileId)
             ?? throw new InvalidOperationException("פרופיל השרת של התזמון אינו קיים עוד.");
+        var duplicate = _store.LoadAll().Any(existing =>
+            existing.ProfileId == schedule.ProfileId &&
+            string.Equals(existing.InstallationPath, schedule.InstallationPath, StringComparison.Ordinal) &&
+            existing.BackupKind == schedule.BackupKind &&
+            existing.Frequency == schedule.Frequency &&
+            string.Equals(existing.LocalTime, schedule.LocalTime, StringComparison.Ordinal) &&
+            (schedule.Frequency != ScheduledBackupFrequency.Weekly || existing.DayOfWeek == schedule.DayOfWeek));
+        if (duplicate)
+            throw new InvalidOperationException("כבר קיים תזמון זהה לאותה התקנה, סוג גיבוי ושעה. אפשר להסיר אותו או לבחור שעה אחרת.");
+
         if (string.IsNullOrWhiteSpace(profile.KnownHostFingerprint))
             throw new InvalidOperationException("לא ניתן לתזמן גיבוי לפני אימות ושמירת טביעת האצבע של שרת SSH.");
         if (_vault.Get(profile.Id) is null)
@@ -156,6 +166,23 @@ public sealed class ScheduledBackupService
 
         DiagnosticLogService.Instance.Info("ScheduledBackup", "ScheduleCreated",
             "An encrypted scheduled backup task was registered.", schedule.ProfileName);
+    }
+
+    public (int Removed, int Failed) RemoveForProfile(Guid profileId)
+    {
+        var ids = _store.LoadAll().Where(x => x.ProfileId == profileId).Select(x => x.Id).ToArray();
+        var removed = 0;
+        var failed = 0;
+        foreach (var id in ids)
+        {
+            try { Remove(id); removed++; }
+            catch (Exception ex)
+            {
+                failed++;
+                DiagnosticLogService.Instance.Error("ScheduledBackup", "ProfileScheduleCleanupFailed", ex, profileId.ToString());
+            }
+        }
+        return (removed, failed);
     }
 
     public void Remove(Guid scheduleId)
@@ -203,7 +230,18 @@ internal static class WindowsScheduledTaskService
     public static void Remove(Guid id)
     {
         var taskName = GetTaskName(id);
-        if (Run(["/Query", "/TN", taskName], false).ExitCode != 0) return;
+        var query = Run(["/Query", "/TN", taskName], false);
+        if (query.ExitCode != 0)
+        {
+            var message = (query.Error + " " + query.Output).Trim();
+            if (message.Contains("cannot find", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("not found", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("could not be found", StringComparison.OrdinalIgnoreCase))
+                return;
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(message)
+                ? "לא ניתן לבדוק את משימת הגיבוי המתוזמן ב-Windows."
+                : message);
+        }
         Run(["/Delete", "/TN", taskName, "/F"]);
     }
 

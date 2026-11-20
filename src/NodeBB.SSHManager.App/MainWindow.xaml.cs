@@ -15,6 +15,7 @@ public partial class MainWindow : Window
     private readonly SshConnectionService _sshService = new();
     private readonly SshSessionManager _sessionManager = new();
     private readonly CredentialVaultService _credentialVault = new();
+    private readonly ScheduledBackupService _scheduledBackupService = new();
     private readonly ServerProfileTransferService _profileTransfer = new();
     private readonly ObservableCollection<ServerProfile> _profiles = [];
     private bool _updatingGroupFilter;
@@ -477,7 +478,7 @@ public partial class MainWindow : Window
             MessageBox.Show(this, "בחר שרת להסרה.", "לא נבחר שרת", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו.",
+        if (MessageBox.Show(this, $"להסיר את הפרופיל '{selected.Name}' מהמחשב? הפעולה אינה מוחקת דבר מהשרת עצמו. גם תזמוני הגיבוי שלו יוסרו; קובצי גיבוי קיימים לא יימחקו.",
                 "אישור הסרת פרופיל", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _profiles.Remove(selected);
         if (!SaveProfiles())
@@ -486,13 +487,18 @@ public partial class MainWindow : Window
             RefreshDashboard();
             return;
         }
-        // Only tear down the session and remove its credential after the profile deletion
-        // is durably stored. A disk error must not disconnect a server or lose its credential.
+        // Remove scheduled tasks only after the profile deletion is durably stored.
+        // Existing backup files are intentionally preserved.
+        var scheduleCleanup = _scheduledBackupService.RemoveForProfile(selected.Id);
         _sessionManager.Disconnect(selected.Id);
         try { _credentialVault.Remove(selected.Id); }
         catch (Exception ex) { DiagnosticLogService.Instance.Warning("CredentialVault", "CredentialRemovalFailed", "Could not remove the saved credential.", ex, selected.Name); }
         DiagnosticLogService.Instance.Info("Profiles", "ServerProfileRemoved", "A server profile was removed.", selected.Name);
         RefreshDashboard();
+        if (scheduleCleanup.Failed > 0)
+            MessageBox.Show(this,
+                $"הפרופיל הוסר, אך לא ניתן היה להסיר {scheduleCleanup.Failed} משימות גיבוי מתוזמן. יש לבדוק את מתזמן המשימות של Windows. קובצי הגיבוי הקיימים נשמרו.",
+                "נדרשת בדיקה של תזמוני גיבוי", MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void ForgetCredential_Click(object sender, RoutedEventArgs e)
