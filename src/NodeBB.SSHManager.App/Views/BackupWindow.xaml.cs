@@ -217,6 +217,7 @@ public partial class BackupWindow : Window
         try
         {
             await ScheduledBackupRunner.RunAsync(schedule.Id);
+            RefreshScheduledBackups();
             StatusText.Text = "הגיבוי המתוזמן הושלם בהצלחה.";
             MessageBox.Show(this, "הגיבוי הושלם. קובצי הגיבוי נשמרו כשהם מוצפנים בתיקייה שהוגדרה בתזמון.",
                 "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -224,6 +225,7 @@ public partial class BackupWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ManualScheduledRunFailed", ex, _session.Profile.Name);
+            RefreshScheduledBackups();
             StatusText.Text = "הפעלת הגיבוי המתוזמן נכשלה: " + ex.Message;
             MessageBox.Show(this, ex.Message, "הפעלת גיבוי נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
         }

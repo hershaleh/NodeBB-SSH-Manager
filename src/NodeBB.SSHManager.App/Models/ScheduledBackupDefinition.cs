@@ -5,6 +5,7 @@ using NodeBB.SSHManager.Services;
 namespace NodeBB.SSHManager.Models;
 
 public enum ScheduledBackupFrequency { Daily, Weekly }
+public enum ScheduledBackupRunStatus { NeverRun, Running, Succeeded, Failed }
 
 public sealed class ScheduledBackupDefinition
 {
@@ -20,6 +21,9 @@ public sealed class ScheduledBackupDefinition
     public DayOfWeek DayOfWeek { get; set; } = DayOfWeek.Monday;
     public string LocalTime { get; set; } = "03:00";
     public DateTime CreatedUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? LastRunUtc { get; set; }
+    public ScheduledBackupRunStatus LastRunStatus { get; set; } = ScheduledBackupRunStatus.NeverRun;
+    public string LastRunSummary { get; set; } = "";
 
     [JsonIgnore]
     public string DisplayLabel
@@ -28,7 +32,15 @@ public sealed class ScheduledBackupDefinition
         {
             var cadence = Frequency == ScheduledBackupFrequency.Daily ? "כל יום" : "כל שבוע · " + DayOfWeek;
             var kind = BackupKind == RemoteBackupKind.FullInstallation ? "קובצי התקנה מלאים" : "הגדרות והעלאות";
-            return cadence + " בשעה " + LocalTime + " · " + kind + (IncludeDatabase ? " · כולל מסד נתונים" : "");
+            var lastRun = LastRunStatus switch
+            {
+                ScheduledBackupRunStatus.Running => "פועל כעת",
+                ScheduledBackupRunStatus.Succeeded => "הצליח " + (LastRunUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? ""),
+                ScheduledBackupRunStatus.Failed => "נכשל " + (LastRunUtc?.ToLocalTime().ToString("dd/MM HH:mm") ?? ""),
+                _ => "טרם הופעל"
+            };
+            return cadence + " בשעה " + LocalTime + " · " + kind +
+                (IncludeDatabase ? " · כולל מסד נתונים" : "") + " · ריצה אחרונה: " + lastRun;
         }
     }
 
@@ -42,8 +54,10 @@ public sealed class ScheduledBackupDefinition
             throw new InvalidDataException("נתיב התקנת NodeBB בתזמון אינו תקין.");
         if (string.IsNullOrWhiteSpace(DestinationDirectory) || !Path.IsPathFullyQualified(DestinationDirectory) || DestinationDirectory.Length > 2048)
             throw new InvalidDataException("יש לבחור תיקיית יעד מקומית תקינה לגיבויים המתוזמנים.");
-        if (!Enum.IsDefined(BackupKind) || !Enum.IsDefined(Frequency) || !Enum.IsDefined(DayOfWeek))
+        if (!Enum.IsDefined(BackupKind) || !Enum.IsDefined(Frequency) || !Enum.IsDefined(DayOfWeek) || !Enum.IsDefined(LastRunStatus))
             throw new InvalidDataException("הגדרות סוג הגיבוי או התזמון אינן תקינות.");
+        if (LastRunSummary.Length > 160 || LastRunSummary.Any(char.IsControl))
+            throw new InvalidDataException("סיכום הריצה האחרונה אינו תקין.");
         if (RetentionCount is not (0 or 5 or 10 or 20))
             throw new InvalidDataException("מדיניות שמירת הגיבויים אינה תקינה.");
         if (!TimeOnly.TryParseExact(LocalTime, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))

@@ -22,6 +22,9 @@ public sealed class ScheduledBackupStoreTests
             schedule.DayOfWeek = DayOfWeek.Friday;
             schedule.LocalTime = "02:45";
             schedule.IncludeDatabase = true;
+            schedule.LastRunUtc = DateTime.UtcNow;
+            schedule.LastRunStatus = ScheduledBackupRunStatus.Succeeded;
+            schedule.LastRunSummary = "הגיבוי הושלם בהצלחה.";
             store.Save(schedule);
 
             var file = Directory.GetFiles(directory, "*.schedule").Single();
@@ -39,7 +42,11 @@ public sealed class ScheduledBackupStoreTests
             Assert.Equal(schedule.DayOfWeek, loaded.DayOfWeek);
             Assert.Equal(schedule.LocalTime, loaded.LocalTime);
             Assert.Equal(schedule.IncludeDatabase, loaded.IncludeDatabase);
+            Assert.Equal(schedule.LastRunStatus, loaded.LastRunStatus);
+            Assert.Equal(schedule.LastRunUtc, loaded.LastRunUtc);
+            Assert.Equal(schedule.LastRunSummary, loaded.LastRunSummary);
             Assert.Contains("כולל מסד נתונים", loaded.DisplayLabel);
+            Assert.Contains("הצליח", loaded.DisplayLabel);
             Assert.Single(store.LoadAll());
 
             store.Delete(schedule.Id);

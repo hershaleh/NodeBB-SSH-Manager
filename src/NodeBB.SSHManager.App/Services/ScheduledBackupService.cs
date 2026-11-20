@@ -294,19 +294,40 @@ public static class ScheduledBackupRunner
 {
     public static async Task RunAsync(Guid scheduleId)
     {
-        using var mutex = new Mutex(false, "Local\\NodeBB-SSHManager-ScheduledBackup-" + scheduleId.ToString("N"));
-        var acquired = false;
+        using var gate = new Semaphore(1, 1, "Local\\NodeBB-SSHManager-ScheduledBackup-" + scheduleId.ToString("N"));
+        var acquired = gate.WaitOne(0);
+        if (!acquired)
+            throw new InvalidOperationException("גיבוי מתוזמן זה כבר פועל. לא הופעלה ריצה מקבילה כדי למנוע התנגשות בגיבויים ובמדיניות השמירה.");
+
         try
         {
-            try { acquired = mutex.WaitOne(0); }
-            catch (AbandonedMutexException) { acquired = true; }
-            if (!acquired)
-                throw new InvalidOperationException("גיבוי מתוזמן זה כבר פועל. לא הופעלה ריצה מקבילה כדי למנוע התנגשות בגיבויים ובמדיניות השמירה.");
+            RecordRunStatus(scheduleId, ScheduledBackupRunStatus.Running, "הגיבוי פועל כעת.");
             await RunCoreAsync(scheduleId);
+            RecordRunStatus(scheduleId, ScheduledBackupRunStatus.Succeeded, "הגיבוי הושלם בהצלחה.");
         }
-        finally
+        catch
         {
-            if (acquired) mutex.ReleaseMutex();
+            RecordRunStatus(scheduleId, ScheduledBackupRunStatus.Failed, "הגיבוי נכשל. יש לעיין ביומן האירועים של התוכנה.");
+            throw;
+        }
+        finally { gate.Release(); }
+    }
+
+    private static void RecordRunStatus(Guid scheduleId, ScheduledBackupRunStatus status, string summary)
+    {
+        try
+        {
+            var store = new ScheduledBackupStore();
+            var schedule = store.Load(scheduleId);
+            schedule.LastRunUtc = DateTime.UtcNow;
+            schedule.LastRunStatus = status;
+            schedule.LastRunSummary = summary;
+            store.Save(schedule);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Warning("ScheduledBackup", "RunStatusUpdateFailed",
+                "Could not persist scheduled-backup run status.", ex);
         }
     }
 
