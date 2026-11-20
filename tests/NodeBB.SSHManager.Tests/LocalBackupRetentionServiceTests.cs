@@ -32,6 +32,47 @@ public sealed class LocalBackupRetentionServiceTests
     }
 
     [Fact]
+    public void BuildFilePrefixSeparatesProfilesWithIdenticalNamesAndBackupKinds()
+    {
+        var first = LocalBackupRetentionService.BuildFilePrefix("Production Server", Guid.Parse("11111111-1111-1111-1111-111111111111"), RemoteBackupKind.FullInstallation);
+        var second = LocalBackupRetentionService.BuildFilePrefix("Production Server", Guid.Parse("22222222-2222-2222-2222-222222222222"), RemoteBackupKind.FullInstallation);
+        var essential = LocalBackupRetentionService.BuildFilePrefix("Production Server", Guid.Parse("11111111-1111-1111-1111-111111111111"), RemoteBackupKind.ConfigurationAndUploads);
+
+        Assert.NotEqual(first, second);
+        Assert.NotEqual(first, essential);
+        Assert.StartsWith("NodeBB-Production-Server-", first);
+        Assert.EndsWith("-full", first);
+        Assert.EndsWith("-config-uploads", essential);
+    }
+
+    [Fact]
+    public void RetentionForOneProfileDoesNotDeleteAnotherProfileWithSameName()
+    {
+        var dir = Path.Combine(Path.GetTempPath(), "NodeBBRetentionTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        try
+        {
+            var firstPrefix = LocalBackupRetentionService.BuildFilePrefix("Production", Guid.Parse("11111111-1111-1111-1111-111111111111"), RemoteBackupKind.FullInstallation);
+            var secondPrefix = LocalBackupRetentionService.BuildFilePrefix("Production", Guid.Parse("22222222-2222-2222-2222-222222222222"), RemoteBackupKind.FullInstallation);
+            var oldFirst = Create(dir, firstPrefix + "-old.nbbbackup", -3);
+            var newestFirst = Create(dir, firstPrefix + "-new.nbbbackup", -1);
+            var otherProfile = Create(dir, secondPrefix + "-only.nbbbackup", -2);
+
+            Assert.Equal(1, LocalBackupRetentionService.ApplyRetention(dir, firstPrefix, 1));
+            Assert.False(File.Exists(oldFirst));
+            Assert.True(File.Exists(newestFirst));
+            Assert.True(File.Exists(otherProfile));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public void RejectsDirectorySeparatorsInPrefix()
+    {
+        Assert.Throws<ArgumentException>(() => LocalBackupRetentionService.ApplyRetention(".", "folder\\backup", 1));
+    }
+
+    [Fact]
     public void ZeroRetentionKeepsAllFiles()
     {
         var dir = Path.Combine(Path.GetTempPath(), "NodeBBRetentionTests", Guid.NewGuid().ToString("N"));

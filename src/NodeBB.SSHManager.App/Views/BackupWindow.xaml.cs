@@ -51,10 +51,7 @@ public partial class BackupWindow : Window
             }
         }
 
-        var suffix = kind == RemoteBackupKind.FullInstallation ? "full" : "config-uploads";
-        var serverToken = string.Concat(_session.Profile.Name.Select(ch => char.IsLetterOrDigit(ch) || ch is '-' or '_' ? ch : '-')).Trim('-');
-        if (string.IsNullOrWhiteSpace(serverToken)) serverToken = "server";
-        var filePrefix = $"NodeBB-{serverToken}-{suffix}";
+        var filePrefix = LocalBackupRetentionService.BuildFilePrefix(_session.Profile.Name, _session.Profile.Id, kind);
         var extension = encrypted ? ".nbbbackup" : ".tar.gz";
         var dialog = new SaveFileDialog
         {

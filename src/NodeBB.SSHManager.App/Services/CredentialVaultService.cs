@@ -81,18 +81,19 @@ public sealed class CredentialVaultService
         var directory = Path.GetDirectoryName(StoragePath) ?? throw new InvalidOperationException("Credential vault path has no directory.");
         Directory.CreateDirectory(directory);
         var clear = JsonSerializer.SerializeToUtf8Bytes(entries);
-        var protectedBytes = ProtectedData.Protect(clear, Entropy, DataProtectionScope.CurrentUser);
-        CryptographicOperations.ZeroMemory(clear);
+        byte[]? protectedBytes = null;
         var temporary = StoragePath + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
+            protectedBytes = ProtectedData.Protect(clear, Entropy, DataProtectionScope.CurrentUser);
             using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             { stream.Write(protectedBytes); stream.Flush(true); }
             File.Move(temporary, StoragePath, true);
         }
         finally
         {
-            CryptographicOperations.ZeroMemory(protectedBytes);
+            CryptographicOperations.ZeroMemory(clear);
+            if (protectedBytes is not null) CryptographicOperations.ZeroMemory(protectedBytes);
             try { if (File.Exists(temporary)) File.Delete(temporary); } catch { }
         }
     }
