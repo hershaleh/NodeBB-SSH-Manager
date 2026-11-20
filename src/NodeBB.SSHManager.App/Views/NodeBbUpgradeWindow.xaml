@@ -63,8 +63,12 @@
                                 <PasswordBox x:Name="BackupPasswordConfirmBox" Padding="10" Height="39" Margin="0,6,0,0"/>
                             </StackPanel>
                         </Grid>
-                        <CheckBox x:Name="RedisScopeWarningCheck" Content="אני מבין שגיבוי Redis כולל את כל שרת Redis וכל המסדים הלוגיים שבו, ולא רק את NodeBB; שחזור Redis עדיין דורש פעולה ידנית." Margin="0,15,0,0" Visibility="Collapsed" Foreground="#9A5B13" TextWrapping="Wrap"/>
-                        <CheckBox x:Name="MigrationWarningCheck" Content="אני מבין שמיגרציות מסד נתונים אינן מתבטלות אוטומטית במקרה כשל." Margin="0,11,0,0" Foreground="#52627A"/>
+                        <CheckBox x:Name="RedisScopeWarningCheck" Margin="0,15,0,0" Visibility="Collapsed" Foreground="#9A5B13">
+                            <TextBlock Text="אני מבין שגיבוי Redis כולל את כל שרת Redis וכל המסדים הלוגיים שבו, ולא רק את NodeBB; שחזור Redis עדיין דורש פעולה ידנית." TextWrapping="Wrap"/>
+                        </CheckBox>
+                        <CheckBox x:Name="MigrationWarningCheck" Margin="0,11,0,0" Foreground="#52627A">
+                            <TextBlock Text="אני מבין שמיגרציות מסד נתונים אינן מתבטלות אוטומטית במקרה כשל." TextWrapping="Wrap"/>
+                        </CheckBox>
                     </StackPanel>
                 </Border>
                 <TextBlock Text="הגיבויים נוצרים לפני עצירת NodeBB. השדרוג יתחיל רק לאחר שכל בדיקות המוכנות והגיבוי יעברו בהצלחה." Foreground="#718096" FontSize="10" TextWrapping="Wrap" Margin="3,12,3,8"/>
