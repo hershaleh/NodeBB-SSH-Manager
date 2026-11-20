@@ -169,11 +169,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             var successfulPackages = affectedPackages;
             if (label is "עדכון מרובה" or "השבתה מרובה" or "הסרה מרובה")
             {
-                successfulPackages = Regex.Matches(raw, @"(?m)^\\[הצלחה\\]\\s+([^\\r\\n]+)")
-                    .Select(match => match.Groups[1].Value.Trim())
-                    .Where(name => affectedPackages.Contains(name, StringComparer.OrdinalIgnoreCase))
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToArray();
+                successfulPackages = RestrictedNodeBbCliService.ExtractSuccessfulPackageNames(raw, affectedPackages).ToArray();
             }
             if (result.ExitCode == 0 || successfulPackages.Length > 0)
             {
