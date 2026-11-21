@@ -31,6 +31,7 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("identity(currentConfig) !== identity(incomingConfig)", script);
         Assert.Contains("find \"$STAGE\" -mindepth 1 ! -type f ! -type d", script);
         Assert.Contains("df -Pk", script);
+        Assert.Contains("[ -x \"$STAGE/nodebb\" ]", script);
         Assert.Contains("nodebb", script);
         Assert.DoesNotContain("mongorestore", script);
         Assert.DoesNotContain("redis-cli FLUSH", script);
@@ -225,6 +226,7 @@ public sealed class RemoteBackupRestoreServiceTests
                 (".", TarEntryType.Directory, ""),
                 ("./config.json", TarEntryType.RegularFile, ValidConfig),
                 ("./package.json", TarEntryType.RegularFile, "{\"name\":\"nodebb\"}"),
+                ("./nodebb", TarEntryType.RegularFile, "#!/usr/bin/env node"),
                 ("./public", TarEntryType.Directory, ""),
                 ("./public/uploads", TarEntryType.Directory, ""),
                 ("./public/uploads/photo.jpg", TarEntryType.RegularFile, "image"));
@@ -250,6 +252,32 @@ public sealed class RemoteBackupRestoreServiceTests
             await CreateFullArchiveWithSpecialEntryAsync(path, name, type);
             await Assert.ThrowsAsync<InvalidDataException>(() =>
                 RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(path));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateFullInstallationArchive_RejectsMissingNodeBbCliAndFileDirectoryCollisions()
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var missingCli = Path.Combine(directory, "missing-cli.tar.gz");
+            await CreateArchiveAsync(missingCli,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("package.json", TarEntryType.RegularFile, "{\"name\":\"nodebb\"}"));
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(missingCli));
+
+            var collision = Path.Combine(directory, "collision.tar.gz");
+            await CreateArchiveAsync(collision,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("package.json", TarEntryType.RegularFile, "{\"name\":\"nodebb\"}"),
+                ("nodebb", TarEntryType.RegularFile, "#!/usr/bin/env node"),
+                ("assets", TarEntryType.RegularFile, "file"),
+                ("assets/logo.png", TarEntryType.RegularFile, "image"));
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(collision));
         }
         finally { Directory.Delete(directory, true); }
     }
@@ -291,6 +319,11 @@ public sealed class RemoteBackupRestoreServiceTests
         };
         writer.WriteEntry(config);
         writer.WriteEntry(package);
+        var cli = new PaxTarEntry(TarEntryType.RegularFile, "nodebb")
+        {
+            DataStream = new MemoryStream(Encoding.UTF8.GetBytes("#!/usr/bin/env node"))
+        };
+        writer.WriteEntry(cli);
         var special = new PaxTarEntry(type, name);
         if (type is TarEntryType.SymbolicLink or TarEntryType.HardLink)
             special.LinkName = "../outside";

@@ -140,8 +140,11 @@ public sealed class RemoteBackupRestoreService
             await using var gzip = new GZipStream(file, CompressionMode.Decompress, true);
             await using var reader = new TarReader(gzip, leaveOpen: true);
             var seen = new HashSet<string>(StringComparer.Ordinal);
+            var filePaths = new HashSet<string>(StringComparer.Ordinal);
+            var directoryPaths = new HashSet<string>(StringComparer.Ordinal);
             var configSeen = false;
             var packageSeen = false;
+            var nodeBbCliSeen = false;
             var entryCount = 0;
             long expandedBytes = 0;
             TarEntry? entry;
@@ -166,6 +169,28 @@ public sealed class RemoteBackupRestoreService
                 if (!seen.Add(path))
                     throw new InvalidDataException($"הארכיון מכיל נתיב כפול: {path}");
 
+                var segments = path.Split('/');
+                for (var segmentIndex = 1; segmentIndex < segments.Length; segmentIndex++)
+                {
+                    var parentPath = string.Join('/', segments.Take(segmentIndex));
+                    if (filePaths.Contains(parentPath))
+                        throw new InvalidDataException($"הארכיון מכיל קובץ שהוא גם תיקיית אב: {parentPath}");
+                    directoryPaths.Add(parentPath);
+                }
+
+                if (entry.EntryType == TarEntryType.Directory)
+                {
+                    if (filePaths.Contains(path))
+                        throw new InvalidDataException($"הארכיון מכיל נתיב שהוא גם קובץ וגם תיקייה: {path}");
+                    directoryPaths.Add(path);
+                }
+                else
+                {
+                    if (directoryPaths.Contains(path))
+                        throw new InvalidDataException($"הארכיון מכיל נתיב שהוא גם תיקייה וגם קובץ: {path}");
+                    filePaths.Add(path);
+                }
+
                 if (entry.EntryType is TarEntryType.RegularFile or TarEntryType.V7RegularFile)
                 {
                     if (entry.DataStream is null)
@@ -173,6 +198,11 @@ public sealed class RemoteBackupRestoreService
                     if (entry.Length < 0 || entry.Length > 100L * 1024 * 1024 * 1024 - expandedBytes)
                         throw new InvalidDataException("גודל ההתקנה לאחר חילוץ חורג מהמגבלה של 100GB.");
                     expandedBytes += entry.Length;
+
+                    if (path == "nodebb")
+                    {
+                        nodeBbCliSeen = true;
+                    }
 
                     if (path is "config.json" or "package.json")
                     {
@@ -214,8 +244,8 @@ public sealed class RemoteBackupRestoreService
             while (await gzip.ReadAsync(drain, cancellationToken) > 0)
                 cancellationToken.ThrowIfCancellationRequested();
 
-            if (!configSeen || !packageSeen)
-                throw new InvalidDataException("גיבוי התקנה מלאה חייב לכלול config.json ו-package.json תקינים בתיקיית השורש.");
+            if (!configSeen || !packageSeen || !nodeBbCliSeen)
+                throw new InvalidDataException("גיבוי התקנה מלאה חייב לכלול config.json, package.json וקובץ nodebb בתיקיית השורש.");
             return new FullInstallationArchiveInfo(entryCount, expandedBytes);
         }
         catch (EndOfStreamException ex)
@@ -356,6 +386,7 @@ public sealed class RemoteBackupRestoreService
         var stopped = false;
         var switched = false;
         var restartAttempted = false;
+        var recoveryRequired = false;
         NodeBbRuntimeInfo? runtime = null;
         var runtimeService = new NodeBbRuntimeService(_session);
         var rollbackPath = GetFullRestoreRollbackPath(installation.Path, work);
@@ -400,6 +431,12 @@ public sealed class RemoteBackupRestoreService
             var restore = await _session.ExecuteAsync(
                 BuildFullInstallationRestoreScript(installation.Path, work, hash, archiveInfo.ExpandedBytes),
                 cancellationToken);
+            if (restore.ExitCode == 42)
+            {
+                recoveryRequired = true;
+                throw new InvalidOperationException(
+                    $"החלפת ההתקנה נכשלה והחזרת העותק המקורי נתקלה בתקלה. אין להפעיל שוב שחזור או למחוק קבצים. עותק החירום נמצא בנתיב {rollbackPath}.");
+            }
             if (restore.ExitCode != 0)
                 throw new InvalidOperationException(string.IsNullOrWhiteSpace(restore.Error)
                     ? $"הכנת ההתקנה והחלפתה נכשלו (קוד {restore.ExitCode}); ההתקנה המקורית נשמרה."
@@ -413,8 +450,11 @@ public sealed class RemoteBackupRestoreService
                 var rollback = await _session.ExecuteAsync(
                     BuildFullInstallationRollbackScript(installation.Path, work), CancellationToken.None);
                 if (rollback.ExitCode != 0)
+                {
+                    recoveryRequired = true;
                     throw new InvalidOperationException(
-                        $"ההתקנה החדשה לא עלתה, וגם ההחזרה האוטומטית נכשלה. ההתקנה המקורית נשמרה בנתיב {rollbackPath}; אין למחוק אותו. נדרשת התערבות מנהל.");
+                        $"ההתקנה החדשה לא עלתה, וגם ההחזרה האוטומטית נכשלה. עותק ההתקנה המקורית נמצא בנתיב {rollbackPath}; אין למחוק אותו. נדרשת התערבות מנהל.");
+                }
 
                 switched = false;
                 var startOld = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", CancellationToken.None);
@@ -446,6 +486,8 @@ public sealed class RemoteBackupRestoreService
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("FullRestore", "RestoreFailed", ex, _session.Profile.Name);
+            if (recoveryRequired)
+                throw new InvalidOperationException(ex.Message + $" עותק החירום: {rollbackPath}", ex);
             if (stopped && !switched && !restartAttempted && runtime is not null)
             {
                 try
@@ -557,7 +599,7 @@ else
 fi
 [ -f "$STAGE/config.json" ] && [ ! -L "$STAGE/config.json" ] || { echo 'config.json חסר או אינו קובץ רגיל.' >&2; exit 41; }
 [ -f "$STAGE/package.json" ] && [ ! -L "$STAGE/package.json" ] || { echo 'package.json חסר או אינו קובץ רגיל.' >&2; exit 41; }
-[ -f "$STAGE/nodebb" ] && [ ! -L "$STAGE/nodebb" ] || { echo 'קובץ ההפעלה nodebb חסר או אינו קובץ רגיל.' >&2; exit 41; }
+[ -f "$STAGE/nodebb" ] && [ -x "$STAGE/nodebb" ] && [ ! -L "$STAGE/nodebb" ] || { echo 'קובץ ההפעלה nodebb חסר, אינו executable או אינו קובץ רגיל.' >&2; exit 41; }
 SPECIAL="$(find "$STAGE" -mindepth 1 ! -type f ! -type d -print -quit)"
 [ -z "$SPECIAL" ] || { echo 'הארכיון חולץ עם קישור או קובץ מיוחד; השחזור בוטל.' >&2; exit 41; }
 
