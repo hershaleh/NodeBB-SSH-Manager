@@ -98,8 +98,10 @@ public sealed class RemoteBackupService
         if (magic[0] != 0x1f || magic[1] != 0x8b)
             throw new InvalidDataException("הקובץ שהורד אינו ארכיון GZip תקין.");
 
-        file.Position = 0;
-        await using var gzip = new GZipStream(file, CompressionMode.Decompress, true);
+        try
+        {
+            file.Position = 0;
+            await using var gzip = new GZipStream(file, CompressionMode.Decompress, true);
         await using var reader = new TarReader(gzip, leaveOpen: true);
         var entryCount = 0;
         long expandedBytes = 0;
@@ -137,7 +139,12 @@ public sealed class RemoteBackupService
         while (await gzip.ReadAsync(buffer, cancellationToken) > 0)
             cancellationToken.ThrowIfCancellationRequested();
 
-        return new BackupArchiveValidationResult(entryCount, expandedBytes);
+            return new BackupArchiveValidationResult(entryCount, expandedBytes);
+        }
+        catch (EndOfStreamException ex)
+        {
+            throw new InvalidDataException("ארכיון הגיבוי נקטע לפני סופו או שאינו מכיל מבנה TAR שלם.", ex);
+        }
     }
 
     private static string BuildArchiveCommand(string installationPath, string archivePath, RemoteBackupKind kind)
