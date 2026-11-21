@@ -50,11 +50,32 @@ jobs:
             throw ("DirectWriteForwarder.dll is not a valid x64 PE image. Signature={0}; Machine=0x{1:X4}" -f $signature, $machine)
           }
           Write-Host ("Verified x64 WPF native component: {0}" -f $dll.FullName)
-      - name: Upload build artifact
+      - name: Create portable Windows package
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "artifacts/win-x64/*" -DestinationPath "artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip" -CompressionLevel Optimal
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $compiler = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress
+          }
+          if (-not (Test-Path $compiler)) { throw "Inno Setup compiler was not found after installation." }
+          $project = [xml](Get-Content "src/NodeBB.SSHManager.App/NodeBB.SSHManager.App.csproj")
+          $version = $project.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1
+          if (-not $version) { throw "Application version is missing from the project file." }
+          & $compiler "/DAppVersion=$version" "installer/NodeBB-SSH-Manager.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE." }
+          if (-not (Test-Path "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe")) { throw "The Windows installer was not created." }
+      - name: Upload build packages
         uses: actions/upload-artifact@v4
         with:
           name: NodeBB-SSH-Manager-win-x64
-          path: artifacts/win-x64/
+          path: |
+            artifacts/win-x64/
+            artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip
+            artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe
           if-no-files-found: error
           retention-days: 14
       - name: Upload test results

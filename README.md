@@ -28,7 +28,7 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring with optional 30-second, 1-minute or 5-minute automatic refresh.
 - System service inventory and controlled start/stop/restart with confirmation and privilege checks.
 - Structured local diagnostic logging and ZIP report export.
-- GitHub Actions build and self-contained Windows x64 publish artifact.
+- GitHub Actions build, automated tests, self-contained Windows x64 publish output, a portable ZIP package and a per-user Windows installer (no administrator rights required).
 
 ## NodeBB upgrades
 
@@ -80,6 +80,8 @@ Development preview. Remote operations have not yet completed comprehensive live
 4. Open NodeBB management and verify that the discovered installation path and detected runtime match the intended forum.
 5. Create and verify a database backup and a separate encrypted configuration/uploads backup before attempting upgrades or restores.
 6. Run the read-only security audit and export a diagnostic report if a connection or command fails.
+
+The Windows installer is built from the same self-contained x64 publish output as the portable ZIP. It installs per-user under LocalAppData and leaves the application's profile, credential and log data in the user's application-data folder when uninstalled.
 
 The application intentionally does not elevate privileges, bypass network filtering, or silently change server permissions. Some operations require a suitable remote utility and sufficient SSH account permissions; the application reports remote command errors rather than assuming success.
 
