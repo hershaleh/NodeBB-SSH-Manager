@@ -45,6 +45,22 @@ public sealed class LocalizationServiceTests
         }
     }
 
+
+    [Fact]
+    public void TranslateFormatTranslatesTemplatesAndFormatsArguments()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        var count = 5;
+        var action = "Start";
+        var path = "/srv/nodebb";
+
+        Assert.Equal("5 installations were found. The first installation was selected.",
+            service.TranslateFormat($"נמצאו {count} התקנות. נבחרה ההתקנה הראשונה."));
+        Assert.Equal("Do you want to Start NodeBB at path /srv/nodebb?",
+            service.TranslateFormat($"האם {action} את NodeBB בנתיב {path}?"));
+    }
+
     [Fact]
     public void RejectsUnsupportedLanguage()
     {

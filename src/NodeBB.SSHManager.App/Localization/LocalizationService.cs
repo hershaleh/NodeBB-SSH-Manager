@@ -572,6 +572,53 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Runtime_bk11"] = ("שחזור ההתקנה המלאה נכשל: ", "Full installation restore failed: "),
             ["Runtime_bk12"] = ("הגיבוי נשמר במחשב:\n{0}\n\nסוג: {1}\nגיבויים ישנים שהוסרו: {2}", "Backup saved on this computer:\n{0}\n\nType: {1}\nOld backups removed: {2}"),
             ["Runtime_bk13"] = (" הוסרו {0} גיבויים ישנים לפי מדיניות השמירה.", " {0} old backups were removed according to the retention policy."),
+            ["Runtime_nm01"] = ("סורק נתיבים נפוצים...", "Scanning common paths..."),
+            ["Runtime_nm02"] = ("לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH.", "No NodeBB installation was found in the checked paths. You can scan again or inspect manually through the SSH terminal."),
+            ["Runtime_nm03"] = ("נמצאו {0} התקנות. נבחרה ההתקנה הראשונה.", "{0} installations were found. The first installation was selected."),
+            ["Runtime_nm04"] = ("בחר התקנת NodeBB תחילה.", "Select a NodeBB installation first."),
+            ["Runtime_nm05"] = ("להפעיל", "Start"),
+            ["Runtime_nm06"] = ("לעצור", "Stop"),
+            ["Runtime_nm07"] = ("להפעיל מחדש", "Restart"),
+            ["Runtime_nm08"] = ("לבנות מחדש", "Rebuild"),
+            ["Runtime_nm09"] = ("האם {0} את NodeBB בנתיב {1}?", "Do you want to {0} NodeBB at path {1}?"),
+            ["Runtime_nm10"] = ("מבצע {0}...", "Running {0}..."),
+            ["Runtime_nm11"] = ("הפעולה {0} הסתיימה בהצלחה.", "The {0} action completed successfully."),
+            ["Runtime_nm12"] = ("הפעולה נכשלה (קוד {0}).", "The action failed (exit code {0})."),
+            ["Runtime_nm13"] = ("תוצאת פעולה", "Action result"),
+            ["Runtime_nm14"] = ("שגיאה: ", "Error: "),
+            ["Runtime_nm15"] = ("פעולת NodeBB נכשלה", "NodeBB action failed"),
+            ["Runtime_nm16"] = ("הסריקה נכשלה: ", "Scan failed: "),
+            ["Runtime_up01"] = ("בודק את השרת...", "Checking the server..."),
+            ["Runtime_up02"] = ("מאגר Git", "Git repository"),
+            ["Runtime_up03"] = ("עץ עבודה נקי (ללא שינויים וקבצים לא מעוקבים)", "Clean working tree (no changes or untracked files)"),
+            ["Runtime_up04"] = ("remote בשם origin", "Remote named origin"),
+            ["Runtime_up05"] = ("גרסה נוכחית: {0}", "Current version: {0}"),
+            ["Runtime_up06"] = ("ענף נוכחי: {0}", "Current branch: {0}"),
+            ["Runtime_up07"] = ("מסד נתונים: {0}", "Database: {0}"),
+            ["Runtime_up08"] = ("השרת עבר את בדיקות המוכנות.", "The server passed the readiness checks."),
+            ["Runtime_up09"] = ("השרת אינו מוכן לשדרוג. יש לטפל בבדיקות שנכשלו.", "The server is not ready for upgrade. Resolve the failed checks first."),
+            ["Runtime_up10"] = ("בדיקת המוכנות נכשלה.", "The readiness check failed."),
+            ["Runtime_up11"] = ("בחירת תיקייה לשמירת גיבויי טרום-השדרוג", "Choose a folder for pre-upgrade backups"),
+            ["Runtime_up12"] = ("יש להזין תגית גרסה תקינה, לדוגמה v4.19.1.", "Enter a valid version tag, for example v4.19.1."),
+            ["Runtime_up13"] = ("תגית לא תקינה", "Invalid tag"),
+            ["Runtime_up14"] = ("יש לבחור תיקייה לשמירת הגיבויים.", "Choose a folder for the backups."),
+            ["Runtime_up15"] = ("נדרשת תיקיית גיבוי", "Backup folder required"),
+            ["Runtime_up16"] = ("סיסמת הגיבוי חייבת להכיל לפחות 12 תווים.", "The backup password must contain at least 12 characters."),
+            ["Runtime_up17"] = ("בדיקת סיסמה", "Password check"),
+            ["Runtime_up18"] = ("יש לאשר במפורש שגיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB.", "You must explicitly confirm that the Redis backup includes the entire Redis server, not only the NodeBB database."),
+            ["Runtime_up19"] = ("נדרש אישור היקף גיבוי", "Backup scope confirmation required"),
+            ["Runtime_up20"] = ("יש לאשר שהבנת את הסיכון של מיגרציות מסד הנתונים.", "Confirm that you understand the risk of database migrations."),
+            ["Runtime_up21"] = ("נדרש אישור", "Confirmation required"),
+            ["Runtime_up22"] = ("התוכנה תיצור ותאמת גיבוי מוצפן של מסד הנתונים ושל config.json/קובצי התצורה והעלאות, ורק לאחר הצלחתם תעצור את NodeBB ותשדרג לתגית {0}. אם מיגרציה תיכשל, השירות יישאר עצור.\n\nלהמשיך?", "The app will create and verify an encrypted backup of the database and config.json/configuration/uploads files. Only after both succeed will it stop NodeBB and upgrade to tag {0}. If a migration fails, the service will remain stopped.\n\nContinue?"),
+            ["Runtime_up23"] = ("אישור גיבוי ושדרוג", "Confirm backup and upgrade"),
+            ["Runtime_up24"] = ("בודק שתגית הגרסה קיימת לפני יצירת הגיבויים...", "Verifying that the version tag exists before creating backups..."),
+            ["Runtime_up25"] = ("הגיבויים אומתו. מתחיל כעת את השדרוג...", "Backups verified. Starting the upgrade now..."),
+            ["Runtime_up26"] = ("\n\nתיקיית הגיבויים: ", "\n\nBackup folder: "),
+            ["Runtime_up27"] = ("השדרוג הושלם", "Upgrade completed"),
+            ["Runtime_up28"] = ("תוצאת השדרוג", "Upgrade result"),
+            ["Runtime_up29"] = ("השדרוג בוטל או נכשל: ", "Upgrade cancelled or failed: "),
+            ["Runtime_up30"] = ("שדרוג לא הושלם", "Upgrade not completed"),
+
         };
 
     public static LocalizationService Instance => LazyInstance.Value;
@@ -594,6 +641,13 @@ public sealed class LocalizationService : INotifyPropertyChanged
             if (string.Equals(translation.He, hebrewText, StringComparison.Ordinal))
                 return translation.En;
         return hebrewText;
+    }
+
+    public string TranslateFormat(FormattableString formattedText)
+    {
+        ArgumentNullException.ThrowIfNull(formattedText);
+        var translatedFormat = Translate(formattedText.Format);
+        return string.Format(CultureInfo.CurrentCulture, translatedFormat, formattedText.GetArguments());
     }
 
     public string Language => _language;

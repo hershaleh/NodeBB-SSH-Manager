@@ -1,3 +1,5 @@
+using System;
+using NodeBB.SSHManager.Localization;
 using System.Collections.ObjectModel;
 using System.Windows;
 using NodeBB.SSHManager.Services;
@@ -52,21 +54,21 @@ public partial class NodeBbManagerWindow : Window
     {
         try
         {
-            SetBusy(true, "סורק נתיבים נפוצים...");
+            SetBusy(true, T("סורק נתיבים נפוצים..."));
             var found = await _service.DiscoverAsync();
             _installations.Clear();
             foreach (var item in found) _installations.Add(item);
             if (found.Count > 0) { InstallationsList.SelectedIndex = 0; InstallationPicker.SelectedIndex = 0; }
             StatusText.Text = found.Count == 0
-                ? "לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH."
-                : $"נמצאו {found.Count} התקנות. נבחרה ההתקנה הראשונה.";
+                ? T("לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH.")
+                : F($"נמצאו {found.Count} התקנות. נבחרה ההתקנה הראשונה.");
             DiagnosticLogService.Instance.Info("NodeBBManagerUI", "DiscoveryCompleted",
                 $"Discovered {found.Count} NodeBB installations.", _session.Profile.Name);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("NodeBBManagerUI", "DiscoveryFailed", ex, _session.Profile.Name);
-            StatusText.Text = "הסריקה נכשלה: " + ex.Message;
+            StatusText.Text = T("הסריקה נכשלה: ") + ex.Message;
         }
         finally { SetBusy(false, StatusText.Text); }
     }
@@ -75,7 +77,7 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
         new SecurityAuditWindow(_session, installation) { Owner = this }.ShowDialog();
@@ -85,7 +87,7 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
         new NodeBbLogsWindow(_session, installation) { Owner = this }.ShowDialog();
@@ -95,7 +97,7 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
         new DatabaseManagerWindow(_session, installation) { Owner = this }.ShowDialog();
@@ -105,7 +107,7 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
         new BackupWindow(_session, installation) { Owner = this }.ShowDialog();
@@ -115,7 +117,7 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
         new PluginThemeManagerWindow(_session, installation) { Owner = this }.ShowDialog();
@@ -129,7 +131,7 @@ public partial class NodeBbManagerWindow : Window
     private void Upgrade_Click(object sender, RoutedEventArgs e)
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
-        { StatusText.Text = "בחר התקנת NodeBB תחילה."; return; }
+        { StatusText.Text = T("בחר התקנת NodeBB תחילה."); return; }
         new NodeBbUpgradeWindow(_session, installation) { Owner = this }.ShowDialog();
     }
 
@@ -137,29 +139,29 @@ public partial class NodeBbManagerWindow : Window
     {
         if (InstallationsList.SelectedItem is not NodeBbInstallation installation)
         {
-            StatusText.Text = "בחר התקנת NodeBB תחילה.";
+            StatusText.Text = T("בחר התקנת NodeBB תחילה.");
             return;
         }
-        var label = action switch { "start" => "להפעיל", "stop" => "לעצור", "restart" => "להפעיל מחדש", _ => "לבנות מחדש" };
-        if (MessageBox.Show(this, $"האם {label} את NodeBB בנתיב {installation.Path}?", "אישור פעולה",
+        var label = action switch { "start" => T("להפעיל"), "stop" => T("לעצור"), "restart" => T("להפעיל מחדש"), _ => T("לבנות מחדש") };
+        if (MessageBox.Show(this, F($"האם {label} את NodeBB בנתיב {installation.Path}?"), T("אישור פעולה"),
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         try
         {
-            SetBusy(true, $"מבצע {action}...");
+            SetBusy(true, F($"מבצע {label}..."));
             var result = await _service.RunLifecycleAsync(installation, action);
             var details = string.Join(Environment.NewLine + Environment.NewLine,
                 new[] { result.Output.Trim(), result.Error.Trim() }.Where(value => !string.IsNullOrWhiteSpace(value)));
-            StatusText.Text = result.ExitCode == 0 ? $"הפעולה {action} הסתיימה בהצלחה." : $"הפעולה נכשלה (קוד {result.ExitCode}).";
+            StatusText.Text = result.ExitCode == 0 ? F($"הפעולה {label} הסתיימה בהצלחה.") : F($"הפעולה נכשלה (קוד {result.ExitCode}).");
             DiagnosticLogService.Instance.Info("NodeBBManagerUI", "LifecycleActionCompleted",
                 $"NodeBB action {action} completed with exit code {result.ExitCode}.", _session.Profile.Name);
-            MessageBox.Show(this, $"{StatusText.Text}{(string.IsNullOrWhiteSpace(details) ? string.Empty : Environment.NewLine + Environment.NewLine + details)}", "תוצאת פעולה",
+            MessageBox.Show(this, $"{StatusText.Text}{(string.IsNullOrWhiteSpace(details) ? string.Empty : Environment.NewLine + Environment.NewLine + details)}", T("תוצאת פעולה"),
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("NodeBBManagerUI", "LifecycleActionFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שגיאה: " + ex.Message;
-            MessageBox.Show(this, ex.Message, "פעולת NodeBB נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = T("שגיאה: ") + ex.Message;
+            MessageBox.Show(this, ex.Message, T("פעולת NodeBB נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { SetBusy(false, StatusText.Text); }
     }
@@ -176,4 +178,8 @@ public partial class NodeBbManagerWindow : Window
         UpdateActionAvailability();
         StatusText.Text = message;
     }
+    private static string T(string text) => LocalizationService.Instance.Translate(text);
+
+    private static string F(FormattableString text) => LocalizationService.Instance.TranslateFormat(text);
+
 }
