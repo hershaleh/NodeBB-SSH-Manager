@@ -432,6 +432,10 @@ public sealed class RemoteBackupRestoreService
                 throw new InvalidOperationException("לא ניתן לעצור את NodeBB באופן בטוח. לא בוצע שינוי בקבצי ההתקנה.");
 
             stopped = true;
+            if (!await runtimeService.VerifyHttpStoppedAsync(installation, cancellationToken))
+                throw new InvalidOperationException(
+                    "פקודת העצירה הסתיימה, אך לא ניתן לאמת שפורט NodeBB הפסיק להאזין. ייתכן שהתהליך עדיין פעיל או הופעל מחדש אוטומטית; השחזור בוטל לפני שינוי הקבצים.");
+
             DiagnosticLogService.Instance.Warning("FullRestore", "RestoreStarted",
                 "Full NodeBB installation restore started. Database contents are not included.", null, _session.Profile.Name);
 

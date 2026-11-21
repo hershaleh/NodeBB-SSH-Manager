@@ -6,6 +6,27 @@ namespace NodeBB.SSHManager.Tests;
 public sealed class NodeBbRuntimeServiceTests
 {
 
+
+    [Fact]
+    public void BuildHttpStoppedCheckScript_InspectsListeningPortAndFailsClosedWithoutTools()
+    {
+        var script = NodeBbRuntimeService.BuildHttpStoppedCheckScript("/srv/nodebb");
+        Assert.Contains("ss", script);
+        Assert.Contains("netstat", script);
+        Assert.Contains("NODEBB_STOPPED", script);
+        Assert.Contains("attempts >= 10", script);
+        Assert.Contains("לא ניתן לאמת בבטחה", script);
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    public void BuildHttpStoppedCheckScript_RejectsUnsafeInstallationPaths(string path)
+    {
+        Assert.Throws<ArgumentException>(() => NodeBbRuntimeService.BuildHttpStoppedCheckScript(path));
+    }
+
     [Fact]
     public void BuildHttpHealthCheckScript_UsesLocalHttpProbeAndRetriesUntilHealthy()
     {
