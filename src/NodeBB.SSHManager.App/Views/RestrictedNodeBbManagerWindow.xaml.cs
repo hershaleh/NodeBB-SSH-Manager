@@ -35,7 +35,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}:{session.Profile.Port} · nodebb-plugins";
         TerminalOutputBox.Text = initialHelp;
         PluginCards.ItemsSource = _allPlugins;
-        SummaryTitle.Text = "החיבור לשרת מוכן";
+        SummaryTitle.Text = T("החיבור לשרת מוכן");
         SummaryText.Text = "אפשר לנהל תוספים, ליצור גיבוי, לבדוק את מצב הפורום ולהפעיל פעולות תחזוקה. המידע יוצג כאן בעברית.";
         UploadZipButton.Visibility = InstallSourceBox.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
         RefreshActionHistory();
@@ -48,7 +48,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     }
     private async void Backup_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "ליצור גיבוי מלא של הפורום ורשימת התוספים לפני המשך?", "גיבוי", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, T("ליצור גיבוי מלא של הפורום ורשימת התוספים לפני המשך?"), T("גיבוי"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         await RunAsync(() => _service.BackupAsync(), "גיבוי מלא");
     }
     private async void Status_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.StatusAsync(), "בדיקת מצב הפורום");
@@ -64,12 +64,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
     }
     private async void Logs_Click(object sender, RoutedEventArgs e)
     {
-        var answer = Microsoft.VisualBasic.Interaction.InputBox("כמה שורות להציג? (1–500)", "לוגים", "80");
+        var answer = Microsoft.VisualBasic.Interaction.InputBox(T("כמה שורות להציג? (1–500)"), T("לוגים"), "80");
         if (!int.TryParse(answer, out var lines) || lines is < 1 or > 500) return;
         await RunAsync(() => _service.LogsAsync(lines), "לוגים");
     }
     private async void Zips_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListZipsAsync(), "קובצי ZIP");
-    private async void Help_Click(object sender, RoutedEventArgs e) { await RunAsync(() => _service.HelpAsync(), "הצגת עזרה"); SummaryTitle.Text = "העזרה הטכנית זמינה בטרמינל"; SummaryText.Text = "רשימת הפקודות והתחביר המקורי הועברו לחלון הטרמינל. ממשק הניהול עצמו נשאר בעברית."; }
+    private async void Help_Click(object sender, RoutedEventArgs e) { await RunAsync(() => _service.HelpAsync(), "הצגת עזרה"); SummaryTitle.Text = T("העזרה הטכנית זמינה בטרמינל"); SummaryText.Text = "רשימת הפקודות והתחביר המקורי הועברו לחלון הטרמינל. ממשק הניהול עצמו נשאר בעברית."; }
 
     private void InstallSourceBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
@@ -81,8 +81,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = "בחירת תוסף ZIP מהמחשב",
-            Filter = "קובצי ZIP (*.zip)|*.zip",
+            Title = T("בחירת תוסף ZIP מהמחשב"),
+            Filter = T("קובצי ZIP (*.zip)|*.zip"),
             CheckFileExists = true,
             Multiselect = false
         };
@@ -90,7 +90,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var info = new FileInfo(dialog.FileName);
         if (info.Length > 25L * 1024 * 1024)
         {
-            MessageBox.Show(this, "גודל קובץ ZIP מוגבל ל־25MB.", "הקובץ גדול מדי",
+            MessageBox.Show(this, T("גודל קובץ ZIP מוגבל ל־25MB."), T("הקובץ גדול מדי"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -113,7 +113,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var target = TargetBox.Text.Trim();
         var source = (InstallSourceBox.SelectedIndex);
         try { if (source == 0) RestrictedNodeBbCliService.ValidatePackage(target); else if (source == 1) RestrictedNodeBbCliService.ValidateGitHubTarget(target); else RestrictedNodeBbCliService.ValidateZipName(target); }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "יעד התקנה לא תקין", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("יעד התקנה לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         if (MessageBox.Show(this, $"להתקין את היעד הבא?\n\n{target}\n\nהשרת מבצע גיבוי אוטומטי לפני התקנה.", "אישור התקנה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => source switch { 0 => _service.InstallNpmAsync(target), 1 => _service.InstallGitHubAsync(target), _ => _service.InstallZipAsync(target) }, "התקנה");
     }
@@ -125,7 +125,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         var file = TargetBox.Text.Trim();
         try { RestrictedNodeBbCliService.ValidateZipName(file); }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "שם קובץ לא תקין", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("שם קובץ לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         if (MessageBox.Show(this, $"למחוק את קובץ ההעלאה {file} מהשרת?", "מחיקת ZIP", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => _service.DeleteZipAsync(file), "מחיקת ZIP");
     }
@@ -134,7 +134,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         var package = TargetBox.Text.Trim();
         try { RestrictedNodeBbCliService.ValidatePackage(package); }
-        catch (Exception ex) { MessageBox.Show(this, ex.Message, "שם חבילה לא תקין", MessageBoxButton.OK, MessageBoxImage.Warning); return; }
+        catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("שם חבילה לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
         if (MessageBox.Show(this, $"{label} את {package}?", "אישור פעולה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => action(package, CancellationToken.None), label);
     }
@@ -150,8 +150,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
         if (!keepPluginView) ManagerTabs.SelectedIndex = 2;
         _busy = true;
         IsEnabled = false;
-        SummaryTitle.Text = label + " — בביצוע";
-        SummaryText.Text = "הבקשה נשלחה לשרת. ממתין לתשובה...";
+        SummaryTitle.Text = T(label) + " — " + T("בביצוע");
+        SummaryText.Text = T("הבקשה נשלחה לשרת. ממתין לתשובה...");
         if (keepPluginView) PluginActionStatus.Text = label + " מתבצע…";
         try
         {
@@ -175,7 +175,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             if (partialSuccess)
             {
                 var failedCount = Math.Max(0, affectedPackages.Length - successfulPackages.Length);
-                SummaryTitle.Text = label + " — הושלם חלקית";
+                SummaryTitle.Text = T(label) + " — " + T("הושלם חלקית");
                 SummaryText.Text = $"הפעולה הצליחה עבור {successfulPackages.Length} מתוך {affectedPackages.Length} חבילות. {failedCount} פעולות נכשלו; בדוק את הפלט המלא לפני ניסיון חוזר.";
             }
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
@@ -234,7 +234,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         {
             _lastOutput = $"[{label}] שגיאה\r\n\r\n{ex}";
             TerminalOutputBox.Text = _lastOutput;
-            SummaryTitle.Text = label + " — הפעולה לא הושלמה";
+            SummaryTitle.Text = T(label) + " — " + T("הפעולה לא הושלמה");
             SummaryText.Text = TranslateError(ex.Message);
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), false, SummaryText.Text);
             if (keepPluginView)
@@ -253,8 +253,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
     private void ShowHebrewSummary(string label, int exitCode, string raw)
     {
-        if (exitCode != 0) { SummaryTitle.Text = label + " — הפעולה נכשלה"; SummaryText.Text = TranslateError(raw); return; }
-        SummaryTitle.Text = label + " — הושלם בהצלחה";
+        if (exitCode != 0) { SummaryTitle.Text = T(label) + " — " + T("הפעולה נכשלה"); SummaryText.Text = TranslateError(raw); return; }
+        SummaryTitle.Text = T(label) + " — " + T("הושלם בהצלחה");
         SummaryText.Text = label switch
         {
             "רשימת תוספים" => "הרשימה עודכנה. התוספים שהשרת דיווח עליהם כמותקנים ופעילים מוצגים בכרטיסים.",
@@ -752,4 +752,6 @@ public sealed class PluginCard(string name, string kindLabel, bool isActive, boo
     public Brush ToggleForeground => IsActive
         ? new SolidColorBrush(Color.FromRgb(154, 91, 19))
         : new SolidColorBrush(Color.FromRgb(22, 118, 79));
+    private static string T(string text) => NodeBB.SSHManager.Localization.LocalizationService.Instance.Translate(text);
+
 }

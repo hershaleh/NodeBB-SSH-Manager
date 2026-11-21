@@ -74,6 +74,18 @@ public sealed class LocalizationServiceTests
         Assert.Contains("PostgreSQL database configured for NodeBB", service.Translate("השחזור יחליף את האובייקטים הכלולים בארכיון בתוך מסד PostgreSQL שהוגדר ב-NodeBB. אובייקטים שאינם כלולים בארכיון עשויים להישאר. לפני השינוי ייווצר גיבוי חירום של מסד היעד; אם השחזור ייכשל, המערכת תנסה להחזיר את המצב הקודם. להמשיך?"));
     }
 
+
+    [Fact]
+    public void RestrictedManagerLabelsTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Backup", service.Translate("גיבוי"));
+        Assert.Equal("No plugins were detected in the server list", service.Translate("לא זוהו תוספים ברשימת השרת"));
+        Assert.Equal("Active", service.Translate("פעיל"));
+        Assert.Equal("CSV file (*.csv)|*.csv", service.Translate("קובץ CSV (*.csv)|*.csv"));
+    }
+
     [Fact]
     public void RejectsUnsupportedLanguage()
     {
