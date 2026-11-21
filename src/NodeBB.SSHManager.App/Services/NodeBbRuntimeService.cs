@@ -247,11 +247,15 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   console.error('יציאת NodeBB אינה תקינה.');
   process.exit(1);
 }
+let relativePath = typeof config.relative_path === 'string' ? config.relative_path.trim() : '';
+if (relativePath && !relativePath.startsWith('/')) relativePath = '/' + relativePath;
+relativePath = relativePath.replace(/\\/+$/, '');
+const apiPath = relativePath + '/api/';
 let attempts = 0;
 const maxAttempts = 30;
 function retry() {
   if (attempts >= maxAttempts) {
-    console.error('NodeBB לא התחיל להשיב לבקשות HTTP בתוך 60 שניות.');
+    console.error('NodeBB לא סיפק תגובת API תקינה בתוך 60 שניות.');
     process.exit(1);
     return;
   }
@@ -259,17 +263,56 @@ function retry() {
 }
 function check() {
   attempts++;
-  const request = http.get({ hostname: host, port, path: '/', timeout: 3000 }, response => {
-    response.resume();
-    if (response.statusCode >= 200 && response.statusCode < 400) {
-      console.log('NODEBB_HEALTHY');
-      process.exit(0);
+  let settled = false;
+  const fail = () => {
+    if (settled) return;
+    settled = true;
+    retry();
+  };
+  const request = http.get({
+    hostname: host,
+    port,
+    path: apiPath,
+    timeout: 3000,
+    headers: { accept: 'application/json' }
+  }, response => {
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      response.resume();
+      fail();
       return;
     }
-    retry();
+    const chunks = [];
+    let bytes = 0;
+    response.on('data', chunk => {
+      bytes += chunk.length;
+      if (bytes > 1024 * 1024) {
+        response.destroy();
+        fail();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    response.on('end', () => {
+      if (settled) return;
+      try {
+        const payload = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        if (!payload || typeof payload !== 'object' ||
+            typeof payload.loggedIn !== 'boolean' ||
+            typeof payload.relative_path !== 'string') {
+          fail();
+          return;
+        }
+        settled = true;
+        console.log('NODEBB_HEALTHY');
+        process.exit(0);
+      } catch {
+        fail();
+      }
+    });
+    response.on('error', fail);
   });
   request.on('timeout', () => request.destroy(new Error('timeout')));
-  request.on('error', retry);
+  request.on('error', fail);
 }
 check();
 NODE

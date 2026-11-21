@@ -35,7 +35,14 @@ public sealed class NodeBbRuntimeServiceTests
         Assert.Contains("http.get", script);
         Assert.Contains("NODEBB_HEALTHY", script);
         Assert.Contains("maxAttempts = 30", script);
-        Assert.Contains("response.statusCode < 400", script);
+        Assert.Contains("path: apiPath", script);
+        Assert.Contains("const apiPath = relativePath + '/api/'", script);
+        Assert.Contains("response.statusCode >= 200 && response.statusCode < 300", script);
+        Assert.Contains("JSON.parse(Buffer.concat(chunks).toString('utf8'))", script);
+        Assert.Contains("typeof payload.loggedIn !== 'boolean'", script);
+        Assert.Contains("typeof payload.relative_path !== 'string'", script);
+        Assert.Contains("bytes > 1024 * 1024", script);
+        Assert.DoesNotContain("path: '/',", script);
         Assert.Contains("127.0.0.1", script);
         Assert.Contains("4567", script);
     }
