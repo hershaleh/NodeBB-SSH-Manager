@@ -166,7 +166,7 @@ public sealed class RemoteBackupRestoreServiceTests
             await CreateArchiveAsync(path,
                 (".", TarEntryType.Directory, ""),
                 ("./config.json", TarEntryType.RegularFile, ValidConfig),
-                ("./package.json", TarEntryType.RegularFile, "{\\"name\\":\\"nodebb\\"}"),
+                ("./package.json", TarEntryType.RegularFile, "{\"name\":\"nodebb\"}"),
                 ("./public", TarEntryType.Directory, ""),
                 ("./public/uploads", TarEntryType.Directory, ""),
                 ("./public/uploads/photo.jpg", TarEntryType.RegularFile, "image"));
@@ -180,7 +180,7 @@ public sealed class RemoteBackupRestoreServiceTests
     [Theory]
     [InlineData("../escape.txt", TarEntryType.RegularFile)]
     [InlineData("/etc/passwd", TarEntryType.RegularFile)]
-    [InlineData("node_modules\\\\evil.js", TarEntryType.RegularFile)]
+    [InlineData("node_modules\\evil.js", TarEntryType.RegularFile)]
     [InlineData("config.json", TarEntryType.SymbolicLink)]
     [InlineData("config.json", TarEntryType.HardLink)]
     public async Task ValidateFullInstallationArchive_RejectsTraversalAndLinks(string name, TarEntryType type)
@@ -211,7 +211,7 @@ public sealed class RemoteBackupRestoreServiceTests
             var wrongPackage = Path.Combine(directory, "wrong-package.tar.gz");
             await CreateArchiveAsync(wrongPackage,
                 ("config.json", TarEntryType.RegularFile, ValidConfig),
-                ("package.json", TarEntryType.RegularFile, "{\\"name\\":\\"other-app\\"}"));
+                ("package.json", TarEntryType.RegularFile, "{\"name\":\"other-app\"}"));
             await Assert.ThrowsAsync<InvalidDataException>(() =>
                 RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(wrongPackage));
         }
@@ -229,7 +229,7 @@ public sealed class RemoteBackupRestoreServiceTests
         };
         var package = new PaxTarEntry(TarEntryType.RegularFile, "package.json")
         {
-            DataStream = new MemoryStream(Encoding.UTF8.GetBytes("{\\"name\\":\\"nodebb\\"}"))
+            DataStream = new MemoryStream(Encoding.UTF8.GetBytes("{\"name\":\"nodebb\"}"))
         };
         writer.WriteEntry(config);
         writer.WriteEntry(package);
