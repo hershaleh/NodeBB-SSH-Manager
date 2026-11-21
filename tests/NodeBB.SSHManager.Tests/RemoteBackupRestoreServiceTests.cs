@@ -58,6 +58,10 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("ROLLBACK=", script);
         Assert.Contains("SWAP_STARTED=1", script);
         Assert.Contains("KEEP_ROLLBACK=1", script);
+        Assert.Contains("trap cleanup EXIT", script);
+        Assert.Contains("trap 'exit 129' HUP", script);
+        Assert.Contains("trap 'exit 130' INT", script);
+        Assert.Contains("trap 'exit 143' TERM", script);
         Assert.Contains("identity(currentConfig) !== identity(incomingConfig)", script);
         Assert.Contains("find \"$STAGE\" -mindepth 1 ! -type f ! -type d", script);
         Assert.Contains("df -Pk", script);
@@ -76,6 +80,11 @@ public sealed class RemoteBackupRestoreServiceTests
         var script = RemoteBackupRestoreService.BuildFullInstallationRollbackScript("/srv/nodebb", FullWork);
         Assert.Contains("mv -- \"$INSTALL\" \"$FAILED\"", script);
         Assert.Contains("mv -- \"$ROLLBACK\" \"$INSTALL\"", script);
+        Assert.Contains("recover_interrupted_rollback()", script);
+        Assert.Contains("trap recover_interrupted_rollback EXIT", script);
+        Assert.Contains("trap 'exit 129' HUP", script);
+        Assert.Contains("trap 'exit 130' INT", script);
+        Assert.Contains("trap 'exit 143' TERM", script);
         Assert.Contains("FULL_RESTORE_ROLLED_BACK", script);
     }
 

@@ -633,6 +633,9 @@ cleanup() {
   exit "$result"
 }
 trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 [ -d "$WORK" ] && [ ! -L "$WORK" ] || { echo 'תיקיית העבודה חסרה או אינה בטוחה.' >&2; exit 40; }
 [ -s "$WORK/incoming.tar.gz" ] && [ ! -L "$WORK/incoming.tar.gz" ] || { echo 'ארכיון הגיבוי שהועלה חסר.' >&2; exit 40; }
@@ -749,6 +752,18 @@ FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
 [ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ] || { echo 'עותק החירום של ההתקנה המקורית לא נמצא.' >&2; exit 44; }
 [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'תיקיית ההתקנה החדשה אינה תקינה.' >&2; exit 44; }
 [ ! -e "$FAILED" ] || { echo 'תיקיית כשל קודמת כבר קיימת.' >&2; exit 44; }
+recover_interrupted_rollback() {
+  result=$?
+  trap - EXIT HUP INT TERM
+  if [ ! -e "$INSTALL" ] && [ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ]; then
+    mv -- "$ROLLBACK" "$INSTALL" || result=45
+  fi
+  exit "$result"
+}
+trap recover_interrupted_rollback EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 mv -- "$INSTALL" "$FAILED" || exit 44
 if ! mv -- "$ROLLBACK" "$INSTALL"; then
   mv -- "$FAILED" "$INSTALL" || { echo 'CRITICAL: לא ניתן להחזיר את שתי תיקיות ההתקנה למקומן.' >&2; exit 45; }
