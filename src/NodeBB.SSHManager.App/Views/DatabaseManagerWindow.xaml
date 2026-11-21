@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.DatabaseManagerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="מסד נתונים" Width="920" Height="900" MinWidth="700" MinHeight="700"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+        Title="{loc:Tr View_3a27971e}" Width="920" Height="900" MinWidth="700" MinHeight="700"
         WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
         FontFamily="Segoe UI Variable, Segoe UI">
     <Window.Resources>
@@ -21,9 +22,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="ניהול מסד הנתונים" FontSize="25" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{loc:Tr View_1d70a888}" FontSize="25" FontWeight="Bold" Foreground="White"/>
                     <TextBlock x:Name="InstallationLabel" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
-                    <TextBlock Text="תצורה, גיבויים ושחזור — ללא חשיפת סיסמאות" Foreground="#8FA3C1" FontSize="11" Margin="0,4,0,0"/>
+                    <TextBlock Text="{loc:Tr View_ab414473}" Foreground="#8FA3C1" FontSize="11" Margin="0,4,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17">
                     <TextBlock Text="▤" FontSize="29" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -31,7 +32,7 @@
             </Grid>
         </Border>
         <DockPanel Grid.Row="1" Margin="0,0,0,14">
-            <Button x:Name="RefreshButton" Content="↻  רענון תצורה" Click="Refresh_Click" Padding="16,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Button x:Name="RefreshButton" Content="{loc:Tr View_2530da07}" Click="Refresh_Click" Padding="16,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
             <Border Background="#E8EEF8" CornerRadius="10" Padding="12,8" Margin="12,0,0,0">
                 <TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="#42536D" FontSize="11"/>
             </Border>
@@ -40,37 +41,37 @@
             <StackPanel>
                 <Border Style="{StaticResource DbCard}">
                     <StackPanel>
-                        <TextBlock Text="תצורת החיבור" FontSize="16" FontWeight="Bold" Foreground="#23324A" Margin="0,0,0,12"/>
+                        <TextBlock Text="{loc:Tr View_6d2ba710}" FontSize="16" FontWeight="Bold" Foreground="#23324A" Margin="0,0,0,12"/>
                         <Border Background="#F4F6FB" CornerRadius="13" Padding="14">
                             <Grid>
                                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                                 <StackPanel Margin="0,0,12,10">
-                                    <TextBlock Text="סוג מסד נתונים" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_cc80de82}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="TypeText" FontSize="15" FontWeight="Bold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="12,0,0,10">
-                                    <TextBlock Text="שרת מארח" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_c50b982d}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="HostText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="1" Margin="0,0,12,10">
-                                    <TextBlock Text="יציאה" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_199bfb9}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="PortText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="1" Grid.Column="1" Margin="12,0,0,10">
-                                    <TextBlock Text="שם מסד נתונים" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_4ed6dc52}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="DatabaseNameText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="2" Margin="0,0,12,10">
-                                    <TextBlock Text="שם משתמש מוגדר" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_559e139}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="UsernameText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="2" Grid.Column="1" Margin="12,0,0,10">
-                                    <TextBlock Text="סיסמה מוגדרת" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_1bb55bfc}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="PasswordText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                                 <StackPanel Grid.Row="3" Grid.ColumnSpan="2">
-                                    <TextBlock Text="כתובת URI מוגדרת" Style="{StaticResource DbLabel}"/>
+                                    <TextBlock Text="{loc:Tr View_4905c002}" Style="{StaticResource DbLabel}"/>
                                     <TextBlock x:Name="UriText" FontSize="14" FontWeight="SemiBold" Foreground="#293A55"/>
                                 </StackPanel>
                             </Grid>
@@ -79,22 +80,22 @@
                 </Border>
                 <Border Style="{StaticResource DbCard}">
                     <StackPanel>
-                        <TextBlock Text="גיבוי מסד הנתונים" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
+                        <TextBlock Text="{loc:Tr View_44e75afe}" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
                         <TextBlock Text="התוכנה מזהה את מנוע מסד הנתונים ומציגה את פעולת הגיבוי המתאימה. הקובץ מוצפן במחשב לפני שמירתו." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,14"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel>
-                                <TextBlock Text="סיסמת הצפנה (לפחות 12 תווים)" Style="{StaticResource DbLabel}"/>
+                                <TextBlock Text="{loc:Tr View_3c1c3d4e}" Style="{StaticResource DbLabel}"/>
                                 <PasswordBox x:Name="BackupPasswordBox" Padding="10" Height="40"/>
                             </StackPanel>
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="אימות סיסמה" Style="{StaticResource DbLabel}"/>
+                                <TextBlock Text="{loc:Tr View_fe307a6c}" Style="{StaticResource DbLabel}"/>
                                 <PasswordBox x:Name="BackupPasswordConfirmBox" Padding="10" Height="40"/>
                             </StackPanel>
                         </Grid>
-                        <Button x:Name="DatabaseBackupButton" Content="יצירת גיבוי MongoDB מוצפן" Click="DatabaseBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#4F63D9" Foreground="White" BorderThickness="0" Margin="0,14,0,0" FontWeight="SemiBold"/>
-                        <Button x:Name="PostgresBackupButton" Content="יצירת גיבוי PostgreSQL מוצפן" Click="PostgresBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
-                        <Button x:Name="RedisBackupButton" Content="יצירת גיבוי Redis מוצפן" Click="RedisBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
+                        <Button x:Name="DatabaseBackupButton" Content="{loc:Tr View_d076e34f}" Click="DatabaseBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#4F63D9" Foreground="White" BorderThickness="0" Margin="0,14,0,0" FontWeight="SemiBold"/>
+                        <Button x:Name="PostgresBackupButton" Content="{loc:Tr View_3d3b70c9}" Click="PostgresBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
+                        <Button x:Name="RedisBackupButton" Content="{loc:Tr View_5ae66b8e}" Click="RedisBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
                         <Border x:Name="RedisBackupNote" Background="#FFF5E8" CornerRadius="10" Padding="11" Margin="0,10,0,0" Visibility="Collapsed">
                             <TextBlock Text="גיבוי Redis הוא תמונת RDB של כל שרת Redis, כולל כל מסדי הנתונים הלוגיים שבו — לא רק מסד NodeBB. הוא אינו כולל שחזור אוטומטי." TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11"/>
                         </Border>
@@ -103,14 +104,14 @@
                 </Border>
                 <Border x:Name="MongoRestorePanel" Style="{StaticResource DbCard}">
                     <StackPanel>
-                        <TextBlock Text="שחזור מסד נתונים" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
+                        <TextBlock Text="{loc:Tr View_8041e2c7}" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
                         <TextBlock Text="לפני שינוי הנתונים נוצר בשרת גיבוי חירום של מסד הנתונים הנוכחי. אם השחזור נכשל, המערכת מנסה להחזיר את המצב הקודם. PostgreSQL משחזר אובייקטים שנמצאים בארכיון; אובייקטים נוספים שאינם בארכיון עשויים להישאר." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,13"/>
-                        <TextBlock Text="סיסמת הגיבוי" Style="{StaticResource DbLabel}"/>
+                        <TextBlock Text="{loc:Tr View_d393e18c}" Style="{StaticResource DbLabel}"/>
                         <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40"/>
-                        <Button x:Name="PostgresRestoreButton" Content="בחירת גיבוי ושחזור PostgreSQL" Click="PostgresRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Visibility="Collapsed" Margin="0,12,0,0"/>
-                        <Button x:Name="DatabaseRestoreButton" Content="בחירת גיבוי ושחזור MongoDB" Click="DatabaseRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Margin="0,12,0,0"/>
+                        <Button x:Name="PostgresRestoreButton" Content="{loc:Tr View_74d55278}" Click="PostgresRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Visibility="Collapsed" Margin="0,12,0,0"/>
+                        <Button x:Name="DatabaseRestoreButton" Content="{loc:Tr View_661c2e9c}" Click="DatabaseRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Margin="0,12,0,0"/>
                         <Border Background="#FFF5E8" CornerRadius="10" Padding="11" Margin="0,12,0,0">
-                            <TextBlock Text="פעולה זו משנה את הנתונים במסד היעד. יש לוודא שנבחר גיבוי השייך לשרת ולמסד הנכונים." TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11"/>
+                            <TextBlock Text="{loc:Tr View_db1d4897}" TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11"/>
                         </Border>
                     </StackPanel>
                 </Border>

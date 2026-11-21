@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.DiagnosticsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="אבחון ויומני פעילות" Width="800" Height="620" MinWidth="620" MinHeight="480"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+        Title="{loc:Tr View_32452b5d}" Width="800" Height="620" MinWidth="620" MinHeight="480"
         WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
         FontFamily="Segoe UI Variable, Segoe UI">
     <Grid Margin="28">
@@ -10,9 +11,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="מרכז האבחון" FontSize="25" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="איסוף מידע טכני לצורך איתור תקלות" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
-                    <TextBlock Text="הדוח נוצר מקומית ונשאר בשליטתך" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
+                    <TextBlock Text="{loc:Tr View_2c7a9d06}" FontSize="25" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{loc:Tr View_56fd87e0}" Foreground="#B9C6DA" FontSize="12" Margin="0,7,0,0"/>
+                    <TextBlock Text="{loc:Tr View_f554d4b7}" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Width="58" Height="58" Background="#293B5C" CornerRadius="17">
                     <TextBlock Text="⌕" FontSize="31" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -20,7 +21,7 @@
             </Grid>
         </Border>
         <StackPanel Grid.Row="1" Margin="0,18,0,18">
-            <TextBlock Text="תוכן דוח האבחון" FontSize="17" FontWeight="Bold" Foreground="#23324A" Margin="2,0,0,11"/>
+            <TextBlock Text="{loc:Tr View_4636ba71}" FontSize="17" FontWeight="Bold" Foreground="#23324A" Margin="2,0,0,11"/>
             <Border Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="16" Padding="18">
                 <StackPanel>
                     <Grid Margin="0,0,0,12">
@@ -29,8 +30,8 @@
                             <TextBlock Text="≋" FontSize="22" Foreground="#5267D9" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="יומני אירועים ושגיאות" FontWeight="SemiBold" Foreground="#26354D"/>
-                            <TextBlock Text="רכיבים, פעולות, תאריכים ופרטי חריגה" FontSize="10" Foreground="#8793A5"/>
+                            <TextBlock Text="{loc:Tr View_307c2aca}" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="{loc:Tr View_15551014}" FontSize="10" Foreground="#8793A5"/>
                         </StackPanel>
                     </Grid>
                     <Separator Background="#EDF1F6"/>
@@ -40,7 +41,7 @@
                             <TextBlock Text="▣" FontSize="20" Foreground="#17865D" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="מידע על סביבת העבודה" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="{loc:Tr View_aab01e0a}" FontWeight="SemiBold" Foreground="#26354D"/>
                             <TextBlock Text="גרסת התוכנה, Windows וגרסת ‎.NET" FontSize="10" Foreground="#8793A5"/>
                         </StackPanel>
                     </Grid>
@@ -59,17 +60,17 @@
             </Border>
             <Border Background="#EAF7EF" BorderBrush="#D2ECDD" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,13,0,0">
                 <StackPanel>
-                    <TextBlock Text="פרטיות ואבטחה" FontSize="13" FontWeight="Bold" Foreground="#17633B"/>
+                    <TextBlock Text="{loc:Tr View_d6cc3b14}" FontSize="13" FontWeight="Bold" Foreground="#17633B"/>
                     <TextBlock Text="הדוח אינו כולל סיסמאות, מפתחות פרטיים, פרופילי שרתים או תוכן קבצים מרוחקים. מידע רגיש עובר הסתרה לפני הייצוא. אין שליחה אוטומטית — הדוח נשמר אצלך בלבד." TextWrapping="Wrap" Foreground="#28734D" FontSize="11" LineHeight="18" Margin="0,6,0,0"/>
                 </StackPanel>
             </Border>
             <Border Background="#E8EEF8" CornerRadius="11" Padding="12" Margin="0,13,0,0">
-                <TextBlock x:Name="StatusText" Text="מוכן לייצוא." Foreground="#42536D" FontSize="11"/>
+                <TextBlock x:Name="StatusText" Text="{loc:Tr View_cf23c74b}" Foreground="#42536D" FontSize="11"/>
             </Border>
         </StackPanel>
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Content="יצירת דוח אבחון ZIP" Click="Export_Click" Padding="19,11" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
-            <Button Content="סגור" Click="Close_Click" Padding="19,11" Margin="10,0,0,0"/>
+            <Button Content="{loc:Tr View_7b19099d}" Click="Export_Click" Padding="19,11" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Button Content="{loc:Tr View_e0b88daf}" Click="Close_Click" Padding="19,11" Margin="10,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>

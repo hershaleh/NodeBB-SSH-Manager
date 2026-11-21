@@ -30,6 +30,7 @@ public sealed class LocalizationServiceTests
             Assert.Equal("en", service.Language);
             Assert.Equal(FlowDirection.LeftToRight, service.FlowDirection);
             Assert.Equal("Dashboard", service["Dashboard_לוח_בקרה"]);
+            Assert.Equal("Backup center", service["View_240265a6"]);
             Assert.Contains("\"language\":\"en\"", File.ReadAllText(path));
 
             var reloaded = new LocalizationService(path);

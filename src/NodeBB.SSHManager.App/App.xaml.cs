@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using System.ComponentModel;
 using NodeBB.SSHManager.Services;
 using NodeBB.SSHManager.Localization;
 
@@ -15,6 +16,7 @@ public partial class App : Application
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
         EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
             new RoutedEventHandler(ClampWindowToWorkArea));
+        LocalizationService.Instance.PropertyChanged += OnLocalizationChanged;
         DiagnosticLogService.Instance.Info("Application", "Startup", "Application process initialized.");
     }
 
@@ -44,6 +46,13 @@ public partial class App : Application
         window.Show();
     }
 
+
+    private static void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(LocalizationService.FlowDirection)) return;
+        foreach (Window window in Current.Windows)
+            window.FlowDirection = LocalizationService.Instance.FlowDirection;
+    }
 
     private static void ClampWindowToWorkArea(object sender, RoutedEventArgs e)
     {
