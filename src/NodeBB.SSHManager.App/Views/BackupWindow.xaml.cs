@@ -45,13 +45,13 @@ public partial class BackupWindow : Window
         {
             if (password.Length < 12)
             {
-                MessageBox.Show(this, T("סיסמת ההצפנה חייבת להכיל לפחות 12 תווים."), T("סיסמה קצרה"),
+                MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
             if (!string.Equals(password, EncryptionConfirmBox.Password, StringComparison.Ordinal))
             {
-                MessageBox.Show(this, T("סיסמאות ההצפנה אינן תואמות."), T("אימות סיסמה"),
+                MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה",
                     MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -61,9 +61,9 @@ public partial class BackupWindow : Window
         var extension = encrypted ? ".nbbbackup" : ".tar.gz";
         var dialog = new SaveFileDialog
         {
-            Title = T("שמירת גיבוי NodeBB"),
+            Title = "שמירת גיבוי NodeBB",
             FileName = $"{filePrefix}-{DateTime.Now:yyyyMMdd-HHmm}{extension}",
-            Filter = encrypted ? T("גיבוי NodeBB מוצפן|*.nbbbackup") : T("ארכיון GZip TAR|*.tar.gz"),
+            Filter = encrypted ? "גיבוי NodeBB מוצפן|*.nbbbackup" : "ארכיון GZip TAR|*.tar.gz",
             DefaultExt = extension,
             AddExtension = true,
             OverwritePrompt = true
@@ -71,7 +71,7 @@ public partial class BackupWindow : Window
         if (dialog.ShowDialog(this) != true) return;
 
         IsEnabled = false;
-        StatusText.Text = T("יוצר גיבוי בשרת ומוריד אותו למחשב...");
+        StatusText.Text = "יוצר גיבוי בשרת ומוריד אותו למחשב...";
         try
         {
             if (encrypted)
@@ -80,7 +80,7 @@ public partial class BackupWindow : Window
                 try
                 {
                     await _service.DownloadBackupAsync(_installation, kind, temporaryPlain);
-                    StatusText.Text = T("מצפין את הגיבוי...");
+                    StatusText.Text = "מצפין את הגיבוי...";
                     await BackupEncryptionService.EncryptFileAsync(temporaryPlain, dialog.FileName, password);
                 }
                 finally { try { if (File.Exists(temporaryPlain)) File.Delete(temporaryPlain); } catch { } }
@@ -95,16 +95,16 @@ public partial class BackupWindow : Window
             var removed = keepCount > 0
                 ? LocalBackupRetentionService.ApplyRetention(Path.GetDirectoryName(dialog.FileName)!, filePrefix, keepCount)
                 : 0;
-            StatusText.Text = encrypted ? T("הגיבוי הוצפן ונשמר בהצלחה.") : T("הגיבוי נשמר בהצלחה.");
-            if (removed > 0) StatusText.Text += TF(" הוסרו {0} גיבויים ישנים לפי מדיניות השמירה.", removed);
-            MessageBox.Show(this, TF("הגיבוי נשמר במחשב:\n{0}\n\nסוג: {1}\nגיבויים ישנים שהוסרו: {2}", dialog.FileName, encrypted ? T("מוצפן") : T("ללא הצפנה"), removed),
-                T("הגיבוי הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
+            StatusText.Text = encrypted ? "הגיבוי הוצפן ונשמר בהצלחה." : "הגיבוי נשמר בהצלחה.";
+            if (removed > 0) StatusText.Text += $" הוסרו {removed} גיבויים ישנים לפי מדיניות השמירה.";
+            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? LocalizationService.Instance.Translate("מוצפן") : LocalizationService.Instance.Translate("ללא הצפנה"))}\nגיבויים ישנים שהוסרו: {removed}",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("BackupUI", "BackupDownloadFailed", ex, _session.Profile.Name);
-            StatusText.Text = T("יצירת הגיבוי נכשלה: ") + ex.Message;
-            MessageBox.Show(this, ex.Message, T("שגיאה ביצירת גיבוי"), MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = "יצירת הגיבוי נכשלה: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה ביצירת גיבוי", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -124,13 +124,13 @@ public partial class BackupWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleListLoadFailed", ex, _session.Profile.Name);
-            StatusText.Text = T("לא ניתן לטעון את רשימת הגיבויים המתוזמנים: ") + ex.Message;
+            StatusText.Text = "לא ניתן לטעון את רשימת הגיבויים המתוזמנים: " + ex.Message;
         }
     }
 
     private void BrowseScheduleFolder_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = T("בחירת תיקיית גיבויים מתוזמנים"), Multiselect = false };
+        var dialog = new OpenFolderDialog { Title = "בחירת תיקיית גיבויים מתוזמנים", Multiselect = false };
         if (Directory.Exists(ScheduleDirectoryBox.Text)) dialog.FolderName = ScheduleDirectoryBox.Text;
         if (dialog.ShowDialog(this) == true) ScheduleDirectoryBox.Text = dialog.FolderName;
     }
@@ -140,21 +140,21 @@ public partial class BackupWindow : Window
         var password = ScheduleEncryptionPasswordBox.Password;
         if (password.Length < 12)
         {
-            MessageBox.Show(this, T("סיסמת ההצפנה חייבת להכיל לפחות 12 תווים."), T("סיסמה קצרה"),
+            MessageBox.Show(this, "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.", "סיסמה קצרה",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (!string.Equals(password, ScheduleEncryptionConfirmBox.Password, StringComparison.Ordinal))
         {
-            MessageBox.Show(this, T("סיסמאות ההצפנה אינן תואמות."), T("אימות סיסמה"),
+            MessageBox.Show(this, "סיסמאות ההצפנה אינן תואמות.", "אימות סיסמה",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
         if (_credentialVault.Get(_session.Profile.Id) is null)
         {
             MessageBox.Show(this,
-                T("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק."),
-                T("נדרשים פרטי התחברות שמורים"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                "כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.",
+                "נדרשים פרטי התחברות שמורים", MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
@@ -166,7 +166,7 @@ public partial class BackupWindow : Window
             if (!Enum.TryParse<ScheduledBackupFrequency>(frequencyTag, out var frequency) ||
                 !Enum.TryParse<RemoteBackupKind>(kindTag, out var kind) ||
                 !Enum.TryParse<DayOfWeek>(dayTag, out var day))
-                throw new InvalidDataException(T("יש לבחור תדירות, יום וסוג גיבוי תקינים."));
+                throw new InvalidDataException("יש לבחור תדירות, יום וסוג גיבוי תקינים.");
 
             var keepText = (RetentionComboBox.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Tag?.ToString();
             var keepCount = int.TryParse(keepText, out var parsedKeep) ? parsedKeep : 0;
@@ -184,20 +184,20 @@ public partial class BackupWindow : Window
                 LocalTime = ScheduleTimeBox.Text.Trim()
             };
             var executable = Environment.ProcessPath
-                ?? throw new InvalidOperationException(T("לא ניתן לזהות את קובץ ההפעלה הנוכחי."));
+                ?? throw new InvalidOperationException("לא ניתן לזהות את קובץ ההפעלה הנוכחי.");
             _scheduledBackupService.Create(schedule, password, executable);
             ScheduleEncryptionPasswordBox.Clear();
             ScheduleEncryptionConfirmBox.Clear();
             RefreshScheduledBackups();
-            StatusText.Text = T("תזמון הגיבוי נוצר בהצלחה במתזמן המשימות של Windows.");
+            StatusText.Text = "תזמון הגיבוי נוצר בהצלחה במתזמן המשימות של Windows.";
             MessageBox.Show(this,
-                T("התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון."),
-                T("התזמון נשמר"), MessageBoxButton.OK, MessageBoxImage.Information);
+                "התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון.",
+                "התזמון נשמר", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleCreateFailed", ex, _session.Profile.Name);
-            MessageBox.Show(this, ex.Message, T("יצירת תזמון נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, "יצירת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -210,25 +210,25 @@ public partial class BackupWindow : Window
     {
         if (ScheduledBackupsList.SelectedItem is not ScheduledBackupDefinition schedule)
         {
-            MessageBox.Show(this, T("בחר תזמון להפעלה."), T("לא נבחר תזמון"), MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "בחר תזמון להפעלה.", "לא נבחר תזמון", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         if (sender is System.Windows.Controls.Button button) button.IsEnabled = false;
-        StatusText.Text = T("מפעיל גיבוי מתוזמן כעת...");
+        StatusText.Text = "מפעיל גיבוי מתוזמן כעת...";
         try
         {
             await ScheduledBackupRunner.RunAsync(schedule.Id);
             RefreshScheduledBackups();
-            StatusText.Text = T("הגיבוי המתוזמן הושלם בהצלחה.");
-            MessageBox.Show(this, T("הגיבוי הושלם. קובצי הגיבוי נשמרו כשהם מוצפנים בתיקייה שהוגדרה בתזמון."),
-                T("הגיבוי הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
+            StatusText.Text = "הגיבוי המתוזמן הושלם בהצלחה.";
+            MessageBox.Show(this, "הגיבוי הושלם. קובצי הגיבוי נשמרו כשהם מוצפנים בתיקייה שהוגדרה בתזמון.",
+                "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ManualScheduledRunFailed", ex, _session.Profile.Name);
             RefreshScheduledBackups();
-            StatusText.Text = T("הפעלת הגיבוי המתוזמן נכשלה: ") + ex.Message;
-            MessageBox.Show(this, ex.Message, T("הפעלת גיבוי נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = "הפעלת הגיבוי המתוזמן נכשלה: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "הפעלת גיבוי נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -240,22 +240,22 @@ public partial class BackupWindow : Window
     {
         if (ScheduledBackupsList.SelectedItem is not ScheduledBackupDefinition schedule)
         {
-            MessageBox.Show(this, T("בחר תזמון להסרה."), T("לא נבחר תזמון"), MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, "בחר תזמון להסרה.", "לא נבחר תזמון", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show(this, T("להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו."),
-            T("אישור הסרת תזמון"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+        if (MessageBox.Show(this, "להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו.",
+            "אישור הסרת תזמון", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
         try
         {
             _scheduledBackupService.Remove(schedule.Id);
             RefreshScheduledBackups();
-            StatusText.Text = T("התזמון הוסר. גיבויים קיימים נשמרו.");
+            StatusText.Text = "התזמון הוסר. גיבויים קיימים נשמרו.";
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleRemoveFailed", ex, _session.Profile.Name);
-            MessageBox.Show(this, ex.Message, T("הסרת תזמון נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, "הסרת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -263,8 +263,8 @@ public partial class BackupWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = T("בחירת גיבוי הגדרות והעלאות"),
-            Filter = T("גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*"),
+            Title = "בחירת גיבוי הגדרות והעלאות",
+            Filter = "גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*",
             CheckFileExists = true,
             Multiselect = false
         };
@@ -274,18 +274,18 @@ public partial class BackupWindow : Window
         var password = RestorePasswordBox.Password;
         if (encrypted && password.Length < 12)
         {
-            MessageBox.Show(this, T("יש להזין את סיסמת ההצפנה (לפחות 12 תווים)."), T("סיסמת גיבוי"),
+            MessageBox.Show(this, "יש להזין את סיסמת ההצפנה (לפחות 12 תווים).", "סיסמת גיבוי",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         if (MessageBox.Show(this,
-            T("השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?"),
-            T("אישור שחזור קבצים"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            "השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?",
+            "אישור שחזור קבצים", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
 
         IsEnabled = false;
-        StatusText.Text = T("מכין ובודק את ארכיון הגיבוי...");
+        StatusText.Text = "מכין ובודק את ארכיון הגיבוי...";
         var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
         var decrypted = Path.Combine(tempRoot, "file-restore-" + Guid.NewGuid().ToString("N") + ".tar.gz");
         var archivePath = dialog.FileName;
@@ -298,18 +298,18 @@ public partial class BackupWindow : Window
                 archivePath = decrypted;
             }
 
-            StatusText.Text = T("בודק את הארכיון ומבצע שחזור בטוח...");
+            StatusText.Text = "בודק את הארכיון ומבצע שחזור בטוח...";
             await new RemoteBackupRestoreService(_session).RestoreAsync(_installation, archivePath);
-            StatusText.Text = T("שחזור ההגדרות וההעלאות הושלם בהצלחה.");
+            StatusText.Text = "שחזור ההגדרות וההעלאות הושלם בהצלחה.";
             MessageBox.Show(this,
-                T("config.json ותיקיית ההעלאות (אם נכללה בגיבוי) שוחזרו בהצלחה. מסד הנתונים וקובצי package/lock לא שונו."),
-                T("השחזור הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
+                "config.json ותיקיית ההעלאות (אם נכללה בגיבוי) שוחזרו בהצלחה. מסד הנתונים וקובצי package/lock לא שונו.",
+                "השחזור הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("BackupUI", "EssentialRestoreFailed", ex, _session.Profile.Name);
-            StatusText.Text = T("שחזור הקבצים נכשל: ") + ex.Message;
-            MessageBox.Show(this, ex.Message, T("שגיאה בשחזור קבצים"), MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = "שחזור הקבצים נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור קבצים", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -326,8 +326,8 @@ public partial class BackupWindow : Window
     {
         var dialog = new OpenFileDialog
         {
-            Title = T("בחירת גיבוי התקנה מלאה של NodeBB"),
-            Filter = T("גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*"),
+            Title = "בחירת גיבוי התקנה מלאה של NodeBB",
+            Filter = "גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*",
             CheckFileExists = true,
             Multiselect = false
         };
@@ -337,18 +337,18 @@ public partial class BackupWindow : Window
         var password = RestorePasswordBox.Password;
         if (encrypted && password.Length < 12)
         {
-            MessageBox.Show(this, T("יש להזין את סיסמת ההצפנה (לפחות 12 תווים)."), T("סיסמת גיבוי"),
+            MessageBox.Show(this, "יש להזין את סיסמת ההצפנה (לפחות 12 תווים).", "סיסמת גיבוי",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
 
         if (MessageBox.Show(this,
-            T("שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?"),
-            T("אישור שחזור התקנה מלאה"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            "שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?",
+            "אישור שחזור התקנה מלאה", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
 
         IsEnabled = false;
-        StatusText.Text = T("מכין, מאמת ומעלה את ארכיון ההתקנה...");
+        StatusText.Text = "מכין, מאמת ומעלה את ארכיון ההתקנה...";
         var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
         var decrypted = Path.Combine(tempRoot, "full-restore-" + Guid.NewGuid().ToString("N") + ".tar.gz");
         var archivePath = dialog.FileName;
@@ -361,18 +361,18 @@ public partial class BackupWindow : Window
                 archivePath = decrypted;
             }
 
-            StatusText.Text = T("מאמת את כל קובצי ההתקנה, עוצר את NodeBB ומכין החלפה בטוחה...");
+            StatusText.Text = "מאמת את כל קובצי ההתקנה, עוצר את NodeBB ומכין החלפה בטוחה...";
             await new RemoteBackupRestoreService(_session).RestoreFullInstallationAsync(_installation, archivePath);
-            StatusText.Text = T("התקנת NodeBB המלאה שוחזרה והופעלה בהצלחה.");
+            StatusText.Text = "התקנת NodeBB המלאה שוחזרה והופעלה בהצלחה.";
             MessageBox.Show(this,
-                T("כל קובצי התקנת NodeBB שוחזרו והשרת הופעל מחדש. מסד הנתונים לא שוחזר ולא שונה."),
-                T("שחזור התקנה מלאה הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
+                "כל קובצי התקנת NodeBB שוחזרו והשרת הופעל מחדש. מסד הנתונים לא שוחזר ולא שונה.",
+                "שחזור התקנה מלאה הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("BackupUI", "FullRestoreFailed", ex, _session.Profile.Name);
-            StatusText.Text = T("שחזור ההתקנה המלאה נכשל: ") + ex.Message;
-            MessageBox.Show(this, ex.Message, T("שגיאה בשחזור התקנה מלאה"), MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = "שחזור ההתקנה המלאה נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור התקנה מלאה", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -383,11 +383,6 @@ public partial class BackupWindow : Window
             IsEnabled = true;
         }
     }
-
-    private static string T(string text) => LocalizationService.Instance.Translate(text);
-
-    private static string TF(string template, params object?[] args) =>
-        string.Format(System.Globalization.CultureInfo.CurrentCulture, T(template), args);
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

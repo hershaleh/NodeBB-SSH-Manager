@@ -558,7 +558,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Runtime_92798867"] = ("קורא את config.json...", "Reading config.json..."),
             ["Runtime_449d5cb9"] = ("כן (הערך עצמו מוסתר)", "Yes (the value itself is hidden)"),
             ["Runtime_b8eaf373"] = ("התצורה נקראה בהצלחה.", "Configuration read successfully."),
-            ["Runtime_2cde0d70"] = ("קריאת התצורה נכשלה: ", "Failed to read configuration: "),,
+            ["Runtime_2cde0d70"] = ("קריאת התצורה נכשלה: ", "Failed to read configuration: "),
             ["Runtime_bk01"] = ("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.", "To run backups without a sign-in prompt, reconnect to the server and save the credentials in the Windows vault. An SSH key without a passphrase can also be saved as an empty credential."),
             ["Runtime_bk02"] = ("התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון.", "The schedule was created. Windows will run an encrypted backup at the selected time, even when the app is closed, as long as the user is signed in. SSH credentials and the encryption password are not written to the command line or task file."),
             ["Runtime_bk03"] = ("הגיבוי הושלם. קובצי הגיבוי נשמרו כשהם מוצפנים בתיקייה שהוגדרה בתזמון.", "The backup completed. Backup files were saved encrypted in the folder configured for this schedule."),
