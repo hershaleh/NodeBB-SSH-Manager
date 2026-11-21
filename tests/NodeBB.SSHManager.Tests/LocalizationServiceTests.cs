@@ -45,6 +45,22 @@ public sealed class LocalizationServiceTests
         }
     }
 
+
+    [Fact]
+    public void BackupWindowMessagesAndFormattedTemplatesTranslateToEnglish()
+    {
+        var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json");
+        var service = new LocalizationService(path);
+        service.SetLanguage("en");
+
+        Assert.Equal("Scheduled backup failed: ", service.Translate("הפעלת הגיבוי המתוזמן נכשלה: "));
+        Assert.Equal("File restore failed: ", service.Translate("שחזור הקבצים נכשל: "));
+        Assert.Equal("Full installation restore failed: ", service.Translate("שחזור ההתקנה המלאה נכשל: "));
+        Assert.Contains("Continue?", service.Translate("שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?"));
+        Assert.Contains("{0}", service.Translate(" הוסרו {0} גיבויים ישנים לפי מדיניות השמירה."));
+        Assert.Contains("Backup saved on this computer", service.Translate("הגיבוי נשמר במחשב:\\n{0}\\n\\nסוג: {1}\\nגיבויים ישנים שהוסרו: {2}"));
+    }
+
     [Fact]
     public void RejectsUnsupportedLanguage()
     {
