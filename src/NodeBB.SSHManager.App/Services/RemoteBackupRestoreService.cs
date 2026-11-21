@@ -453,7 +453,9 @@ public sealed class RemoteBackupRestoreService
             switched = true;
             restartAttempted = true;
             var startNew = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", cancellationToken);
-            if (startNew.ExitCode != 0)
+            var newInstallationHealthy = startNew.ExitCode == 0 &&
+                await runtimeService.VerifyHttpHealthAsync(installation, CancellationToken.None);
+            if (!newInstallationHealthy)
             {
                 var rollback = await _session.ExecuteAsync(
                     BuildFullInstallationRollbackScript(installation.Path, work), CancellationToken.None);
@@ -466,8 +468,10 @@ public sealed class RemoteBackupRestoreService
 
                 switched = false;
                 var startOld = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", CancellationToken.None);
-                stopped = startOld.ExitCode != 0;
-                if (startOld.ExitCode == 0)
+                var originalInstallationHealthy = startOld.ExitCode == 0 &&
+                    await runtimeService.VerifyHttpHealthAsync(installation, CancellationToken.None);
+                stopped = !originalInstallationHealthy;
+                if (originalInstallationHealthy)
                 {
                     var cleanupOld = await _session.ExecuteAsync(
                         BuildFullInstallationFinalizeScript(installation.Path, work, true), CancellationToken.None);
@@ -475,9 +479,9 @@ public sealed class RemoteBackupRestoreService
                         DiagnosticLogService.Instance.Warning("FullRestore", "FailedTreeCleanupPending",
                             "The previous installation was restored, but the failed replacement directory remains on the server.", null, _session.Profile.Name);
                 }
-                throw new InvalidOperationException(startOld.ExitCode == 0
-                    ? "ההתקנה המשוחזרת לא הצליחה לעלות. ההתקנה המקורית הוחזרה והופעלה מחדש."
-                    : $"ההתקנה החדשה לא עלתה. ההתקנה המקורית הוחזרה, אך גם הפעלתה נכשלה. יש לבדוק את השירות; נתיב ההתקנה המקורית: {installation.Path}");
+                throw new InvalidOperationException(originalInstallationHealthy
+                    ? "ההתקנה המשוחזרת לא הצליחה לעבור בדיקת HTTP. ההתקנה המקורית הוחזרה, הופעלה ונבדקה בהצלחה."
+                    : $"ההתקנה החדשה לא עברה בדיקת בריאות. ההתקנה המקורית הוחזרה, אך לא הצליחה לעבור בדיקת HTTP. יש לבדוק את השירות; נתיב ההתקנה המקורית: {installation.Path}");
             }
 
             stopped = false;

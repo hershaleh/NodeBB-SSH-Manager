@@ -138,6 +138,74 @@ printf 'MANUAL|CLI\n'
         return result;
     }
 
+
+    /// <summary>
+    /// Confirms that the restored NodeBB instance answers HTTP requests locally.
+    /// A successful service-manager start command alone is not considered a healthy restore.
+    /// </summary>
+    public async Task<bool> VerifyHttpHealthAsync(
+        NodeBbInstallation installation, CancellationToken cancellationToken = default)
+    {
+        var result = await _session.ExecuteAsync(BuildHttpHealthCheckScript(installation.Path), cancellationToken);
+        return result.ExitCode == 0 &&
+            result.Output.Contains("NODEBB_HEALTHY", StringComparison.Ordinal);
+    }
+
+    internal static string BuildHttpHealthCheckScript(string installationPath)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        return """
+set -eu
+INSTALL=__INSTALL__
+[ -f "$INSTALL/config.json" ] && [ ! -L "$INSTALL/config.json" ] || { echo 'קובץ config.json חסר לאחר ההפעלה.' >&2; exit 1; }
+node - "$INSTALL/config.json" <<'NODE'
+const fs = require('fs');
+const http = require('http');
+let config;
+try {
+  config = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+} catch {
+  console.error('לא ניתן לקרוא את config.json לצורך בדיקת תקינות NodeBB.');
+  process.exit(1);
+}
+const port = Number(config.port || 4567);
+let host = typeof config.bind_address === 'string' && config.bind_address
+  ? config.bind_address : '127.0.0.1';
+if (host === '0.0.0.0') host = '127.0.0.1';
+if (host === '::') host = '::1';
+if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  console.error('יציאת NodeBB אינה תקינה.');
+  process.exit(1);
+}
+let attempts = 0;
+const maxAttempts = 30;
+function check() {
+  attempts++;
+  const request = http.get({ hostname: host, port, path: '/', timeout: 3000 }, response => {
+    response.resume();
+    if (response.statusCode >= 200 && response.statusCode < 400) {
+      console.log('NODEBB_HEALTHY');
+      process.exit(0);
+      return;
+    }
+    retry();
+  });
+  request.on('timeout', () => request.destroy(new Error('timeout')));
+  request.on('error', retry);
+}
+function retry() {
+  if (attempts >= maxAttempts) {
+    console.error('NodeBB לא התחיל להשיב לבקשות HTTP בתוך 60 שניות.');
+    process.exit(1);
+    return;
+  }
+  setTimeout(check, 2000);
+}
+check();
+NODE
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal);
+    }
+
     private static string PrivilegedCommand(string command) => $"""
 if [ "$(id -u)" = "0" ]; then
   {command}

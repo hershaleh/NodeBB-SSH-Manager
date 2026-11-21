@@ -5,6 +5,29 @@ namespace NodeBB.SSHManager.Tests;
 
 public sealed class NodeBbRuntimeServiceTests
 {
+
+    [Fact]
+    public void BuildHttpHealthCheckScript_UsesLocalHttpProbeAndRetriesUntilHealthy()
+    {
+        var script = NodeBbRuntimeService.BuildHttpHealthCheckScript("/srv/nodebb");
+        Assert.Contains("config.json", script);
+        Assert.Contains("http.get", script);
+        Assert.Contains("NODEBB_HEALTHY", script);
+        Assert.Contains("maxAttempts = 30", script);
+        Assert.Contains("response.statusCode < 400", script);
+        Assert.Contains("127.0.0.1", script);
+        Assert.Contains("4567", script);
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    public void BuildHttpHealthCheckScript_RejectsUnsafeInstallationPaths(string path)
+    {
+        Assert.Throws<ArgumentException>(() => NodeBbRuntimeService.BuildHttpHealthCheckScript(path));
+    }
+
     [Theory]
     [InlineData("SYSTEMD", "nodebb.service", true)]
     [InlineData("OPENRC", "nodebb", true)]
