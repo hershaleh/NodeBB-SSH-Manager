@@ -12,6 +12,8 @@ public partial class App : Application
         DispatcherUnhandledException += OnDispatcherUnhandledException;
         AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
         TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+        EventManager.RegisterClassHandler(typeof(Window), FrameworkElement.LoadedEvent,
+            new RoutedEventHandler(ClampWindowToWorkArea));
         DiagnosticLogService.Instance.Info("Application", "Startup", "Application process initialized.");
     }
 
@@ -39,6 +41,35 @@ public partial class App : Application
         var window = new MainWindow();
         MainWindow = window;
         window.Show();
+    }
+
+
+    private static void ClampWindowToWorkArea(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Window window) return;
+
+        var workArea = SystemParameters.WorkArea;
+        var maxWidth = Math.Max(320, workArea.Width - 24);
+        var maxHeight = Math.Max(320, workArea.Height - 24);
+        window.MinWidth = Math.Min(window.MinWidth, maxWidth);
+        window.MinHeight = Math.Min(window.MinHeight, maxHeight);
+        window.MaxWidth = maxWidth;
+        window.MaxHeight = maxHeight;
+
+        if (window.WindowState != WindowState.Maximized)
+        {
+            if (window.Width > maxWidth) window.Width = maxWidth;
+            if (window.Height > maxHeight) window.Height = maxHeight;
+        }
+
+        var left = double.IsFinite(window.Left)
+            ? window.Left
+            : workArea.Left + (workArea.Width - window.Width) / 2;
+        var top = double.IsFinite(window.Top)
+            ? window.Top
+            : workArea.Top + (workArea.Height - window.Height) / 2;
+        window.Left = Math.Clamp(left, workArea.Left, Math.Max(workArea.Left, workArea.Right - window.Width));
+        window.Top = Math.Clamp(top, workArea.Top, Math.Max(workArea.Top, workArea.Bottom - window.Height));
     }
 
     private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
