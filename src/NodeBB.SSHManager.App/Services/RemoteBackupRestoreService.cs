@@ -572,8 +572,10 @@ if [ "$(id -u)" != "0" ]; then
   [ -z "$FOREIGN" ] || { echo 'חלק מקובצי ההתקנה שייכים למשתמש או לקבוצה אחרים; יש להתחבר בהרשאות מתאימות.' >&2; exit 50; }
 fi
 AVAILABLE_KB="$(df -Pk "$PARENT" | awk 'END {print $4}')"
-case "$AVAILABLE_KB" in ''|*[!0-9]*) echo 'לא ניתן לבדוק את המקום הפנוי בדיסק.' >&2; exit 50;; esac
-[ "$((AVAILABLE_KB * 1024))" -ge "$((EXPECTED_BYTES + 67108864))" ] || { echo 'אין די מקום פנוי בדיסק להכנת ההתקנה המשוחזרת.' >&2; exit 50; }
+CURRENT_KB="$(du -skx "$INSTALL" | awk '{print $1}')"
+case "$AVAILABLE_KB:$CURRENT_KB" in *[!0-9:]*|:*) echo 'לא ניתן לחשב בבטחה את המקום הפנוי וגודל ההתקנה הקיימת.' >&2; exit 50;; esac
+REQUIRED_BYTES="$((EXPECTED_BYTES + CURRENT_KB * 1024 + 67108864))"
+[ "$((AVAILABLE_KB * 1024))" -ge "$REQUIRED_BYTES" ] || { echo 'אין די מקום פנוי גם לחילוץ ההתקנה החדשה וגם לשמירת עותק החירום המלא של ההתקנה הקיימת.' >&2; exit 50; }
 tar -tzf "$WORK/incoming.tar.gz" >/dev/null || { echo 'בדיקת קריאת ארכיון TAR.GZ בשרת נכשלה.' >&2; exit 50; }
 echo 'FULL_RESTORE_PREFLIGHT_OK'
 """.Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal)
@@ -646,8 +648,10 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 AVAILABLE_KB="$(df -Pk "$PARENT" | awk 'END {print $4}')"
-case "$AVAILABLE_KB" in ''|*[!0-9]*) echo 'לא ניתן לבדוק מקום פנוי בדיסק.' >&2; exit 40;; esac
-[ "$((AVAILABLE_KB * 1024))" -ge "$((EXPECTED_BYTES + 67108864))" ] || { echo 'אין די מקום פנוי להכנת ההתקנה המשוחזרת ולשמירת מרווח בטיחות של 64MB.' >&2; exit 40; }
+CURRENT_KB="$(du -skx "$INSTALL" | awk '{print $1}')"
+case "$AVAILABLE_KB:$CURRENT_KB" in *[!0-9:]*|:*) echo 'לא ניתן לחשב בבטחה את המקום הפנוי וגודל ההתקנה הקיימת.' >&2; exit 40;; esac
+REQUIRED_BYTES="$((EXPECTED_BYTES + CURRENT_KB * 1024 + 67108864))"
+[ "$((AVAILABLE_KB * 1024))" -ge "$REQUIRED_BYTES" ] || { echo 'אין די מקום פנוי גם לחילוץ ההתקנה החדשה וגם לשמירת עותק החירום המלא של ההתקנה הקיימת; לא בוצע שינוי.' >&2; exit 40; }
 
 mkdir -m 700 "$STAGE"
 tar -tzf "$WORK/incoming.tar.gz" >/dev/null || { echo 'ארכיון TAR.GZ פגום.' >&2; exit 41; }

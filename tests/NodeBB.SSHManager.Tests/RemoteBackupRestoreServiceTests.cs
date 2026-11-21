@@ -27,6 +27,9 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("tar -tzf", script);
         Assert.Contains("df -Pk", script);
         Assert.Contains("FOREIGN=", script);
+        Assert.Contains("du -skx", script);
+        Assert.Contains("CURRENT_KB", script);
+        Assert.Contains("REQUIRED_BYTES", script);
         Assert.Contains(".nodebb-stage-", script);
         Assert.Contains(".nodebb-rollback-", script);
         Assert.Contains("NodeBB", script);
@@ -58,6 +61,9 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("identity(currentConfig) !== identity(incomingConfig)", script);
         Assert.Contains("find \"$STAGE\" -mindepth 1 ! -type f ! -type d", script);
         Assert.Contains("df -Pk", script);
+        Assert.Contains("du -skx", script);
+        Assert.Contains("CURRENT_KB", script);
+        Assert.Contains("REQUIRED_BYTES", script);
         Assert.Contains("[ -x \"$STAGE/nodebb\" ]", script);
         Assert.Contains("nodebb", script);
         Assert.DoesNotContain("mongorestore", script);
