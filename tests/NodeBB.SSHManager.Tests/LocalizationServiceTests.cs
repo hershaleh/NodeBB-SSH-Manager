@@ -61,6 +61,19 @@ public sealed class LocalizationServiceTests
             service.TranslateFormat($"האם {action} את NodeBB בנתיב {path}?"));
     }
 
+
+    [Fact]
+    public void DatabaseBackupAndRestoreMessagesTranslateIncludingFilePaths()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        var file = "C:/Backups/nodebb.nbbbackup";
+
+        Assert.Contains(file, service.TranslateFormat($"גיבוי מסד הנתונים נשמר כשהוא מוצפן:\n{file}\n\nשמור את סיסמת ההצפנה במקום בטוח."));
+        Assert.Contains("All contents of the NodeBB MongoDB database", service.Translate("כל תוכן מסד MongoDB של NodeBB יוחלף בתוכן הגיבוי. לפני כן ייווצר גיבוי חירום של כל מסד היעד. אם הייבוא ייכשל, המערכת תנסה לשחזר את מסד הנתונים הקודם. האם להמשיך?"));
+        Assert.Contains("PostgreSQL database configured for NodeBB", service.Translate("השחזור יחליף את האובייקטים הכלולים בארכיון בתוך מסד PostgreSQL שהוגדר ב-NodeBB. אובייקטים שאינם כלולים בארכיון עשויים להישאר. לפני השינוי ייווצר גיבוי חירום של מסד היעד; אם השחזור ייכשל, המערכת תנסה להחזיר את המצב הקודם. להמשיך?"));
+    }
+
     [Fact]
     public void RejectsUnsupportedLanguage()
     {

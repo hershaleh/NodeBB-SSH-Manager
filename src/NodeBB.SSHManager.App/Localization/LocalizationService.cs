@@ -619,6 +619,13 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Runtime_up29"] = ("השדרוג בוטל או נכשל: ", "Upgrade cancelled or failed: "),
             ["Runtime_up30"] = ("שדרוג לא הושלם", "Upgrade not completed"),
 
+            ["Runtime_db01"] = ("גיבוי מסד הנתונים נשמר כשהוא מוצפן:\n{0}\n\nשמור את סיסמת ההצפנה במקום בטוח.", "The database backup was saved encrypted:\n{0}\n\nKeep the encryption password in a safe place."),
+            ["Runtime_db02"] = ("גיבוי PostgreSQL נשמר כשהוא מוצפן:\n{0}\n\nשמור את סיסמת ההצפנה במקום בטוח.", "The PostgreSQL backup was saved encrypted:\n{0}\n\nKeep the encryption password in a safe place."),
+            ["Runtime_db03"] = ("גיבוי Redis מלא נשמר כשהוא מוצפן:\n{0}\n\nהגיבוי כולל את כל מסדי Redis בשרת. שמור את הסיסמה במקום בטוח.", "The full Redis backup was saved encrypted:\n{0}\n\nThe backup includes every Redis database on the server. Keep the password in a safe place."),
+            ["Runtime_db04"] = ("גיבוי NodeBB מוצפן|*.nbbbackup|כל הקבצים|*.*", "Encrypted NodeBB backup|*.nbbbackup|All files|*.*"),
+            ["Runtime_db05"] = ("כל תוכן מסד MongoDB של NodeBB יוחלף בתוכן הגיבוי. לפני כן ייווצר גיבוי חירום של כל מסד היעד. אם הייבוא ייכשל, המערכת תנסה לשחזר את מסד הנתונים הקודם. האם להמשיך?", "All contents of the NodeBB MongoDB database will be replaced with the backup contents. A full emergency backup of the target database will be created first. If the import fails, the app will attempt to restore the previous database. Continue?"),
+            ["Runtime_db06"] = ("השחזור יחליף את האובייקטים הכלולים בארכיון בתוך מסד PostgreSQL שהוגדר ב-NodeBB. אובייקטים שאינם כלולים בארכיון עשויים להישאר. לפני השינוי ייווצר גיבוי חירום של מסד היעד; אם השחזור ייכשל, המערכת תנסה להחזיר את המצב הקודם. להמשיך?", "The restore will replace the objects included in the archive within the PostgreSQL database configured for NodeBB. Objects not included in the archive may remain. An emergency backup of the target database will be created first; if the restore fails, the app will attempt to restore the previous state. Continue?"),
+
         };
 
     public static LocalizationService Instance => LazyInstance.Value;
