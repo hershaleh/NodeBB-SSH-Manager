@@ -245,7 +245,8 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_5db73d30"] = ("nodebb-plugin-name או nodebb-theme-name", "nodebb-plugin-name or nodebb-theme-name"),
             ["View_91f186f1"] = ("＋  התקנה", "＋  Install"),
             ["View_560b1712"] = ("עדכון לגרסה האחרונה", "Update to latest version"),
-            ["View_317fe4dd"] = ("הפעלה", "Enable"),
+            ["View_317fe4dd"] = ("הפעלה", "Start"),
+            ["View_enable_package"] = ("הפעלה", "Enable"),
             ["View_1cb1e553"] = ("השבתה", "Disable"),
             ["View_51d9bcda"] = ("הסרה", "Remove"),
             ["View_d30a183d"] = ("הערה: שינוי חבילות עשוי לדרוש בנייה מחדש או הפעלה מחדש של NodeBB. מומלץ לוודא שקיים גיבוי לפני עדכון או הסרה.", "Note: Package changes may require rebuilding or restarting NodeBB. Ensure a backup exists before updating or removing packages."),
@@ -308,7 +309,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_5e4a7e45"] = ("סיסמה או Passphrase", "Password or passphrase"),
             ["View_4301a24b"] = ("שמור את פרטי ההתחברות בצורה מוצפנת בחשבון Windows הזה", "Save credentials encrypted in this Windows account"),
             ["View_b6e3f0ae"] = ("המשך לחיבור", "Continue to connect"),
-            ["View_5b36e7e4"] = ("ביטול", "Cancel"),
+
             ["View_d4a43bd3"] = ("בדיקת אבטחה", "Security audit"),
             ["View_9bb7a5df"] = ("מרכז אבטחת השרת", "Server security center"),
             ["View_bac422ea"] = ("סריקה לקריאה בלבד · ללא שינוי הגדרות, הרשאות או שירותים", "Read-only scan · no settings, permissions, or services are changed"),
@@ -348,7 +349,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_435fe9d2"] = ("בדיקה לקריאה בלבד · לא מתבצעים שינויים בהגדרות או בשירותים", "Read-only check · no settings or services are changed"),
             ["View_fc11ae46"] = ("רכיב / יכולת", "Component / capability"),
             ["View_d11b5092"] = ("זיהוי / גרסה", "Detection / version"),
-            ["View_8346d9ce"] = ("ניטור שרת", "Server monitoring"),
+
             ["View_139e44fc"] = ("ניטור ובריאות השרת", "Server monitoring and health"),
             ["View_76dfe72"] = ("משאבים, אחסון ותהליכים כפי שדווחו על ידי מערכת ההפעלה", "Resources, storage, and processes as reported by the operating system"),
             ["View_bad0cf85"] = ("↻  רענון נתונים", "↻  Refresh data"),
@@ -386,10 +387,10 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_2c407cd2"] = ("מחיקה", "Delete"),
             ["View_2baed7c0"] = ("↻ רענון", "↻ Refresh"),
             ["View_70ba6176"] = ("מסוף SSH", "SSH terminal"),
-            ["View_fb49f534"] = ("שירותי מערכת", "System services"),
+
             ["View_46bae114"] = ("שירותי מערכת בשרת", "System services on server"),
             ["View_4ad8e5fb"] = ("צפייה וניהול של שירותים באמצעות מנהל השירותים שזוהה", "View and manage services using the detected service manager"),
-            ["View_317fe4dd"] = ("הפעלה", "Start"),
+
             ["View_39527464"] = ("עצירה", "Stop"),
             ["View_3d362fd1"] = ("אתחול", "Restart"),
             ["View_af42fe20"] = ("שם השירות", "Service name"),

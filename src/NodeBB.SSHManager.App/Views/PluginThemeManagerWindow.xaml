@@ -136,7 +136,7 @@
                 <WrapPanel Grid.Row="2">
                     <Button Content="{loc:Tr View_91f186f1}" Click="Install_Click" Padding="15,9" Margin="0,0,8,0" Background="#5268E8" Foreground="White" BorderBrush="#5268E8"/>
                     <Button Content="{loc:Tr View_560b1712}" Click="Update_Click" Padding="15,9" Margin="0,0,8,0"/>
-                    <Button Content="{loc:Tr View_317fe4dd}" Click="Activate_Click" Padding="15,9" Margin="0,0,8,0" Background="#E9F7F0" Foreground="#16764F" BorderBrush="#D2EEDF"/>
+                    <Button Content="{loc:Tr View_enable_package}" Click="Activate_Click" Padding="15,9" Margin="0,0,8,0" Background="#E9F7F0" Foreground="#16764F" BorderBrush="#D2EEDF"/>
                     <Button Content="{loc:Tr View_1cb1e553}" Click="Deactivate_Click" Padding="15,9" Margin="0,0,8,0" Background="#FFF5E9" Foreground="#9A5B13" BorderBrush="#F4E2C8"/>
                     <Button Content="{loc:Tr View_51d9bcda}" Click="Remove_Click" Padding="15,9" Background="#FFF0F2" Foreground="#B4233C" BorderBrush="#F5D9DE"/>
                 </WrapPanel>
