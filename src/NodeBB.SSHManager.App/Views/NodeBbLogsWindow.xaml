@@ -57,7 +57,7 @@
                          FlowDirection="LeftToRight" SelectionBrush="#385B83"/>
             </Grid>
         </Border>
-        <TextBlock Grid.Row="3" Text="מקור: קובץ הלוג שהוגדר ב-config.json (ברירת מחדל: logs/output.log). הלוגים אינם משנים את השרת."
+        <TextBlock Grid.Row="3" Text="{loc:Tr View_f41e5694}"
                    Foreground="#7589A8" FontSize="10" Margin="2,12,2,0"/>
     </Grid>
 </Window>

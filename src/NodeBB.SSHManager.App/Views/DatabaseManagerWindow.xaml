@@ -81,7 +81,7 @@
                 <Border Style="{StaticResource DbCard}">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_44e75afe}" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
-                        <TextBlock Text="התוכנה מזהה את מנוע מסד הנתונים ומציגה את פעולת הגיבוי המתאימה. הקובץ מוצפן במחשב לפני שמירתו." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,14"/>
+                        <TextBlock Text="{loc:Tr View_71437735}" TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,14"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel>
@@ -97,15 +97,15 @@
                         <Button x:Name="PostgresBackupButton" Content="{loc:Tr View_3d3b70c9}" Click="PostgresBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
                         <Button x:Name="RedisBackupButton" Content="{loc:Tr View_5ae66b8e}" Click="RedisBackup_Click" HorizontalAlignment="Stretch" Padding="15,11" Margin="0,9,0,0" Background="#4F63D9" Foreground="White" BorderThickness="0" Visibility="Collapsed"/>
                         <Border x:Name="RedisBackupNote" Background="#FFF5E8" CornerRadius="10" Padding="11" Margin="0,10,0,0" Visibility="Collapsed">
-                            <TextBlock Text="גיבוי Redis הוא תמונת RDB של כל שרת Redis, כולל כל מסדי הנתונים הלוגיים שבו — לא רק מסד NodeBB. הוא אינו כולל שחזור אוטומטי." TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11"/>
+                            <TextBlock Text="{loc:Tr View_4f12bcf0}" TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11"/>
                         </Border>
-                        <TextBlock Text="נדרשים כלי הגיבוי המתאימים ו-Node.js בשרת. קובץ הגיבוי הזמני נמחק לאחר ההצפנה." TextWrapping="Wrap" Foreground="#8A94A6" FontSize="10" Margin="0,11,0,0"/>
+                        <TextBlock Text="{loc:Tr View_935f5ef5}" TextWrapping="Wrap" Foreground="#8A94A6" FontSize="10" Margin="0,11,0,0"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="MongoRestorePanel" Style="{StaticResource DbCard}">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_8041e2c7}" FontSize="16" FontWeight="Bold" Foreground="#23324A"/>
-                        <TextBlock Text="לפני שינוי הנתונים נוצר בשרת גיבוי חירום של מסד הנתונים הנוכחי. אם השחזור נכשל, המערכת מנסה להחזיר את המצב הקודם. PostgreSQL משחזר אובייקטים שנמצאים בארכיון; אובייקטים נוספים שאינם בארכיון עשויים להישאר." TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,13"/>
+                        <TextBlock Text="{loc:Tr View_2fb5ebbd}" TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,13"/>
                         <TextBlock Text="{loc:Tr View_d393e18c}" Style="{StaticResource DbLabel}"/>
                         <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40"/>
                         <Button x:Name="PostgresRestoreButton" Content="{loc:Tr View_74d55278}" Click="PostgresRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Visibility="Collapsed" Margin="0,12,0,0"/>

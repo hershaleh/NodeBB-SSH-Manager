@@ -42,7 +42,7 @@
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
                             <TextBlock Text="{loc:Tr View_aab01e0a}" FontWeight="SemiBold" Foreground="#26354D"/>
-                            <TextBlock Text="גרסת התוכנה, Windows וגרסת ‎.NET" FontSize="10" Foreground="#8793A5"/>
+                            <TextBlock Text="{loc:Tr View_506cfee6}" FontSize="10" Foreground="#8793A5"/>
                         </StackPanel>
                     </Grid>
                     <Separator Background="#EDF1F6"/>
@@ -52,8 +52,8 @@
                             <TextBlock Text="!" FontSize="20" FontWeight="Bold" Foreground="#A56A16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="דפוסים ושגיאות חוזרות" FontWeight="SemiBold" Foreground="#26354D"/>
-                            <TextBlock Text="מידע שיכול לסייע להבין מה קדם לתקלה" FontSize="10" Foreground="#8793A5"/>
+                            <TextBlock Text="{loc:Tr View_fef788b9}" FontWeight="SemiBold" Foreground="#26354D"/>
+                            <TextBlock Text="{loc:Tr View_143bbcdb}" FontSize="10" Foreground="#8793A5"/>
                         </StackPanel>
                     </Grid>
                 </StackPanel>
@@ -61,7 +61,7 @@
             <Border Background="#EAF7EF" BorderBrush="#D2ECDD" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,13,0,0">
                 <StackPanel>
                     <TextBlock Text="{loc:Tr View_d6cc3b14}" FontSize="13" FontWeight="Bold" Foreground="#17633B"/>
-                    <TextBlock Text="הדוח אינו כולל סיסמאות, מפתחות פרטיים, פרופילי שרתים או תוכן קבצים מרוחקים. מידע רגיש עובר הסתרה לפני הייצוא. אין שליחה אוטומטית — הדוח נשמר אצלך בלבד." TextWrapping="Wrap" Foreground="#28734D" FontSize="11" LineHeight="18" Margin="0,6,0,0"/>
+                    <TextBlock Text="{loc:Tr View_29b94f10}" TextWrapping="Wrap" Foreground="#28734D" FontSize="11" LineHeight="18" Margin="0,6,0,0"/>
                 </StackPanel>
             </Border>
             <Border Background="#E8EEF8" CornerRadius="11" Padding="12" Margin="0,13,0,0">

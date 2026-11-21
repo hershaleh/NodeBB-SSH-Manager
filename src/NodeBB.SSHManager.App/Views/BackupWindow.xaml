@@ -97,7 +97,7 @@
                 <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_305878ca}" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
-                        <TextBlock Text="הגיבוי יופעל דרך מתזמן המשימות של Windows גם כשהתוכנה סגורה, כל עוד המשתמש מחובר ל-Windows. קובצי ההתקנה אינם כוללים מסד נתונים אלא אם סומנה האפשרות המתאימה. גיבוי מתוזמן מוצפן תמיד; סיסמתו נשמרת בכספת Windows המוגנת למשתמש הנוכחי." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,12"/>
+                        <TextBlock Text="{loc:Tr View_ca9f052e}" Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,12"/>
                         <Grid>
                             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                             <StackPanel>
@@ -152,8 +152,8 @@
                             </StackPanel>
                         </Grid>
                         <CheckBox x:Name="ScheduleIncludeDatabaseCheckBox" Content="{loc:Tr View_31eb32ab}" Margin="0,10,0,0" Foreground="#26354D"/>
-                        <TextBlock Text="גיבוי Redis כולל את כל שרת Redis ולא רק את מסד NodeBB. גיבויי MongoDB ו-PostgreSQL ניתנים לשחזור דרך מנהל מסד הנתונים; שחזור Redis דורש הליך Redis נפרד." Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
-                        <TextBlock Text="מדיניות השמירה שלמעלה תחול גם על הגיבויים המתוזמנים. יש לשמור את סיסמת ההצפנה בנפרד; בלעדיה לא ניתן יהיה לשחזר את הגיבויים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
+                        <TextBlock Text="{loc:Tr View_d6589051}" Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,5,0,0"/>
+                        <TextBlock Text="{loc:Tr View_365d4fbd}" Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,8,0,10"/>
                         <Button Content="{loc:Tr View_e5e77227}" Click="CreateScheduledBackup_Click" Background="#17865D" Foreground="White" BorderThickness="0" Padding="15,11"/>
                         <TextBlock Text="{loc:Tr View_4dfc59bf}" FontWeight="SemiBold" Margin="0,14,0,6"/>
                         <ListBox x:Name="ScheduledBackupsList" Height="112" ScrollViewer.VerticalScrollBarVisibility="Auto">
@@ -173,7 +173,7 @@
                 <Border Style="{StaticResource SectionCard}">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_af768ef6}" FontSize="15" FontWeight="Bold" Foreground="#26354D"/>
-                        <TextBlock Text="השחזור יכול להחליף את config.json ואת public/uploads אם נכללה בארכיון. מסד הנתונים וקובצי package/lock אינם משוחזרים." Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,13"/>
+                        <TextBlock Text="{loc:Tr View_32218043}" Foreground="#718096" FontSize="11" TextWrapping="Wrap" Margin="0,6,0,13"/>
                         <TextBlock Text="{loc:Tr View_a2f4463d}" Style="{StaticResource FieldLabel}"/>
                         <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40" Margin="0,0,0,12"/>
                         <Button x:Name="RestoreEssentialButton" Content="{loc:Tr View_172a11b6}" Click="RestoreEssential_Click" HorizontalAlignment="Stretch" Padding="17,11" Background="#A83F4B" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
@@ -181,13 +181,13 @@
                         <Button x:Name="RestoreFullButton" Content="{loc:Tr View_b30a36e8}" Click="RestoreFull_Click"
                                 HorizontalAlignment="Stretch" Padding="17,11" Margin="0,9,0,0"
                                 Background="#8B3E58" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
-                        <TextBlock Text="השחזור המלא מחליף את כל קובצי ההתקנה, אך אינו משחזר את מסד הנתונים. ההתקנה המקורית נשמרת עד שההתקנה המשוחזרת עולה בהצלחה."
+                        <TextBlock Text="{loc:Tr View_3421c754}"
                                    Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,0"/>
 
                     </StackPanel>
                 </Border>
                 <Border Background="#FFF5E8" BorderBrush="#F3D6A7" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,0,0,12">
-                    <TextBlock Text="חשוב: גיבויי קבצים אינם כוללים את תוכן מסד הנתונים. שחזור config.json מחזיר גם הגדרות חיבור ופרטי גישה, ולכן התוכנה מוודאת שסוג מסד הנתונים והשרת/מסד היעד תואמים להתקנה הנוכחית. ארכיון התקנה מלא אינו נתמך בשחזור זה. שמור תמיד גם גיבוי מסד נתונים נפרד." TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11" LineHeight="18"/>
+                    <TextBlock Text="{loc:Tr View_fa367}" TextWrapping="Wrap" Foreground="#8A4B08" FontSize="11" LineHeight="18"/>
                 </Border>
                 <Border Background="#EAF0FA" CornerRadius="12" Padding="12" Margin="0,0,0,10">
                     <TextBlock x:Name="StatusText" Foreground="#42536D" TextWrapping="Wrap" FontSize="11"/>
