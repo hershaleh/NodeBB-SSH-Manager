@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.SftpFileManagerWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="מנהל קבצים SFTP" Width="1120" Height="760" MinWidth="800" MinHeight="540"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+        Title="{loc:Tr View_e066c31c}" Width="1120" Height="760" MinWidth="800" MinHeight="540"
         WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
         FontFamily="Segoe UI Variable, Segoe UI">
     <Window.Resources>
@@ -26,9 +27,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="קבצים ותיקיות בשרת" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{loc:Tr View_f8ee7b26}" FontSize="24" FontWeight="Bold" Foreground="White"/>
                     <TextBlock x:Name="ServerLabel" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
-                    <TextBlock Text="ניהול מרוחק באמצעות SFTP · פעולות על הקבצים שבחרת בלבד" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
+                    <TextBlock Text="{loc:Tr View_4a3849a}" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Width="54" Height="54" Background="#293B5C" CornerRadius="15">
                     <TextBlock Text="▤" FontSize="28" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -39,10 +40,10 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <TextBox x:Name="PathBox" Height="39" Padding="12,8" VerticalContentAlignment="Center"
-                         FlowDirection="LeftToRight" ToolTip="נתיב מוחלט בשרת" Background="#F7F9FC" BorderBrush="#E2E8F0"/>
-                <Button Grid.Column="1" Content="עבור לנתיב" Click="Navigate_Click" Margin="9,0,0,0" Padding="17,8"
+                         FlowDirection="LeftToRight" ToolTip="{loc:Tr View_9b90297d}" Background="#F7F9FC" BorderBrush="#E2E8F0"/>
+                <Button Grid.Column="1" Content="{loc:Tr View_53c22a09}" Click="Navigate_Click" Margin="9,0,0,0" Padding="17,8"
                         Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
-                <Button Grid.Column="2" Content="↑ תיקיית אב" Click="Up_Click" Margin="8,0,0,0" Style="{StaticResource FileAction}"/>
+                <Button Grid.Column="2" Content="{loc:Tr View_a7c2fbfd}" Click="Up_Click" Margin="8,0,0,0" Style="{StaticResource FileAction}"/>
             </Grid>
         </Border>
         <Border Grid.Row="2" Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="16" Padding="12">
@@ -50,19 +51,19 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <Grid Margin="5,3,5,11">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="100"/><ColumnDefinition Width="125"/><ColumnDefinition Width="170"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="שם הפריט" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="1" Text="סוג" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="2" Text="גודל" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="3" Text="שינוי אחרון" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Text="{loc:Tr View_ecf22cfa}" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Text="{loc:Tr View_e1f7d20b}" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="2" Text="{loc:Tr View_6540bd4f}" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="3" Text="{loc:Tr View_a78f268c}" Foreground="#64748B" FontSize="11" FontWeight="Bold"/>
                 </Grid>
                 <ListView x:Name="FilesList" Grid.Row="1" MouseDoubleClick="FilesList_MouseDoubleClick"
                           BorderThickness="0" Background="Transparent">
                     <ListView.View>
                         <GridView>
-                            <GridViewColumn Header="שם" Width="520" DisplayMemberBinding="{Binding Name}"/>
-                            <GridViewColumn Header="סוג" Width="100" DisplayMemberBinding="{Binding Kind}"/>
-                            <GridViewColumn Header="גודל" Width="120" DisplayMemberBinding="{Binding SizeDisplay}"/>
-                            <GridViewColumn Header="עודכן" Width="180" DisplayMemberBinding="{Binding ModifiedDisplay}"/>
+                            <GridViewColumn Header="{loc:Tr View_a29008db}" Width="520" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="{loc:Tr View_e1f7d20b}" Width="100" DisplayMemberBinding="{Binding Kind}"/>
+                            <GridViewColumn Header="{loc:Tr View_6540bd4f}" Width="120" DisplayMemberBinding="{Binding SizeDisplay}"/>
+                            <GridViewColumn Header="{loc:Tr View_3f4c991b}" Width="180" DisplayMemberBinding="{Binding ModifiedDisplay}"/>
                         </GridView>
                     </ListView.View>
                 </ListView>
@@ -71,15 +72,15 @@
         <Grid Grid.Row="3" Margin="0,13,0,0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <WrapPanel>
-                <Button Content="＋ תיקייה חדשה" Click="CreateDirectory_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
-                <Button Content="שינוי שם" Click="Rename_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
-                <Button Content="↑ העלאה" Click="Upload_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
-                <Button Content="↓ הורדה" Click="Download_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
-                <Button Content="מחיקה" Click="Delete_Click" Padding="14,9" Background="#FFF1F1" Foreground="#B42318" BorderBrush="#F3D0D0" BorderThickness="1"/>
+                <Button Content="{loc:Tr View_fa2a90a1}" Click="CreateDirectory_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
+                <Button Content="{loc:Tr View_70f4b78f}" Click="Rename_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
+                <Button Content="{loc:Tr View_98d6a00a}" Click="Upload_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
+                <Button Content="{loc:Tr View_2022344c}" Click="Download_Click" Style="{StaticResource FileAction}" Margin="0,0,7,0"/>
+                <Button Content="{loc:Tr View_2c407cd2}" Click="Delete_Click" Padding="14,9" Background="#FFF1F1" Foreground="#B42318" BorderBrush="#F3D0D0" BorderThickness="1"/>
             </WrapPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock x:Name="StatusText" Foreground="#64748B" VerticalAlignment="Center" FontSize="11" Margin="0,0,12,0"/>
-                <Button Content="↻ רענון" Click="Refresh_Click" Style="{StaticResource FileAction}"/>
+                <Button Content="{loc:Tr View_2baed7c0}" Click="Refresh_Click" Style="{StaticResource FileAction}"/>
             </StackPanel>
         </Grid>
     </Grid>
