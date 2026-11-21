@@ -53,8 +53,11 @@ public sealed class RedisDatabaseBackupService
 
     public static async Task ValidateRdbAsync(string path, CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(path) || new FileInfo(path).Length < 9) throw new InvalidDataException("קובץ RDB חסר או קצר מדי.");
-        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
+        if (!File.Exists(path)) throw new FileNotFoundException("קובץ RDB חסר.", path);
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+        if (stream.Length < 18)
+            throw new InvalidDataException("קובץ RDB קצר מדי ואינו מכיל כותרת, סמן סיום ו-checksum.");
+
         var header = new byte[5];
         await stream.ReadExactlyAsync(header, cancellationToken);
         if (!header.AsSpan().SequenceEqual(Encoding.ASCII.GetBytes("REDIS")))
@@ -63,6 +66,49 @@ public sealed class RedisDatabaseBackupService
         await stream.ReadExactlyAsync(version, cancellationToken);
         if (!version.All(b => b is >= (byte)'0' and <= (byte)'9'))
             throw new InvalidDataException("כותרת גרסת Redis RDB אינה תקינה.");
+
+        // Redis stores an EOF opcode immediately before its 8-byte little-endian CRC64.
+        // A zero checksum is valid for Redis configurations that explicitly disable it.
+        var checksumOffset = stream.Length - sizeof(ulong);
+        stream.Position = checksumOffset - 1;
+        var eof = stream.ReadByte();
+        if (eof != 0xFF)
+            throw new InvalidDataException("קובץ RDB אינו מסתיים בסמן EOF תקין.");
+
+        stream.Position = checksumOffset;
+        var checksumBytes = new byte[sizeof(ulong)];
+        await stream.ReadExactlyAsync(checksumBytes, cancellationToken);
+        var storedChecksum = System.Buffers.Binary.BinaryPrimitives.ReadUInt64LittleEndian(checksumBytes);
+        if (storedChecksum == 0) return;
+
+        stream.Position = 0;
+        var buffer = new byte[131072];
+        long remaining = checksumOffset;
+        ulong calculatedChecksum = 0;
+        while (remaining > 0)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var requested = (int)Math.Min(buffer.Length, remaining);
+            var read = await stream.ReadAsync(buffer.AsMemory(0, requested), cancellationToken);
+            if (read == 0) throw new EndOfStreamException("קובץ RDB נקטע במהלך בדיקת checksum.");
+            calculatedChecksum = ComputeRedisCrc64(buffer.AsSpan(0, read), calculatedChecksum);
+            remaining -= read;
+        }
+
+        if (calculatedChecksum != storedChecksum)
+            throw new InvalidDataException("בדיקת checksum של קובץ Redis RDB נכשלה; הגיבוי פגום או השתנה.");
+    }
+
+    internal static ulong ComputeRedisCrc64(ReadOnlySpan<byte> data, ulong crc = 0)
+    {
+        const ulong reflectedPolynomial = 0x95AC9329AC4BC9B5UL; // CRC-64/Jones used by Redis
+        foreach (var value in data)
+        {
+            crc ^= value;
+            for (var bit = 0; bit < 8; bit++)
+                crc = (crc & 1) != 0 ? (crc >> 1) ^ reflectedPolynomial : crc >> 1;
+        }
+        return crc;
     }
 
     internal static string BuildBackupScript(string installationPath, string workDirectory)

@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Buffers.Binary;
 using System.Text;
 using NodeBB.SSHManager.Services;
 using Xunit;
@@ -42,19 +44,85 @@ public sealed class RedisDatabaseBackupServiceTests
     }
 
     [Fact]
-    public async Task ValidateRdb_AcceptsRedisHeaderAndRejectsOtherFiles()
+    public void RedisCrc64_MatchesKnownJonesCheckValue()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "NodeBBRedisTests", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(dir);
-        var good = Path.Combine(dir, "good.rdb");
-        var bad = Path.Combine(dir, "bad.rdb");
+        Assert.Equal(0xCAA717168609F281UL,
+            RedisDatabaseBackupService.ComputeRedisCrc64(Encoding.ASCII.GetBytes("123456789")));
+    }
+
+    [Fact]
+    public async Task ValidateRdb_AcceptsValidChecksumAndDisabledChecksum()
+    {
+        var dir = CreateTempDirectory();
         try
         {
-            await File.WriteAllBytesAsync(good, Encoding.ASCII.GetBytes("REDIS0011payload"));
-            await File.WriteAllTextAsync(bad, "not a redis dump");
-            await RedisDatabaseBackupService.ValidateRdbAsync(good);
-            await Assert.ThrowsAsync<InvalidDataException>(() => RedisDatabaseBackupService.ValidateRdbAsync(bad));
+            var valid = Path.Combine(dir, "valid.rdb");
+            var disabled = Path.Combine(dir, "disabled-checksum.rdb");
+            await File.WriteAllBytesAsync(valid, CreateRdb(withChecksum: true));
+            await File.WriteAllBytesAsync(disabled, CreateRdb(withChecksum: false));
+
+            await RedisDatabaseBackupService.ValidateRdbAsync(valid);
+            await RedisDatabaseBackupService.ValidateRdbAsync(disabled);
         }
         finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
+    public async Task ValidateRdb_RejectsBadHeaderAndChecksum()
+    {
+        var dir = CreateTempDirectory();
+        try
+        {
+            var badHeader = Path.Combine(dir, "bad-header.rdb");
+            var badChecksum = Path.Combine(dir, "bad-checksum.rdb");
+            var headerBytes = CreateRdb(withChecksum: true);
+            headerBytes[0] = (byte)'X';
+            await File.WriteAllBytesAsync(badHeader, headerBytes);
+            var checksumBytes = CreateRdb(withChecksum: true);
+            checksumBytes[^1] ^= 0x80;
+            await File.WriteAllBytesAsync(badChecksum, checksumBytes);
+
+            await Assert.ThrowsAsync<InvalidDataException>(() => RedisDatabaseBackupService.ValidateRdbAsync(badHeader));
+            await Assert.ThrowsAsync<InvalidDataException>(() => RedisDatabaseBackupService.ValidateRdbAsync(badChecksum));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Theory]
+    [InlineData("REDIS0011payload")]
+    [InlineData("REDISabcd")]
+    public async Task ValidateRdb_RejectsTruncatedOrMalformedFiles(string contents)
+    {
+        var dir = CreateTempDirectory();
+        var path = Path.Combine(dir, "invalid.rdb");
+        try
+        {
+            await File.WriteAllTextAsync(path, contents);
+            await Assert.ThrowsAsync<InvalidDataException>(() => RedisDatabaseBackupService.ValidateRdbAsync(path));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    private static byte[] CreateRdb(bool withChecksum)
+    {
+        // Minimal synthetic RDB envelope: header, opaque payload, EOF opcode and checksum.
+        var prefix = Encoding.ASCII.GetBytes("REDIS0011");
+        var payload = new byte[] { 0xFE, 0x00, 0x00, 0xFF };
+        var content = new byte[prefix.Length + payload.Length + sizeof(ulong)];
+        prefix.CopyTo(content, 0);
+        payload.CopyTo(content, prefix.Length);
+        if (withChecksum)
+        {
+            var checksum = RedisDatabaseBackupService.ComputeRedisCrc64(content.AsSpan(0, content.Length - sizeof(ulong)));
+            BinaryPrimitives.WriteUInt64LittleEndian(content.AsSpan(content.Length - sizeof(ulong)), checksum);
+        }
+        return content;
+    }
+
+    private static string CreateTempDirectory()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBRedisTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        return directory;
     }
 }
