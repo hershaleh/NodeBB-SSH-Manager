@@ -46,7 +46,7 @@ public sealed class RedisDatabaseBackupServiceTests
     [Fact]
     public void RedisCrc64_MatchesKnownJonesCheckValue()
     {
-        Assert.Equal(0xCAA717168609F281UL,
+        Assert.Equal(0xE9C6D914C4B8D9CAUL,
             RedisDatabaseBackupService.ComputeRedisCrc64(Encoding.ASCII.GetBytes("123456789")));
     }
 
