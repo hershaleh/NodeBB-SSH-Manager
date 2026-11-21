@@ -97,6 +97,8 @@
                                 <MenuItem Header="ייבוא פרופילי שרתים" Click="ImportProfiles_Click"/>
                                 <MenuItem Header="ייצוא פרופילי שרתים" Click="ExportProfiles_Click"/>
                                 <Separator/>
+                                <MenuItem Header="בדיקת עדכונים" Click="CheckUpdates_Click"/>
+                                <Separator/>
                                 <MenuItem Header="היסטוריית פעולות מכל השרתים" Click="AllServerHistory_Click"/>
                                 <MenuItem Header="דוח אבחון האפליקציה" Click="Diagnostics_Click"/>
                                 <MenuItem Header="השוואת שרתים מחוברים" Click="CompareServers_Click"/>
