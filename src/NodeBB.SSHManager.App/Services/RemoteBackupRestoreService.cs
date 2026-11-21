@@ -6,7 +6,8 @@ using Renci.SshNet;
 
 namespace NodeBB.SSHManager.Services;
 
-public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool ContainsUploads);\npublic sealed record FullInstallationArchiveInfo(int EntryCount, long ExpandedBytes);
+public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool ContainsUploads);
+public sealed record FullInstallationArchiveInfo(int EntryCount, long ExpandedBytes);
 
 /// <summary>
 /// Restores only the safe configuration/uploads backup format. Full-installation archives are
@@ -229,8 +230,8 @@ public sealed class RemoteBackupRestoreService
 
     internal static string NormalizeFullArchivePath(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || name.IndexOf('\\0') >= 0 || name.Any(char.IsControl) ||
-            name.Contains('\\\\') || name.Contains(':') || name.StartsWith("/", StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(name) || name.IndexOf((char)0) >= 0 || name.Any(char.IsControl) ||
+            name.Contains((char)92) || name.Contains(':') || name.StartsWith("/", StringComparison.Ordinal))
             throw new InvalidDataException("הארכיון מכיל נתיב לא בטוח.");
 
         var normalized = name;
