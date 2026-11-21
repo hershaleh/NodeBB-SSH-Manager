@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Data;
@@ -17,6 +18,7 @@ public partial class MainWindow : Window
     private readonly CredentialVaultService _credentialVault = new();
     private readonly ScheduledBackupService _scheduledBackupService = new();
     private readonly ServerProfileTransferService _profileTransfer = new();
+    private readonly AppUpdateService _appUpdateService = new();
     private readonly ObservableCollection<ServerProfile> _profiles = [];
     private bool _updatingGroupFilter;
 
@@ -751,6 +753,45 @@ public partial class MainWindow : Window
     private void AllServerHistory_Click(object sender, RoutedEventArgs e)
     {
         new ServerActionHistoryOverviewWindow { Owner = this }.ShowDialog();
+    }
+
+    private async void CheckUpdates_Click(object sender, RoutedEventArgs e)
+    {
+        SetBusy(true);
+        try
+        {
+            var result = await _appUpdateService.CheckAsync();
+            if (!result.UpdateAvailable || result.Update is null)
+            {
+                MessageBox.Show(this, result.Message, "בדיקת עדכונים",
+                    MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var update = result.Update;
+            var confirmation = $"נמצאה גרסה חדשה: {update.Version}.\nהגרסה המותקנת: {result.CurrentVersion}.\n\nהמתקין יורד, נבדק מול SHA-256, ויותקן למשתמש הנוכחי. להמשיך?";
+            if (MessageBox.Show(this, confirmation, "עדכון NodeBB SSH Manager",
+                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
+                return;
+
+            StatusText.Text = "מוריד ומאמת את מתקין העדכון...";
+            var installerPath = await _appUpdateService.DownloadInstallerAsync(update);
+            var process = Process.Start(new ProcessStartInfo(installerPath) { UseShellExecute = true });
+            if (process is null)
+                throw new InvalidOperationException("Windows לא הצליח להפעיל את מתקין העדכון.");
+
+            Application.Current.Shutdown();
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Updates", "UpdateCheckOrInstallFailed", ex);
+            MessageBox.Show(this, "בדיקת העדכונים או התקנתם נכשלה. " + ex.Message,
+                "עדכון נכשל", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            if (IsLoaded) SetBusy(false);
+        }
     }
 
     private void Diagnostics_Click(object sender, RoutedEventArgs e)

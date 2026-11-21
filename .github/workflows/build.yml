@@ -68,6 +68,18 @@ jobs:
           & $compiler "/DAppVersion=$version" "installer/NodeBB-SSH-Manager.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe")) { throw "The Windows installer was not created." }
+      - name: Create release checksum manifest
+        shell: pwsh
+        run: |
+          $targets = @(
+            "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe",
+            "artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip"
+          )
+          $lines = foreach ($file in $targets) {
+            $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $([System.IO.Path]::GetFileName($file))"
+          }
+          $lines | Set-Content "artifacts/SHA256SUMS.txt" -Encoding ascii
       - name: Upload build packages
         uses: actions/upload-artifact@v4
         with:
@@ -76,6 +88,7 @@ jobs:
             artifacts/win-x64/
             artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip
             artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe
+            artifacts/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
       - name: Upload test results
