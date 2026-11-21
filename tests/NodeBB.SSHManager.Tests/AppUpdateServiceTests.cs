@@ -162,6 +162,36 @@ public sealed class AppUpdateServiceTests
     }
 
     [Fact]
+    public async Task DownloadInstallerAsync_RejectsForgedExternalAssetUriBeforeNetworkAccess()
+    {
+        var requests = 0;
+        using var client = new HttpClient(new StubHandler(_ =>
+        {
+            requests++;
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("unexpected") };
+        }));
+        var service = new AppUpdateService(client);
+        var valid = CreateUpdateInfo();
+        var forged = valid with { InstallerUri = new Uri("https://example.invalid/installer.exe") };
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => service.DownloadInstallerAsync(forged));
+        Assert.Equal(0, requests);
+    }
+
+    [Fact]
+    public async Task DownloadInstallerAsync_RejectsUntrustedFinalRedirectTarget()
+    {
+        using var client = new HttpClient(new StubHandler(request =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("unexpected") };
+            response.RequestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri("https://example.invalid/redirected"));
+            return response;
+        }));
+        var service = new AppUpdateService(client);
+        await Assert.ThrowsAsync<InvalidDataException>(() => service.DownloadInstallerAsync(CreateUpdateInfo()));
+    }
+
+    [Fact]
     public async Task DownloadInstallerAsync_RejectsOversizedChecksumManifest()
     {
         using var client = new HttpClient(new StubHandler(_ =>

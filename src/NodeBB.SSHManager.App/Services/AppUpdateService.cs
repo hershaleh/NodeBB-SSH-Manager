@@ -115,12 +115,16 @@ public sealed class AppUpdateService
     public async Task<string> DownloadInstallerAsync(AppUpdateInfo update, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(update);
+        if (!IsTrustedGitHubUri(update.ChecksumsUri) || !IsTrustedGitHubUri(update.InstallerUri))
+            throw new InvalidDataException("כתובות קובצי העדכון חייבות להיות כתובות GitHub HTTPS מאושרות.");
         using var manifestResponse = await _http.GetAsync(update.ChecksumsUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        EnsureTrustedDownloadResponse(manifestResponse);
         manifestResponse.EnsureSuccessStatusCode();
         var manifest = await ReadBoundedTextAsync(manifestResponse.Content, MaximumChecksumManifestBytes, "קובץ סכומי הביקורת", cancellationToken);
         var expectedHash = ParseChecksumManifest(manifest, InstallerFileName);
 
         using var response = await _http.GetAsync(update.InstallerUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        EnsureTrustedDownloadResponse(response);
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentLength is > MaximumInstallerBytes)
             throw new InvalidDataException("קובץ מתקין העדכון גדול מהמותר.");
@@ -222,6 +226,20 @@ public sealed class AppUpdateService
         uri.IsAbsoluteUri && uri.Scheme == Uri.UriSchemeHttps &&
         string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
         uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo);
+
+    private static void EnsureTrustedDownloadResponse(HttpResponseMessage response)
+    {
+        var finalUri = response.RequestMessage?.RequestUri;
+        var trustedHost = finalUri is not null && finalUri.IsAbsoluteUri &&
+            finalUri.Scheme == Uri.UriSchemeHttps && finalUri.IsDefaultPort &&
+            string.IsNullOrEmpty(finalUri.UserInfo) &&
+            (string.Equals(finalUri.Host, "github.com", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(finalUri.Host, "release-assets.githubusercontent.com", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(finalUri.Host, "objects.githubusercontent.com", StringComparison.OrdinalIgnoreCase) ||
+             string.Equals(finalUri.Host, "github-releases.githubusercontent.com", StringComparison.OrdinalIgnoreCase));
+        if (!trustedHost)
+            throw new InvalidDataException("השרת שאליו הופנה הורדת העדכון אינו שרת GitHub/CDN מאושר.");
+    }
 
     private static async Task<string> ReadBoundedTextAsync(HttpContent content, int maximumBytes, string description,
         CancellationToken cancellationToken)
