@@ -59,10 +59,10 @@ public sealed class ServerProfileTransferServiceTests
     public void Import_RejectsControlCharactersInProfileIdentityFields()
     {
         var profile = CreateProfile();
-        profile.Name = "Forum\\nInjected";
+        profile.Name = "Forum\nInjected";
         Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
         profile = CreateProfile();
-        profile.Username = "nodebb\\radmin";
+        profile.Username = "nodebb\radmin";
         Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
     }
 

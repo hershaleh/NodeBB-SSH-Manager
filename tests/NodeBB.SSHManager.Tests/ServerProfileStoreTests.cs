@@ -160,10 +160,10 @@ public sealed class ServerProfileStoreTests : IDisposable
     {
         var store = new ServerProfileStore(FilePath);
         var name = CreateProfile();
-        name.Name = "Forum\\nInjected";
+        name.Name = "Forum\nInjected";
         Assert.Throws<InvalidDataException>(() => store.Save([name]));
         var username = CreateProfile();
-        username.Username = "nodebb\\radmin";
+        username.Username = "nodebb\radmin";
         Assert.Throws<InvalidDataException>(() => store.Save([username]));
     }
 

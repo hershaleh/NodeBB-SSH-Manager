@@ -149,8 +149,9 @@ public sealed class AppUpdateService
                     throw new InvalidDataException("קובץ מתקין העדכון ריק.");
             }
 
-            await using var verifyStream = new FileStream(temporary, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
-            var actualHash = await SHA256.HashDataAsync(verifyStream, cancellationToken);
+            byte[] actualHash;
+            await using (var verifyStream = new FileStream(temporary, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true))
+                actualHash = await SHA256.HashDataAsync(verifyStream, cancellationToken);
             var expectedBytes = Convert.FromHexString(expectedHash);
             if (!CryptographicOperations.FixedTimeEquals(actualHash, expectedBytes))
                 throw new CryptographicException("אימות SHA-256 של מתקין העדכון נכשל; הקובץ לא יופעל.");
