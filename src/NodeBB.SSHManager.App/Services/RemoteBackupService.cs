@@ -114,10 +114,24 @@ public sealed class RemoteBackupService
                 if (entry.Length < 0 || entry.Length > long.MaxValue - expandedBytes)
                     throw new InvalidDataException("גודל תוכן הארכיון אינו תקין.");
                 expandedBytes += entry.Length;
+                if (entry.DataStream is null)
+                    throw new InvalidDataException("הארכיון מכיל קובץ ללא זרם נתונים.");
+                long entryBytes = 0;
+                var entryBuffer = new byte[131072];
+                int entryRead;
+                while ((entryRead = await entry.DataStream.ReadAsync(entryBuffer, cancellationToken)) > 0)
+                    entryBytes += entryRead;
+                if (entryBytes != entry.Length)
+                    throw new InvalidDataException("קובץ בתוך ארכיון הגיבוי נקטע או פגום.");
             }
-            if (entry.DataStream is not null)
+            else if (entry.DataStream is not null)
+            {
                 await entry.DataStream.CopyToAsync(Stream.Null, cancellationToken);
+            }
         }
+
+        if (entryCount == 0)
+            throw new InvalidDataException("ארכיון הגיבוי ריק ואינו מכיל פריטים.");
 
         var buffer = new byte[131072];
         while (await gzip.ReadAsync(buffer, cancellationToken) > 0)

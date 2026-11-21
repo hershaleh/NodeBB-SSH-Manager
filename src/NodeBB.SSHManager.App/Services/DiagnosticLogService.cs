@@ -21,13 +21,13 @@ public sealed class DiagnosticLogService
     private const int RetainedFiles = 5;
     private static readonly object Sync = new();
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = false };
+    private static readonly Regex UriCredentialPattern = new(@"(?i)([a-z][a-z0-9+.-]*://)[^/@\s]+:[^/@\s]+@([^/\s]+)", RegexOptions.Compiled);
     private static readonly Regex[] SecretPatterns =
     [
         new(@"(?i)([""']?(?:password|passwd|passphrase|token|api[_-]?key|secret)[""']?\s*[=:]\s*)[""']?[^,\s;""']+[""']?", RegexOptions.Compiled),
         new(@"(?i)(--(?:password|passwd|passphrase|token|api[-_]?key|secret)(?:=|\s+))(?:""[^""]*""|'[^']*'|[^\s]+)", RegexOptions.Compiled),
         new(@"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._~+/-]+=*", RegexOptions.Compiled),
         new(@"(?i)((?:mongodb(?:\+srv)?|postgres(?:ql)?|redis|mysql)://)[^\s""']+", RegexOptions.Compiled),
-        new(@"(?i)([a-z][a-z0-9+.-]*://)[^/@\s]+:[^/@\s]+@", RegexOptions.Compiled),
         new(@"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)", RegexOptions.Compiled)
     ];
 
@@ -132,7 +132,7 @@ public sealed class DiagnosticLogService
 
     public static string Redact(string value)
     {
-        var result = value;
+        var result = UriCredentialPattern.Replace(value, "$1[REDACTED]@$2");
         foreach (var pattern in SecretPatterns)
             result = pattern.Replace(result, "$1[REDACTED]");
         return result;

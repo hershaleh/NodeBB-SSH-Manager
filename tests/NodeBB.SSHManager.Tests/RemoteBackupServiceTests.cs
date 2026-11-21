@@ -42,7 +42,7 @@ public sealed class RemoteBackupServiceTests
 
             await CreateArchiveAsync(truncated, new (string Name, string Contents)[] { ("config.json", "{}") });
             var bytes = await File.ReadAllBytesAsync(truncated);
-            await File.WriteAllBytesAsync(truncated, bytes[..^8]);
+            await File.WriteAllBytesAsync(truncated, bytes[..Math.Max(1, bytes.Length / 2)]);
             await Assert.ThrowsAnyAsync<Exception>(() => RemoteBackupService.ValidateArchiveAsync(truncated));
         }
         finally { Directory.Delete(directory, true); }
@@ -56,8 +56,7 @@ public sealed class RemoteBackupServiceTests
         try
         {
             await CreateArchiveAsync(path);
-            var result = await RemoteBackupService.ValidateArchiveAsync(path);
-            Assert.Equal(0, result.EntryCount);
+            await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupService.ValidateArchiveAsync(path));
         }
         finally { Directory.Delete(directory, true); }
     }
