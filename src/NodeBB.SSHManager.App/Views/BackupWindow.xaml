@@ -176,6 +176,13 @@
                         <TextBlock Text="סיסמת הגיבוי (רק אם הקובץ מוצפן)" Style="{StaticResource FieldLabel}"/>
                         <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40" Margin="0,0,0,12"/>
                         <Button x:Name="RestoreEssentialButton" Content="בחירת גיבוי ושחזור" Click="RestoreEssential_Click" HorizontalAlignment="Stretch" Padding="17,11" Background="#A83F4B" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+
+                        <Button x:Name="RestoreFullButton" Content="שחזור התקנה מלאה (החלפת כל תיקיית NodeBB)" Click="RestoreFull_Click"
+                                HorizontalAlignment="Stretch" Padding="17,11" Margin="0,9,0,0"
+                                Background="#8B3E58" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+                        <TextBlock Text="השחזור המלא מחליף את כל קובצי ההתקנה, אך אינו משחזר את מסד הנתונים. ההתקנה המקורית נשמרת עד שההתקנה המשוחזרת עולה בהצלחה."
+                                   Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,0"/>
+
                     </StackPanel>
                 </Border>
                 <Border Background="#FFF5E8" BorderBrush="#F3D6A7" BorderThickness="1" CornerRadius="14" Padding="15" Margin="0,0,0,12">

@@ -1,6 +1,7 @@
 using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text.Json;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Renci.SshNet;
 
@@ -333,6 +334,353 @@ public sealed class RemoteBackupRestoreService
                 }
             }
         }
+    }
+
+
+    /// <summary>
+    /// Replaces the NodeBB installation tree from a previously validated archive.
+    /// The database is never restored; its endpoint must match the live installation.
+    /// The old directory is retained until the restored NodeBB starts successfully.
+    /// </summary>
+    public async Task RestoreFullInstallationAsync(
+        NodeBbInstallation installation, string localArchive, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(installation);
+        RemotePathSafety.ValidateNodeBbInstallationPath(installation.Path);
+        var archiveInfo = await ValidateFullInstallationArchiveAsync(localArchive, cancellationToken);
+        var work = "/tmp/nodebb-full-restore-" + Guid.NewGuid().ToString("N");
+        var remoteArchive = work + "/incoming.tar.gz";
+        var hash = await ComputeSha256Async(localArchive, cancellationToken);
+        var workCreated = false;
+        var scriptStarted = false;
+        var stopped = false;
+        var switched = false;
+        var restartAttempted = false;
+        NodeBbRuntimeInfo? runtime = null;
+        var runtimeService = new NodeBbRuntimeService(_session);
+        var rollbackPath = GetFullRestoreRollbackPath(installation.Path, work);
+
+        try
+        {
+            var init = await _session.ExecuteAsync($"umask 077 && mkdir -m 700 -- {ShellQuote(work)}", cancellationToken);
+            if (init.ExitCode != 0)
+                throw new InvalidOperationException("לא ניתן ליצור תיקיית עבודה זמנית ומוגנת בשרת.");
+            workCreated = true;
+
+            using (var sftp = _session.CreateSftpClient())
+            {
+                await Task.Run(sftp.Connect, cancellationToken);
+                try
+                {
+                    await using var input = new FileStream(localArchive, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+                    await Task.Run(() => sftp.UploadFile(input, remoteArchive, false), cancellationToken);
+                }
+                finally
+                {
+                    if (sftp.IsConnected) sftp.Disconnect();
+                }
+            }
+
+            var remoteHash = await _session.ExecuteAsync(
+                $"sha256sum -- {ShellQuote(remoteArchive)} | awk '{{print $1}}'", cancellationToken);
+            if (remoteHash.ExitCode != 0 ||
+                !string.Equals(remoteHash.Output.Trim(), hash, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException("אימות SHA-256 של הארכיון לאחר העלאה לשרת נכשל; השחזור בוטל.");
+
+            runtime = await runtimeService.DetectAsync(installation, cancellationToken);
+            var stop = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);
+            if (stop.ExitCode != 0)
+                throw new InvalidOperationException("לא ניתן לעצור את NodeBB באופן בטוח. לא בוצע שינוי בקבצי ההתקנה.");
+
+            stopped = true;
+            DiagnosticLogService.Instance.Warning("FullRestore", "RestoreStarted",
+                "Full NodeBB installation restore started. Database contents are not included.", null, _session.Profile.Name);
+
+            scriptStarted = true;
+            var restore = await _session.ExecuteAsync(
+                BuildFullInstallationRestoreScript(installation.Path, work, hash, archiveInfo.ExpandedBytes),
+                cancellationToken);
+            if (restore.ExitCode != 0)
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(restore.Error)
+                    ? $"הכנת ההתקנה והחלפתה נכשלו (קוד {restore.ExitCode}); ההתקנה המקורית נשמרה."
+                    : SanitizeError(restore.Error));
+
+            switched = true;
+            restartAttempted = true;
+            var startNew = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", cancellationToken);
+            if (startNew.ExitCode != 0)
+            {
+                var rollback = await _session.ExecuteAsync(
+                    BuildFullInstallationRollbackScript(installation.Path, work), CancellationToken.None);
+                if (rollback.ExitCode != 0)
+                    throw new InvalidOperationException(
+                        $"ההתקנה החדשה לא עלתה, וגם ההחזרה האוטומטית נכשלה. ההתקנה המקורית נשמרה בנתיב {rollbackPath}; אין למחוק אותו. נדרשת התערבות מנהל.");
+
+                switched = false;
+                var startOld = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", CancellationToken.None);
+                stopped = startOld.ExitCode != 0;
+                if (startOld.ExitCode == 0)
+                {
+                    var cleanupOld = await _session.ExecuteAsync(
+                        BuildFullInstallationFinalizeScript(installation.Path, work, true), CancellationToken.None);
+                    if (cleanupOld.ExitCode != 0)
+                        DiagnosticLogService.Instance.Warning("FullRestore", "FailedTreeCleanupPending",
+                            "The previous installation was restored, but the failed replacement directory remains on the server.", null, _session.Profile.Name);
+                }
+                throw new InvalidOperationException(startOld.ExitCode == 0
+                    ? "ההתקנה המשוחזרת לא הצליחה לעלות. ההתקנה המקורית הוחזרה והופעלה מחדש."
+                    : $"ההתקנה החדשה לא עלתה. ההתקנה המקורית הוחזרה, אך גם הפעלתה נכשלה. יש לבדוק את השירות; נתיב ההתקנה המקורית: {installation.Path}");
+            }
+
+            stopped = false;
+            var finalize = await _session.ExecuteAsync(
+                BuildFullInstallationFinalizeScript(installation.Path, work, false), CancellationToken.None);
+            if (finalize.ExitCode != 0)
+                DiagnosticLogService.Instance.Warning("FullRestore", "RollbackCleanupPending",
+                    $"NodeBB was restored and started, but the emergency copy remains at {rollbackPath}.", null, _session.Profile.Name);
+
+            DiagnosticLogService.Instance.Info("FullRestore", "RestoreCompleted",
+                $"Full NodeBB installation restored and started; {archiveInfo.EntryCount} archive entries, database contents unchanged.",
+                _session.Profile.Name);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("FullRestore", "RestoreFailed", ex, _session.Profile.Name);
+            if (stopped && !switched && !restartAttempted && runtime is not null)
+            {
+                try
+                {
+                    var restart = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", CancellationToken.None);
+                    if (restart.ExitCode != 0)
+                        DiagnosticLogService.Instance.Error("FullRestore", "OriginalInstallationRestartFailed",
+                            $"The original NodeBB installation could not be restarted after the restore was aborted; exit code {restart.ExitCode}.", _session.Profile.Name);
+                }
+                catch (Exception restartError)
+                {
+                    DiagnosticLogService.Instance.Error("FullRestore", "OriginalInstallationRestartFailed", restartError, _session.Profile.Name);
+                }
+            }
+            if (switched)
+                throw new InvalidOperationException(
+                    $"החיבור או הפעלת NodeBB נקטעו לאחר החלפת הקבצים. עותק החירום נשמר בנתיב {rollbackPath}; לא בוצע ניקוי אוטומטי כדי לא לסכן את ההתקנה.", ex);
+            throw;
+        }
+        finally
+        {
+            // Once the remote restore script starts, it owns cleanup. After an uncertain
+            // SSH interruption preserve remote state for manual recovery.
+            if (workCreated && !scriptStarted)
+            {
+                try { await _session.ExecuteAsync($"rm -rf -- {ShellQuote(work)}", CancellationToken.None); }
+                catch
+                {
+                    DiagnosticLogService.Instance.Warning("FullRestore", "RemoteCleanupFailed",
+                        "Could not remove the temporary full-restore upload directory.", null, _session.Profile.Name);
+                }
+            }
+        }
+    }
+
+    internal static string BuildFullInstallationRestoreScript(
+        string installationPath, string workDirectory, string expectedSha256, long expandedBytes)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
+            throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
+        if (!Regex.IsMatch(expectedSha256, @"^[a-f0-9]{64}$"))
+            throw new ArgumentException("טביעת SHA-256 אינה תקינה.", nameof(expectedSha256));
+        if (expandedBytes is < 1 or > 100L * 1024 * 1024 * 1024)
+            throw new ArgumentOutOfRangeException(nameof(expandedBytes));
+
+        return $"""
+set -eu
+INSTALL={{ShellQuote(installationPath)}}
+WORK={{ShellQuote(workDirectory)}}
+EXPECTED_SHA256={{ShellQuote(expectedSha256)}}
+EXPECTED_BYTES={{expandedBytes}}
+WORK_NAME="$(basename "$WORK")"
+PARENT="$(dirname "$INSTALL")"
+BASE="$(basename "$INSTALL")"
+STAGE="$PARENT/.nodebb-stage-$WORK_NAME"
+ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
+FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
+SWAP_STARTED=0
+KEEP_ROLLBACK=0
+
+cleanup() {
+  result=$?
+  trap - EXIT
+  if [ "$SWAP_STARTED" = "1" ] && [ "$KEEP_ROLLBACK" = "0" ] && [ -d "$ROLLBACK" ]; then
+    set +e
+    if [ -e "$INSTALL" ]; then mv "$INSTALL" "$FAILED" || result=42; fi
+    if [ ! -e "$INSTALL" ]; then mv "$ROLLBACK" "$INSTALL" || result=42; fi
+    if [ "$result" -eq 0 ]; then rm -rf -- "$FAILED"; fi
+    set -e
+  fi
+  if [ "$KEEP_ROLLBACK" = "0" ]; then rm -rf -- "$STAGE"; fi
+  rm -rf -- "$WORK"
+  exit "$result"
+}
+trap cleanup EXIT
+
+[ -d "$WORK" ] && [ ! -L "$WORK" ] || { echo 'תיקיית העבודה חסרה או אינה בטוחה.' >&2; exit 40; }
+[ -s "$WORK/incoming.tar.gz" ] && [ ! -L "$WORK/incoming.tar.gz" ] || { echo 'ארכיון הגיבוי שהועלה חסר.' >&2; exit 40; }
+command -v sha256sum >/dev/null 2>&1 || { echo 'sha256sum אינו זמין בשרת.' >&2; exit 40; }
+ACTUAL_SHA256="$(sha256sum -- "$WORK/incoming.tar.gz" | awk '{print $1}')"
+[ "$ACTUAL_SHA256" = "$EXPECTED_SHA256" ] || { echo 'אימות SHA-256 של הארכיון נכשל.' >&2; exit 40; }
+command -v tar >/dev/null 2>&1 || { echo 'tar אינו מותקן בשרת.' >&2; exit 40; }
+command -v node >/dev/null 2>&1 || { echo 'Node.js אינו מותקן בשרת.' >&2; exit 40; }
+[ -d "$PARENT" ] && [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'נתיב ההתקנה הקיים אינו תיקייה רגילה.' >&2; exit 40; }
+PARENT_REAL="$(cd "$PARENT" && pwd -P)"
+[ "$PARENT_REAL/$BASE" = "$INSTALL" ] || { echo 'נתיב ההתקנה עובר דרך קישור סמלי או אינו קנוני.' >&2; exit 40; }
+[ -w "$PARENT" ] || { echo 'אין הרשאת כתיבה לתיקיית ההתקנה.' >&2; exit 40; }
+[ ! -e "$STAGE" ] && [ ! -e "$ROLLBACK" ] && [ ! -e "$FAILED" ] || { echo 'נמצאו תיקיות שחזור קודמות; לא בוצעה דריסה.' >&2; exit 40; }
+[ -f "$INSTALL/package.json" ] && [ ! -L "$INSTALL/package.json" ] || { echo 'ההתקנה הנוכחית אינה מזוהה כהתקנת NodeBB.' >&2; exit 40; }
+
+if [ "$(id -u)" != "0" ]; then
+  CURRENT_UID="$(id -u)"
+  CURRENT_GID="$(id -g)"
+  FOREIGN="$(find "$INSTALL" -xdev \( ! -user "$CURRENT_UID" -o ! -group "$CURRENT_GID" \) -print -quit)"
+  [ -z "$FOREIGN" ] || { echo 'קובצי ההתקנה שייכים למשתמש או לקבוצה אחרים. יש להתחבר כמשתמש NodeBB או כ-root; לא בוצע שינוי.' >&2; exit 40; }
+fi
+
+AVAILABLE_KB="$(df -Pk "$PARENT" | awk 'END {print $4}')"
+case "$AVAILABLE_KB" in ''|*[!0-9]*) echo 'לא ניתן לבדוק מקום פנוי בדיסק.' >&2; exit 40;; esac
+[ "$((AVAILABLE_KB * 1024))" -ge "$((EXPECTED_BYTES + 67108864))" ] || { echo 'אין די מקום פנוי להכנת ההתקנה המשוחזרת ולשמירת מרווח בטיחות של 64MB.' >&2; exit 40; }
+
+mkdir -m 700 "$STAGE"
+tar -tzf "$WORK/incoming.tar.gz" >/dev/null || { echo 'ארכיון TAR.GZ פגום.' >&2; exit 41; }
+if [ "$(id -u)" = "0" ]; then
+  tar --same-owner --same-permissions -xzf "$WORK/incoming.tar.gz" -C "$STAGE" || { echo 'חילוץ הארכיון נכשל.' >&2; exit 41; }
+else
+  tar --no-same-owner --same-permissions -xzf "$WORK/incoming.tar.gz" -C "$STAGE" || { echo 'חילוץ הארכיון נכשל.' >&2; exit 41; }
+fi
+[ -f "$STAGE/config.json" ] && [ ! -L "$STAGE/config.json" ] || { echo 'config.json חסר או אינו קובץ רגיל.' >&2; exit 41; }
+[ -f "$STAGE/package.json" ] && [ ! -L "$STAGE/package.json" ] || { echo 'package.json חסר או אינו קובץ רגיל.' >&2; exit 41; }
+[ -f "$STAGE/nodebb" ] && [ ! -L "$STAGE/nodebb" ] || { echo 'קובץ ההפעלה nodebb חסר או אינו קובץ רגיל.' >&2; exit 41; }
+SPECIAL="$(find "$STAGE" -mindepth 1 ! -type f ! -type d -print -quit)"
+[ -z "$SPECIAL" ] || { echo 'הארכיון חולץ עם קישור או קובץ מיוחד; השחזור בוטל.' >&2; exit 41; }
+
+node - "$INSTALL/package.json" "$INSTALL/config.json" "$STAGE/package.json" "$STAGE/config.json" <<'NODE'
+const fs = require('fs');
+function readJson(path) { return JSON.parse(fs.readFileSync(path, 'utf8')); }
+function identity(config) {
+  const type = config.database;
+  if (!['mongo', 'postgres', 'redis'].includes(type)) throw new Error('unsupported database');
+  const section = config[type];
+  if (!section || typeof section !== 'object') throw new Error('missing database section');
+  const defaults = { mongo: 27017, postgres: 5432, redis: 6379 };
+  const normalizeHost = value => String(value).replace(/^\[|\]$/g, '').toLowerCase();
+  let host = typeof section.host === 'string' && section.host ? normalizeHost(section.host) : '127.0.0.1';
+  let port = Number(section.port || defaults[type]);
+  let database = section.database || section.db || (type === 'redis' ? 0 : '');
+  if (section.uri) {
+    const uri = new URL(section.uri);
+    if (type === 'mongo' && !['mongodb:', 'mongodb+srv:'].includes(uri.protocol)) throw new Error('invalid mongo uri');
+    if (type === 'postgres' && !['postgres:', 'postgresql:'].includes(uri.protocol)) throw new Error('invalid postgres uri');
+    if (type === 'redis' && !['redis:', 'rediss:'].includes(uri.protocol)) throw new Error('invalid redis uri');
+    host = normalizeHost(uri.hostname);
+    port = Number(uri.port || defaults[type]);
+    const pathDatabase = decodeURIComponent(uri.pathname.replace(/^\/+/, ''));
+    if (pathDatabase) database = pathDatabase;
+  }
+  if (!host || !Number.isInteger(port) || port < 1 || port > 65535) throw new Error('invalid endpoint');
+  return JSON.stringify([type, host, port, String(database)]);
+}
+try {
+  const currentPackage = readJson(process.argv[2]);
+  const currentConfig = readJson(process.argv[3]);
+  const incomingPackage = readJson(process.argv[4]);
+  const incomingConfig = readJson(process.argv[5]);
+  if (String(currentPackage.name).toLowerCase() !== 'nodebb' ||
+      String(incomingPackage.name).toLowerCase() !== 'nodebb') throw new Error('not NodeBB');
+  if (identity(currentConfig) !== identity(incomingConfig)) {
+    console.error('הגדרות מסד הנתונים בארכיון שונות מההתקנה הנוכחית; השחזור בוטל כדי למנוע חיבור למסד אחר.');
+    process.exit(30);
+  }
+} catch (error) {
+  if (error && error.message && error.message.includes('הגדרות מסד')) process.exit(30);
+  console.error('לא ניתן לאמת את חבילות NodeBB ואת זהות מסד הנתונים.');
+  process.exit(31);
+}
+NODE
+
+SWAP_STARTED=1
+mv -- "$INSTALL" "$ROLLBACK" || { SWAP_STARTED=0; echo 'לא ניתן להעביר את ההתקנה המקורית לתיקיית החירום.' >&2; exit 43; }
+if ! mv -- "$STAGE" "$INSTALL"; then
+  echo 'לא ניתן להציב את ההתקנה החדשה; מתבצעת החזרה אוטומטית.' >&2
+  exit 43
+fi
+KEEP_ROLLBACK=1
+echo 'FULL_RESTORE_SWITCHED'
+""";
+    }
+
+    internal static string BuildFullInstallationRollbackScript(string installationPath, string workDirectory)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
+            throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
+        return $"""
+set -eu
+INSTALL={{ShellQuote(installationPath)}}
+WORK={{ShellQuote(workDirectory)}}
+WORK_NAME="$(basename "$WORK")"
+PARENT="$(dirname "$INSTALL")"
+ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
+FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
+[ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ] || { echo 'עותק החירום של ההתקנה המקורית לא נמצא.' >&2; exit 44; }
+[ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'תיקיית ההתקנה החדשה אינה תקינה.' >&2; exit 44; }
+[ ! -e "$FAILED" ] || { echo 'תיקיית כשל קודמת כבר קיימת.' >&2; exit 44; }
+mv -- "$INSTALL" "$FAILED" || exit 44
+if ! mv -- "$ROLLBACK" "$INSTALL"; then
+  mv -- "$FAILED" "$INSTALL" || { echo 'CRITICAL: לא ניתן להחזיר את שתי תיקיות ההתקנה למקומן.' >&2; exit 45; }
+  exit 44
+fi
+echo 'FULL_RESTORE_ROLLED_BACK'
+""";
+    }
+
+    internal static string BuildFullInstallationFinalizeScript(
+        string installationPath, string workDirectory, bool removeFailedReplacement)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
+            throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
+        return $"""
+set -eu
+INSTALL={{ShellQuote(installationPath)}}
+WORK={{ShellQuote(workDirectory)}}
+WORK_NAME="$(basename "$WORK")"
+PARENT="$(dirname "$INSTALL")"
+ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
+FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
+[ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'ההתקנה הפעילה אינה תיקייה תקינה.' >&2; exit 46; }
+[ -f "$INSTALL/package.json" ] && [ ! -L "$INSTALL/package.json" ] || { echo 'חבילת NodeBB אינה נמצאת בהתקנה הפעילה.' >&2; exit 46; }
+if [ "{{(removeFailedReplacement ? "1" : "0")}}" = "1" ]; then
+  [ -d "$FAILED" ] && [ ! -L "$FAILED" ] || { echo 'תיקיית ההתקנה שנכשלה לא נמצאה.' >&2; exit 46; }
+  rm -rf -- "$FAILED"
+else
+  [ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ] || { echo 'עותק החירום לא נמצא; לא ניתן לאשר ניקוי.' >&2; exit 46; }
+  rm -rf -- "$ROLLBACK"
+fi
+rm -rf -- "$WORK"
+echo 'FULL_RESTORE_FINALIZED'
+""";
+    }
+
+    private static string GetFullRestoreRollbackPath(string installationPath, string workDirectory)
+    {
+        var workName = workDirectory[(workDirectory.LastIndexOf('/') + 1)..];
+        var parent = installationPath[..installationPath.TrimEnd('/').LastIndexOf('/')];
+        return parent + "/.nodebb-rollback-" + workName;
+    }
+
+    private static async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)
+    {
+        await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+        var hash = await SHA256.HashDataAsync(stream, cancellationToken);
+        return Convert.ToHexString(hash).ToLowerInvariant();
     }
 
     internal static string BuildRestoreScript(string installationPath, string workDirectory, bool restoreUploads)

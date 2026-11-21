@@ -320,5 +320,68 @@ public partial class BackupWindow : Window
         }
     }
 
+
+    private async void RestoreFull_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "בחירת גיבוי התקנה מלאה של NodeBB",
+            Filter = "גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*",
+            CheckFileExists = true,
+            Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+
+        var encrypted = dialog.FileName.EndsWith(".nbbbackup", StringComparison.OrdinalIgnoreCase);
+        var password = RestorePasswordBox.Password;
+        if (encrypted && password.Length < 12)
+        {
+            MessageBox.Show(this, "יש להזין את סיסמת ההצפנה (לפחות 12 תווים).", "סיסמת גיבוי",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        if (MessageBox.Show(this,
+            "שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?",
+            "אישור שחזור התקנה מלאה", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
+            return;
+
+        IsEnabled = false;
+        StatusText.Text = "מכין, מאמת ומעלה את ארכיון ההתקנה...";
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var decrypted = Path.Combine(tempRoot, "full-restore-" + Guid.NewGuid().ToString("N") + ".tar.gz");
+        var archivePath = dialog.FileName;
+        try
+        {
+            if (encrypted)
+            {
+                Directory.CreateDirectory(tempRoot);
+                await BackupEncryptionService.DecryptFileAsync(dialog.FileName, decrypted, password);
+                archivePath = decrypted;
+            }
+
+            StatusText.Text = "מאמת את כל קובצי ההתקנה, עוצר את NodeBB ומכין החלפה בטוחה...";
+            await new RemoteBackupRestoreService(_session).RestoreFullInstallationAsync(_installation, archivePath);
+            StatusText.Text = "התקנת NodeBB המלאה שוחזרה והופעלה בהצלחה.";
+            MessageBox.Show(this,
+                "כל קובצי התקנת NodeBB שוחזרו והשרת הופעל מחדש. מסד הנתונים לא שוחזר ולא שונה.",
+                "שחזור התקנה מלאה הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("BackupUI", "FullRestoreFailed", ex, _session.Profile.Name);
+            StatusText.Text = "שחזור ההתקנה המלאה נכשל: " + ex.Message;
+            MessageBox.Show(this, ex.Message, "שגיאה בשחזור התקנה מלאה", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(decrypted)) File.Delete(decrypted); } catch { }
+            RestorePasswordBox.Clear();
+            EncryptionPasswordBox.Clear();
+            EncryptionConfirmBox.Clear();
+            IsEnabled = true;
+        }
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

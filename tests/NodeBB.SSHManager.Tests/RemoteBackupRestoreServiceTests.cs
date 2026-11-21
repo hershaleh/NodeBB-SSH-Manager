@@ -13,6 +13,62 @@ public sealed class RemoteBackupRestoreServiceTests
     private const string Work = "/tmp/nodebb-file-restore-0123456789abcdef0123456789abcdef";
     private const string ValidConfig = "{\"database\":\"mongo\",\"mongo\":{\"host\":\"127.0.0.1\",\"port\":27017,\"database\":\"nodebb\"}}";
 
+
+    private const string FullWork = "/tmp/nodebb-full-restore-0123456789abcdef0123456789abcdef";
+    private const string ValidHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    [Fact]
+    public void BuildFullInstallationRestoreScript_StagesValidatesAndKeepsEmergencyCopy()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
+            "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
+        Assert.Contains("sha256sum", script);
+        Assert.Contains("EXPECTED_SHA256", script);
+        Assert.Contains("FULL_RESTORE_SWITCHED", script);
+        Assert.Contains("ROLLBACK=", script);
+        Assert.Contains("SWAP_STARTED=1", script);
+        Assert.Contains("KEEP_ROLLBACK=1", script);
+        Assert.Contains("identity(currentConfig) !== identity(incomingConfig)", script);
+        Assert.Contains("find \"$STAGE\" -mindepth 1 ! -type f ! -type d", script);
+        Assert.Contains("df -Pk", script);
+        Assert.Contains("nodebb", script);
+        Assert.DoesNotContain("mongorestore", script);
+        Assert.DoesNotContain("redis-cli FLUSH", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationRollbackScript_RestoresOriginalDirectoryAndPreservesFailedTreeUntilFinalized()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRollbackScript("/srv/nodebb", FullWork);
+        Assert.Contains("mv -- \"$INSTALL\" \"$FAILED\"", script);
+        Assert.Contains("mv -- \"$ROLLBACK\" \"$INSTALL\"", script);
+        Assert.Contains("FULL_RESTORE_ROLLED_BACK", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationFinalizeScript_OnlyDeletesTheExpectedEmergencyDirectory()
+    {
+        var success = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, false);
+        var rollback = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, true);
+        Assert.Contains("rm -rf -- \"$ROLLBACK\"", success);
+        Assert.DoesNotContain("rm -rf -- \"$FAILED\"", success);
+        Assert.Contains("rm -rf -- \"$FAILED\"", rollback);
+        Assert.DoesNotContain("rm -rf -- \"$ROLLBACK\"", rollback);
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb", FullWork, ValidHash, 1024)]
+    [InlineData("/", FullWork, ValidHash, 1024)]
+    [InlineData("/srv/nodebb", "/tmp/wrong", ValidHash, 1024)]
+    [InlineData("/srv/nodebb", FullWork, "bad-hash", 1024)]
+    [InlineData("/srv/nodebb", FullWork, ValidHash, 0)]
+    [InlineData("/srv/nodebb", FullWork, ValidHash, 100L * 1024 * 1024 * 1024 + 1)]
+    public void BuildFullInstallationRestoreScript_RejectsUnsafeInputs(
+        string installationPath, string workDirectory, string hash, long expandedBytes) =>
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
+                installationPath, workDirectory, hash, expandedBytes));
+
     [Fact]
     public void BuildRestoreScript_UsesStagingRollbackAndDatabaseIdentityGuard()
     {
