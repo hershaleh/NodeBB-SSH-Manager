@@ -1,5 +1,10 @@
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Threading;
+using System.Threading.Tasks;
 using NodeBB.SSHManager.Services;
 using Xunit;
 
@@ -88,4 +93,74 @@ public sealed class AppUpdateServiceTests
         Assert.Throws<InvalidDataException>(() =>
             AppUpdateService.ParseChecksumManifest(line + "\n" + line, AppUpdateService.InstallerFileName));
     }
+    [Fact]
+    public async Task DownloadInstallerAsync_VerifiesChecksumAndWindowsHeaderBeforeReturningPath()
+    {
+        var installerBytes = new byte[] { (byte)'M', (byte)'Z', 0x01, 0x02, 0x03, 0x04 };
+        var hash = Convert.ToHexString(SHA256.HashData(installerBytes)).ToLowerInvariant();
+        using var client = new HttpClient(new StubHandler(request =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (path.EndsWith(AppUpdateService.ChecksumsFileName, StringComparison.Ordinal))
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(hash + "  " + AppUpdateService.InstallerFileName)
+                };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(installerBytes)
+            };
+        }));
+        var service = new AppUpdateService(client);
+        var update = CreateUpdateInfo();
+
+        var path = await service.DownloadInstallerAsync(update);
+        try
+        {
+            Assert.Equal(installerBytes, await File.ReadAllBytesAsync(path));
+        }
+        finally
+        {
+            try { if (File.Exists(path)) File.Delete(path); } catch { }
+        }
+    }
+
+    [Fact]
+    public async Task DownloadInstallerAsync_RejectsChecksumMismatchAndDoesNotLeavePartialFile()
+    {
+        var installerBytes = new byte[] { (byte)'M', (byte)'Z', 0x10, 0x20 };
+        using var client = new HttpClient(new StubHandler(request =>
+        {
+            var path = request.RequestUri!.AbsolutePath;
+            if (path.EndsWith(AppUpdateService.ChecksumsFileName, StringComparison.Ordinal))
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(new string('0', 64) + "  " + AppUpdateService.InstallerFileName)
+                };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new ByteArrayContent(installerBytes)
+            };
+        }));
+        var service = new AppUpdateService(client);
+        await Assert.ThrowsAsync<CryptographicException>(() => service.DownloadInstallerAsync(CreateUpdateInfo()));
+    }
+
+    private static AppUpdateInfo CreateUpdateInfo() => new(
+        new Version(0, 2, 0),
+        "v0.2.0",
+        new Uri("https://github.com/hershaleh/NodeBB-SSH-Manager/releases/tag/v0.2.0"),
+        new Uri("https://github.com/hershaleh/NodeBB-SSH-Manager/releases/download/v0.2.0/" + AppUpdateService.InstallerFileName),
+        new Uri("https://github.com/hershaleh/NodeBB-SSH-Manager/releases/download/v0.2.0/" + AppUpdateService.ChecksumsFileName));
+
+    private sealed class StubHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _respond;
+
+        public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) => _respond = respond;
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(_respond(request));
+    }
+
 }

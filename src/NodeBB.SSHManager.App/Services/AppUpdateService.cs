@@ -31,7 +31,11 @@ public sealed class AppUpdateService
     public const string ChecksumsFileName = "SHA256SUMS.txt";
     private const long MaximumInstallerBytes = 512L * 1024 * 1024;
     private const string LatestReleaseApi = "https://api.github.com/repos/hershaleh/NodeBB-SSH-Manager/releases/latest";
-    private static readonly HttpClient Http = CreateHttpClient();
+    private static readonly HttpClient SharedHttp = CreateHttpClient();
+    private readonly HttpClient _http;
+
+    public AppUpdateService(HttpClient? httpClient = null) =>
+        _http = httpClient ?? SharedHttp;
 
     private static HttpClient CreateHttpClient()
     {
@@ -44,7 +48,7 @@ public sealed class AppUpdateService
     public async Task<AppUpdateCheckResult> CheckAsync(CancellationToken cancellationToken = default)
     {
         var current = GetCurrentVersion();
-        using var response = await Http.GetAsync(LatestReleaseApi, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await _http.GetAsync(LatestReleaseApi, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         if (response.StatusCode == HttpStatusCode.NotFound)
             return new AppUpdateCheckResult(current, null, false, null, "עדיין לא פורסמה גרסה יציבה של התוכנה.");
 
@@ -109,10 +113,10 @@ public sealed class AppUpdateService
     public async Task<string> DownloadInstallerAsync(AppUpdateInfo update, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(update);
-        var manifest = await Http.GetStringAsync(update.ChecksumsUri, cancellationToken);
+        var manifest = await _http.GetStringAsync(update.ChecksumsUri, cancellationToken);
         var expectedHash = ParseChecksumManifest(manifest, InstallerFileName);
 
-        using var response = await Http.GetAsync(update.InstallerUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        using var response = await _http.GetAsync(update.InstallerUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
         response.EnsureSuccessStatusCode();
         if (response.Content.Headers.ContentLength is > MaximumInstallerBytes)
             throw new InvalidDataException("קובץ מתקין העדכון גדול מהמותר.");
