@@ -204,10 +204,7 @@ public sealed class RemoteBackupRestoreService
 
     internal static string BuildRestoreScript(string installationPath, string workDirectory, bool restoreUploads)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || !installationPath.StartsWith("/", StringComparison.Ordinal) ||
-            installationPath == "/" || installationPath.Any(char.IsControl) ||
-            installationPath.Split('/').Any(segment => segment is "." or ".."))
-            throw new ArgumentException("נתיב התקנת NodeBB חייב להיות נתיב מוחלט ובטוח בשרת.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-file-restore-[a-f0-9]{32}$"))
             throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
 

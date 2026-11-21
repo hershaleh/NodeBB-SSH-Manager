@@ -124,8 +124,7 @@ public sealed class NodeBbUpgradeService
 
     internal static string BuildHealthCheckScript(string installationPath, int timeoutSeconds = 45)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (timeoutSeconds is < 10 or > 120)
             throw new ArgumentOutOfRangeException(nameof(timeoutSeconds), "זמן בדיקת הבריאות חייב להיות בין 10 ל-120 שניות.");
 
@@ -191,8 +190,7 @@ NODE
 
     internal static string BuildPreflightScript(string installationPath)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         var path = ShellQuote(installationPath);
         return $$"""
 set +e
@@ -225,16 +223,14 @@ fi
 
     internal static string BuildVerifyTargetTagScript(string installationPath, string targetTag)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!IsValidTargetTag(targetTag)) throw new ArgumentException("תגית הגרסה אינה תקינה.", nameof(targetTag));
         return $"set -eu\ncd {ShellQuote(installationPath)}\ngit fetch --tags origin\nif ! git rev-parse --verify {ShellQuote("refs/tags/" + targetTag + "^{commit}")} >/dev/null 2>&1; then echo \"Tag not found on origin.\" >&2; exit 33; fi\n";
     }
 
     internal static string BuildUpgradeScript(string installationPath, string targetTag, string expectedCommit)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!IsValidTargetTag(targetTag)) throw new ArgumentException("תגית הגרסה אינה תקינה.", nameof(targetTag));
         if (!Regex.IsMatch(expectedCommit, "^[a-fA-F0-9]{40,64}$"))
             throw new ArgumentException("מזהה commit קודם אינו תקין.", nameof(expectedCommit));

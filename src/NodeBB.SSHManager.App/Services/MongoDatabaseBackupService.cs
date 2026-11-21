@@ -36,7 +36,7 @@ public sealed class MongoDatabaseBackupService
     }
     internal static string BuildBackupScript(string installationPath, string workDirectory)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0) throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!System.Text.RegularExpressions.Regex.IsMatch(workDirectory, @"^/tmp/nodebb-mongo-backup-[a-f0-9]{32}$")) throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
         return $$"""
 set -eu

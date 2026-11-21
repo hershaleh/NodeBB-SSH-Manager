@@ -149,6 +149,7 @@ public sealed class RemoteBackupService
 
     private static string BuildArchiveCommand(string installationPath, string archivePath, RemoteBackupKind kind)
     {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         var path = ShellQuote(installationPath);
         var archive = ShellQuote(archivePath);
         return kind switch

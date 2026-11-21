@@ -83,8 +83,7 @@ public sealed class MongoDatabaseRestoreService
 
     internal static string BuildRestoreScript(string installationPath, string workDirectory)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-mongo-restore-[a-f0-9]{32}$"))
             throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
         return $$"""
