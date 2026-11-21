@@ -92,7 +92,13 @@ public sealed class RemoteBackupRestoreService
                 }
                 else
                 {
-                    await entry.DataStream.CopyToAsync(Stream.Null, cancellationToken);
+                    var entryBuffer = new byte[131072];
+                    long entryBytes = 0;
+                    int read;
+                    while ((read = await entry.DataStream.ReadAsync(entryBuffer, cancellationToken)) > 0)
+                        entryBytes += read;
+                    if (entryBytes != entry.Length)
+                        throw new InvalidDataException($"קובץ בארכיון נקטע: {path}");
                 }
             }
             else if (entry.DataStream is not null)
@@ -198,8 +204,10 @@ public sealed class RemoteBackupRestoreService
 
     internal static string BuildRestoreScript(string installationPath, string workDirectory, bool restoreUploads)
     {
-        if (string.IsNullOrWhiteSpace(installationPath) || installationPath.IndexOf('\0') >= 0)
-            throw new ArgumentException("נתיב התקנת NodeBB אינו תקין.", nameof(installationPath));
+        if (string.IsNullOrWhiteSpace(installationPath) || !installationPath.StartsWith("/", StringComparison.Ordinal) ||
+            installationPath == "/" || installationPath.Any(char.IsControl) ||
+            installationPath.Split('/').Any(segment => segment is "." or ".."))
+            throw new ArgumentException("נתיב התקנת NodeBB חייב להיות נתיב מוחלט ובטוח בשרת.", nameof(installationPath));
         if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-file-restore-[a-f0-9]{32}$"))
             throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
 
@@ -349,8 +357,9 @@ echo 'NodeBB configuration/uploads restore completed.'
 
     private static string SanitizeError(string error)
     {
+        var redactedError = DiagnosticLogService.Redact(error);
         var safe = string.Join(Environment.NewLine,
-            error.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            redactedError.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .Where(line => !line.Contains("password", StringComparison.OrdinalIgnoreCase)
                     && !line.Contains("credential", StringComparison.OrdinalIgnoreCase)
                     && !line.Contains("mongodb://", StringComparison.OrdinalIgnoreCase)

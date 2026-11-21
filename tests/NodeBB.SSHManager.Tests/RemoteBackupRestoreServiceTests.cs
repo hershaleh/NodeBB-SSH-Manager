@@ -35,6 +35,15 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("RESTORE_UPLOADS=0", script);
     }
 
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    [InlineData("/srv/nodebb/./forum")]
+    [InlineData("/srv/nodebb\nforum")]
+    public void BuildRestoreScript_RejectsUnsafeInstallationPaths(string path) =>
+        Assert.Throws<ArgumentException>(() => RemoteBackupRestoreService.BuildRestoreScript(path, Work, true));
+
     [Fact]
     public void BuildRestoreScript_QuotesInstallationPath()
     {
@@ -88,6 +97,23 @@ public sealed class RemoteBackupRestoreServiceTests
 
             await CreateArchiveAsync(bad, ("../config.json", TarEntryType.RegularFile, "{}"));
             await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(bad));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateEssentialArchive_RejectsTruncatedArchive()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "truncated.tar.gz");
+        try
+        {
+            await CreateArchiveAsync(path,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("public/uploads/large.bin", TarEntryType.RegularFile, new string('x', 8192)));
+            var bytes = await File.ReadAllBytesAsync(path);
+            await File.WriteAllBytesAsync(path, bytes[..Math.Max(1, bytes.Length / 2)]);
+            await Assert.ThrowsAnyAsync<Exception>(() => RemoteBackupRestoreService.ValidateEssentialArchiveAsync(path));
         }
         finally { Directory.Delete(directory, true); }
     }
