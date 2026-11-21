@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Windows;
 using System.Windows.Controls;
 using NodeBB.SSHManager.Services;
@@ -26,17 +27,17 @@ public partial class NodeBbLogsWindow : Window
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "קורא לוגים...";
+        StatusText.Text = LocalizationService.Instance.Translate("קורא לוגים...");
         try
         {
             _rawLogs = await _service.ReadRecentLogsAsync(_installation);
             ApplyFilter();
-            StatusText.Text = "הלוגים עודכנו.";
+            StatusText.Text = LocalizationService.Instance.Translate("הלוגים עודכנו.");
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("NodeBBLogsUI", "RefreshFailed", ex, _session.Profile.Name);
-            StatusText.Text = "קריאת הלוגים נכשלה: " + ex.Message;
+            StatusText.Text = LocalizationService.Instance.Translate("קריאת הלוגים נכשלה: ") + ex.Message;
         }
         finally { RefreshButton.IsEnabled = true; }
     }
@@ -62,12 +63,12 @@ public partial class NodeBbLogsWindow : Window
         try
         {
             Clipboard.SetText(LogTextBox.Text);
-            StatusText.Text = "התצוגה הועתקה ללוח.";
+            StatusText.Text = LocalizationService.Instance.Translate("התצוגה הועתקה ללוח.");
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("NodeBBLogsUI", "CopyFailed", ex, _session.Profile.Name);
-            StatusText.Text = "ההעתקה נכשלה: " + ex.Message;
+            StatusText.Text = LocalizationService.Instance.Translate("ההעתקה נכשלה: ") + ex.Message;
         }
     }
 }

@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Collections.ObjectModel;
 using System.Windows;
 using NodeBB.SSHManager.Services;
@@ -27,7 +28,7 @@ public partial class SecurityAuditWindow : Window
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "בודק הגדרות אבטחה...";
+        StatusText.Text = LocalizationService.Instance.Translate("בודק הגדרות אבטחה...");
         try
         {
             var findings = await _service.RunAsync(_installation);
@@ -40,7 +41,7 @@ public partial class SecurityAuditWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SecurityAuditUI", "RefreshFailed", ex, _session.Profile.Name);
-            StatusText.Text = "בדיקת האבטחה נכשלה: " + ex.Message;
+            StatusText.Text = LocalizationService.Instance.Translate("בדיקת האבטחה נכשלה: ") + ex.Message;
         }
         finally { RefreshButton.IsEnabled = true; }
     }

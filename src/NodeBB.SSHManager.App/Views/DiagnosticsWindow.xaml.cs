@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Windows;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Services;
@@ -16,27 +17,27 @@ public partial class DiagnosticsWindow : Window
     {
         var dialog = new SaveFileDialog
         {
-            Title = "שמירת דוח אבחון",
+            Title = LocalizationService.Instance.Translate("שמירת דוח אבחון"),
             FileName = $"NodeBB-SSH-Diagnostics-{DateTime.Now:yyyyMMdd-HHmm}.zip",
-            Filter = "קובץ ZIP|*.zip",
+            Filter = LocalizationService.Instance.Translate("קובץ ZIP|*.zip"),
             DefaultExt = ".zip",
             AddExtension = true
         };
         if (dialog.ShowDialog(this) != true) return;
 
         IsEnabled = false;
-        StatusText.Text = "אוסף יומנים ומכין דוח...";
+        StatusText.Text = LocalizationService.Instance.Translate("אוסף יומנים ומכין דוח...");
         try
         {
             await DiagnosticLogService.Instance.ExportReportAsync(dialog.FileName);
-            StatusText.Text = "דוח האבחון נשמר בהצלחה.";
+            StatusText.Text = LocalizationService.Instance.Translate("דוח האבחון נשמר בהצלחה.");
             MessageBox.Show(this, $"הדוח נשמר בנתיב:\n{dialog.FileName}", "הייצוא הושלם",
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("Diagnostics", "ReportExportFailed", ex);
-            StatusText.Text = "ייצוא הדוח נכשל.";
+            StatusText.Text = LocalizationService.Instance.Translate("ייצוא הדוח נכשל.");
             MessageBox.Show(this, ex.Message, "שגיאה בייצוא", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { IsEnabled = true; }

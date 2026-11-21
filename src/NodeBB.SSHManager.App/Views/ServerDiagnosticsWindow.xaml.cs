@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Collections.ObjectModel;
 using System.Windows;
 using NodeBB.SSHManager.Services;
@@ -27,7 +28,7 @@ public partial class ServerDiagnosticsWindow : Window
     private async Task DetectAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "סורק את השרת...";
+        StatusText.Text = LocalizationService.Instance.Translate("סורק את השרת...");
         try
         {
             var data = await _service.DetectAsync();
@@ -50,12 +51,12 @@ public partial class ServerDiagnosticsWindow : Window
             _items.Add(new("PM2", data.Pm2Version));
             _items.Add(new("פקודת NodeBB גלובלית", data.NodeBbCliAvailable ? "זמינה" : "לא נמצאה"));
             DetectedAtText.Text = $"עודכן: {data.DetectedAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
-            StatusText.Text = "הסריקה הושלמה.";
+            StatusText.Text = LocalizationService.Instance.Translate("הסריקה הושלמה.");
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("InventoryUI", "InventoryDisplayFailed", ex, _session.Profile.Name);
-            StatusText.Text = "הסריקה נכשלה: " + ex.Message;
+            StatusText.Text = LocalizationService.Instance.Translate("הסריקה נכשלה: ") + ex.Message;
         }
         finally { RefreshButton.IsEnabled = true; }
     }

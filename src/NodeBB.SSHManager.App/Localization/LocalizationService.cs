@@ -429,6 +429,44 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_7156a392"] = ("המערכת מציגה מידע ופעולות בהתאם להרשאות שניתנו לחשבון בשרת.", "The application displays information and actions according to the permissions granted to the server account."),
             ["View_5f50dc94"] = ("ההצפנה נעשית באמצעות Windows DPAPI. הפרט אינו נשמר בקובץ פרופילי השרתים ואינו נכלל בדוח האבחון.", "Encryption uses Windows DPAPI. The secret is not stored in the server profiles file or included in diagnostic reports."),
             ["View_b199d765"] = ("חשבונות SSH מוגבלים שאינם מספקים מעטפת מערכת רגילה יסומנו כלא נתמכים בהשוואת פרטי מערכת.", "Restricted SSH accounts without a normal system shell are marked unsupported for system-information comparison."),
+            ["Runtime_13ffba5e"] = ("עריכת שרת", "Edit server"),
+            ["Runtime_f82bd710"] = ("עריכת פרופיל שרת", "Edit server profile"),
+            ["Runtime_f4306af8"] = ("בחירת מפתח SSH פרטי", "Select private SSH key"),
+            ["Runtime_5055682b"] = ("שם הקבוצה יכול להכיל עד 80 תווים ואינו יכול להכיל תווי בקרה.", "Group name can contain up to 80 characters and cannot contain control characters."),
+            ["Runtime_1fc8c081"] = ("שם קבוצה לא תקין", "Invalid group name"),
+            ["Runtime_2aae179"] = ("יש למלא שם, כתובת, משתמש ופורט תקין.", "Enter a name, address, username, and valid port."),
+            ["Runtime_6739a6b2"] = ("נתונים חסרים", "Missing information"),
+            ["Runtime_7530e221"] = ("בחר קובץ מפתח SSH פרטי קיים.", "Select an existing private SSH key file."),
+            ["Runtime_3074be2"] = ("מפתח SSH חסר", "SSH key missing"),
+            ["Runtime_3c7aaa72"] = ("שמירת דוח אבחון", "Save diagnostic report"),
+            ["Runtime_59bc4897"] = ("קובץ ZIP|*.zip", "ZIP file|*.zip"),
+            ["Runtime_db5613e9"] = ("אוסף יומנים ומכין דוח...", "Collecting logs and preparing report..."),
+            ["Runtime_320c18e5"] = ("דוח האבחון נשמר בהצלחה.", "Diagnostic report saved successfully."),
+            ["Runtime_4dd358c5"] = ("הייצוא הושלם", "Export completed"),
+            ["Runtime_acf797fd"] = ("ייצוא הדוח נכשל.", "Report export failed."),
+            ["Runtime_b07664ef"] = ("שגיאה בייצוא", "Export error"),
+            ["Runtime_e6d38b56"] = ("קורא לוגים...", "Reading logs..."),
+            ["Runtime_47b64bfa"] = ("הלוגים עודכנו.", "Logs updated."),
+            ["Runtime_4035b74e"] = ("קריאת הלוגים נכשלה: ", "Failed to read logs: "),
+            ["Runtime_ed6acf1a"] = ("התצוגה הועתקה ללוח.", "View copied to clipboard."),
+            ["Runtime_6b666cc0"] = ("ההעתקה נכשלה: ", "Copy failed: "),
+            ["Runtime_3c7aaa72"] = ("שמירת דוח אבחון", "Save diagnostic report"),
+            ["Runtime_646c3203"] = ("בודק הגדרות אבטחה...", "Checking security settings..."),
+            ["Runtime_1d6257eb"] = ("בדיקת האבטחה נכשלה: ", "Security check failed: "),
+            ["Runtime_bd4cb91"] = ("סורק את השרת...", "Scanning server..."),
+            ["Runtime_e66ec90e"] = ("שם שרת", "Server name"),
+            ["Runtime_81642274"] = ("מנהל שירותים", "Service manager"),
+            ["Runtime_a726b88b"] = ("מנהל חבילות", "Package manager"),
+            ["Runtime_a224f42d"] = ("משתמש SSH", "SSH user"),
+            ["Runtime_474cfa75"] = ("הרשאות root", "Root privileges"),
+            ["Runtime_e46dde7f"] = ("כן", "Yes"),
+            ["Runtime_ab60b8d1"] = ("לא", "No"),
+            ["Runtime_f8253d1"] = ("פקודת NodeBB גלובלית", "Global NodeBB command"),
+            ["Runtime_4f73108"] = ("זמינה", "Available"),
+            ["Runtime_27d5710d"] = ("לא נמצאה", "Not found"),
+            ["Runtime_6fa65629"] = ("עודכן: ", "Updated: "),
+            ["Runtime_d5ab4e18"] = ("הסריקה הושלמה.", "Scan completed."),
+            ["Runtime_e6789ac"] = ("הסריקה נכשלה: ", "Scan failed: "),
         };
 
     public static LocalizationService Instance => LazyInstance.Value;
@@ -441,6 +479,16 @@ public sealed class LocalizationService : INotifyPropertyChanged
             "NodeBB SSH Manager", "language.json");
         Load();
         ApplyCulture();
+    }
+
+
+    public string Translate(string hebrewText)
+    {
+        if (_language != "en" || string.IsNullOrEmpty(hebrewText)) return hebrewText;
+        foreach (var translation in Texts.Values)
+            if (string.Equals(translation.He, hebrewText, StringComparison.Ordinal))
+                return translation.En;
+        return hebrewText;
     }
 
     public string Language => _language;
