@@ -146,6 +146,34 @@ public sealed class AppUpdateServiceTests
         await Assert.ThrowsAsync<CryptographicException>(() => service.DownloadInstallerAsync(CreateUpdateInfo()));
     }
 
+
+    [Theory]
+    [InlineData("https://github.com.evil.invalid/release")]
+    [InlineData("https://user@github.com/release")]
+    [InlineData("https://github.com:444/release")]
+    [InlineData("http://github.com/release")]
+    public void ParseReleaseMetadata_RejectsGitHubLookalikeOrNonHttpsUris(string uri)
+    {
+        var json = ReleaseJson.Replace(
+            "https://github.com/hershaleh/NodeBB-SSH-Manager/releases/tag/v0.2.0", uri,
+            StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
+    }
+
+    [Fact]
+    public async Task DownloadInstallerAsync_RejectsOversizedChecksumManifest()
+    {
+        using var client = new HttpClient(new StubHandler(_ =>
+            new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(new string('x', 70 * 1024))
+            }));
+        var service = new AppUpdateService(client);
+        await Assert.ThrowsAsync<InvalidDataException>(() =>
+            service.DownloadInstallerAsync(CreateUpdateInfo()));
+    }
+
     private static AppUpdateInfo CreateUpdateInfo() => new(
         new Version(0, 2, 0),
         "v0.2.0",

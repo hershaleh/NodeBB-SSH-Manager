@@ -30,6 +30,8 @@ public sealed class AppUpdateService
     public const string InstallerFileName = "NodeBB-SSH-Manager-Setup-win-x64.exe";
     public const string ChecksumsFileName = "SHA256SUMS.txt";
     private const long MaximumInstallerBytes = 512L * 1024 * 1024;
+    private const int MaximumReleaseMetadataBytes = 1024 * 1024;
+    private const int MaximumChecksumManifestBytes = 64 * 1024;
     private const string LatestReleaseApi = "https://api.github.com/repos/hershaleh/NodeBB-SSH-Manager/releases/latest";
     private static readonly HttpClient SharedHttp = CreateHttpClient();
     private readonly HttpClient _http;
@@ -53,7 +55,7 @@ public sealed class AppUpdateService
             return new AppUpdateCheckResult(current, null, false, null, "עדיין לא פורסמה גרסה יציבה של התוכנה.");
 
         response.EnsureSuccessStatusCode();
-        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        var json = await ReadBoundedTextAsync(response.Content, MaximumReleaseMetadataBytes, "פרטי הגרסה ב-GitHub", cancellationToken);
         return ParseReleaseMetadata(json, current);
     }
 
@@ -113,7 +115,9 @@ public sealed class AppUpdateService
     public async Task<string> DownloadInstallerAsync(AppUpdateInfo update, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(update);
-        var manifest = await _http.GetStringAsync(update.ChecksumsUri, cancellationToken);
+        using var manifestResponse = await _http.GetAsync(update.ChecksumsUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        manifestResponse.EnsureSuccessStatusCode();
+        var manifest = await ReadBoundedTextAsync(manifestResponse.Content, MaximumChecksumManifestBytes, "קובץ סכומי הביקורת", cancellationToken);
         var expectedHash = ParseChecksumManifest(manifest, InstallerFileName);
 
         using var response = await _http.GetAsync(update.InstallerUri, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
@@ -199,8 +203,8 @@ public sealed class AppUpdateService
 
     private static Uri GetTrustedGitHubUri(JsonElement root, string propertyName)
     {
-        if (!root.TryGetProperty(propertyName, out var element) || !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri)
-            || uri.Scheme != Uri.UriSchemeHttps || !string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+        if (!root.TryGetProperty(propertyName, out var element) || element.ValueKind != JsonValueKind.String ||
+            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri))
             throw new InvalidDataException("כתובת דף הגרסה אינה כתובת GitHub HTTPS מאושרת.");
         return uri;
     }
@@ -208,11 +212,33 @@ public sealed class AppUpdateService
     private static Uri GetTrustedAssetUri(JsonElement asset)
     {
         if (!asset.TryGetProperty("browser_download_url", out var element) ||
-            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) ||
-            uri.Scheme != Uri.UriSchemeHttps ||
-            !string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase))
+            element.ValueKind != JsonValueKind.String ||
+            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri))
             throw new InvalidDataException("כתובת קובץ העדכון אינה כתובת GitHub HTTPS מאושרת.");
         return uri;
+    }
+
+    private static bool IsTrustedGitHubUri(Uri uri) =>
+        uri.IsAbsoluteUri && uri.Scheme == Uri.UriSchemeHttps &&
+        string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
+        uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo);
+
+    private static async Task<string> ReadBoundedTextAsync(HttpContent content, int maximumBytes, string description,
+        CancellationToken cancellationToken)
+    {
+        if (content.Headers.ContentLength is > 0 && content.Headers.ContentLength > maximumBytes)
+            throw new InvalidDataException($"{description} גדול מהמותר.");
+        await using var input = await content.ReadAsStreamAsync(cancellationToken);
+        using var output = new MemoryStream();
+        var buffer = new byte[8192];
+        int read;
+        while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
+        {
+            if (output.Length + read > maximumBytes)
+                throw new InvalidDataException($"{description} גדול מהמותר.");
+            output.Write(buffer, 0, read);
+        }
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     private static Version NormalizeVersion(Version version) =>
