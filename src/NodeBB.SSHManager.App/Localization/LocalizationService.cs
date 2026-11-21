@@ -413,6 +413,22 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["View_143bbcdb"] = ("מידע שיכול לסייע להבין מה קדם לתקלה", "Information that may help identify what happened before an issue"),
             ["View_29b94f10"] = ("הדוח אינו כולל סיסמאות, מפתחות פרטיים, פרופילי שרתים או תוכן קבצים מרוחקים. מידע רגיש עובר הסתרה לפני הייצוא. אין שליחה אוטומטית — הדוח נשמר אצלך בלבד.", "The report excludes passwords, private keys, server profiles, and remote file contents. Sensitive information is redacted before export. Nothing is sent automatically — the report is saved only on your computer."),
             ["View_f41e5694"] = ("מקור: קובץ הלוג שהוגדר ב-config.json (ברירת מחדל: logs/output.log). הלוגים אינם משנים את השרת.", "Source: log file configured in config.json (default: logs/output.log). Viewing logs does not modify the server."),
+            ["View_ecc7a683"] = ("לפני עצירת NodeBB נוצרים גיבוי מוצפן של מסד הנתונים וגיבוי מוצפן של config.json, קובצי התצורה והעלאות. התוכן מפוענח ונבדק מול המקור. אם יצירה או אימות נכשלים, השדרוג לא יתחיל. מיגרציות מסד נתונים אינן מתבטלות אוטומטית; במקרה כשל NodeBB יישאר עצור.", "Before NodeBB is stopped, encrypted backups are created for the database and for config.json, configuration files, and uploads. The contents are decrypted and verified against the originals. The upgrade will not start if creation or verification fails. Database migrations are not automatically reversed; NodeBB remains stopped if the upgrade fails."),
+            ["View_226836e9"] = ("אני מבין שגיבוי Redis כולל את כל שרת Redis וכל המסדים הלוגיים שבו, ולא רק את NodeBB; שחזור Redis עדיין דורש פעולה ידנית.", "I understand that a Redis backup includes the entire Redis server and all logical databases, not only NodeBB; Redis restoration still requires a manual procedure."),
+            ["View_9c685ead"] = ("אני מבין שמיגרציות מסד נתונים אינן מתבטלות אוטומטית במקרה כשל.", "I understand that database migrations are not automatically reversed if an upgrade fails."),
+            ["View_d07a5b72"] = ("הגיבויים נוצרים לפני עצירת NodeBB. השדרוג יתחיל רק לאחר שכל בדיקות המוכנות והגיבוי יעברו בהצלחה.", "Backups are created before NodeBB is stopped. The upgrade starts only after all readiness and backup checks pass."),
+            ["View_3e999437"] = ("ניהול תוספים", "Plugin management"),
+            ["View_e371cbca"] = ("רענון מהשרת", "Refresh from server"),
+            ["View_ebe77ff"] = ("קובץ ZIP מועלה ישירות לשרת (עד 25MB). לאחר ההעלאה אפשר להתקין אותו מכאן.", "The ZIP file is uploaded directly to the server (up to 25 MB). After upload, you can install it here."),
+            ["View_5ddd90a4"] = ("לחץ על «רענון מהשרת» כדי להציג את התוספים ככרטיסים.", "Click “Refresh from server” to display plugins as cards."),
+            ["View_518239dd"] = ("בחר פעולה במרכז הבקרה או במסך התוספים. התוצאות יוצגו כאן בעברית ברורה.", "Choose an action in the control center or plugin screen. Results will appear here."),
+            ["View_302a5221"] = ("הפלט המקורי והפקודות הטכניות נשמרים בנפרד. להצגתם לחץ על «הצג טרמינל».", "Original output and technical commands are stored separately. Click “Show terminal” to view them."),
+            ["View_ccbae3cc"] = ("היסטוריית פעולות בשרת הזה", "Activity history for this server"),
+            ["View_8739a5b5"] = ("עדיין לא נשמרו פעולות", "No actions have been recorded yet"),
+            ["View_e481fe8a"] = ("כאן תופיע היסטוריית הפעולות המקומית. היא נשמרת במחשב ואינה נשלחת לשרת.", "Local action history will appear here. It is stored on this computer and is not sent to the server."),
+            ["View_7156a392"] = ("המערכת מציגה מידע ופעולות בהתאם להרשאות שניתנו לחשבון בשרת.", "The application displays information and actions according to the permissions granted to the server account."),
+            ["View_5f50dc94"] = ("ההצפנה נעשית באמצעות Windows DPAPI. הפרט אינו נשמר בקובץ פרופילי השרתים ואינו נכלל בדוח האבחון.", "Encryption uses Windows DPAPI. The secret is not stored in the server profiles file or included in diagnostic reports."),
+            ["View_b199d765"] = ("חשבונות SSH מוגבלים שאינם מספקים מעטפת מערכת רגילה יסומנו כלא נתמכים בהשוואת פרטי מערכת.", "Restricted SSH accounts without a normal system shell are marked unsupported for system-information comparison."),
         };
 
     public static LocalizationService Instance => LazyInstance.Value;

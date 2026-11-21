@@ -128,12 +128,12 @@
       <Button Style="{StaticResource Tile}" Click="Zips_Click" Margin="0,0,10,0"><StackPanel><TextBlock Text="▤" FontSize="26" Foreground="#526BDF"/><TextBlock Text="{loc:Tr View_f22829c2}" FontSize="16" FontWeight="Bold" Margin="0,10,0,4"/><TextBlock Text="{loc:Tr View_be1ed06c}" Foreground="#8994A6" FontSize="11"/></StackPanel></Button>
      </UniformGrid></ScrollViewer>
     </TabItem>
-    <TabItem Header="ניהול תוספים">
+    <TabItem Header="{loc:Tr View_3e999437}">
      <Grid Margin="0,12,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Grid Grid.Row="0"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
        <StackPanel><TextBlock Text="{loc:Tr View_bc8c66ee}" FontSize="21" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="PluginCountText" Text="{loc:Tr View_e32ff0a1}" Foreground="#75849A" FontSize="12" Margin="0,4,0,0"/>
         <TextBlock x:Name="PluginActionStatus" Text="{loc:Tr View_5cb74edb}" Foreground="#4965B8" FontSize="11" FontWeight="SemiBold" Margin="0,6,0,0"/></StackPanel>
-       <Button Grid.Column="1" Content="רענון מהשרת" Click="List_Click" Padding="15,9" VerticalAlignment="Center"/>
+       <Button Grid.Column="1" Content="{loc:Tr View_e371cbca}" Click="List_Click" Padding="15,9" VerticalAlignment="Center"/>
       </Grid>
       <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="16" Padding="16" Margin="0,14,0,14">
        <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -144,7 +144,7 @@
          <Button x:Name="UploadZipButton" Grid.Column="2" Content="{loc:Tr View_e923bce8}" Click="UploadZip_Click" Padding="14,9" Margin="9,0,0,0" Background="#EEF2FF" Foreground="#344CC2" BorderBrush="#D9E1FF" Visibility="Collapsed"/>
          <Button Grid.Column="3" Content="{loc:Tr View_3dcb8a28}" Click="Install_Click" Padding="19,9" Margin="9,0,0,0" Background="#3659D9" Foreground="White" BorderThickness="0"/>
         </Grid>
-        <TextBlock Grid.Row="2" Text="קובץ ZIP מועלה ישירות לשרת (עד 25MB). לאחר ההעלאה אפשר להתקין אותו מכאן." Foreground="#7C8AA0" FontSize="11" Margin="0,8,0,0"/>
+        <TextBlock Grid.Row="2" Text="{loc:Tr View_ebe77ff}" Foreground="#7C8AA0" FontSize="11" Margin="0,8,0,0"/>
        </Grid>
       </Border>
       <Grid Grid.Row="2"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
@@ -186,7 +186,7 @@
          </ItemsControl>
         </ScrollViewer>
         <Border x:Name="PluginEmptyState" Background="#F8FAFD" BorderBrush="#E4EAF2" BorderThickness="1" CornerRadius="16" Padding="28" HorizontalAlignment="Stretch" VerticalAlignment="Center" Visibility="Visible">
-         <StackPanel HorizontalAlignment="Center"><TextBlock Text="▦" FontSize="32" Foreground="#A3B1C7" HorizontalAlignment="Center"/><TextBlock x:Name="PluginEmptyTitle" Text="{loc:Tr View_8beb32a1}" FontSize="15" FontWeight="Bold" Foreground="#4B5B72" HorizontalAlignment="Center" Margin="0,9,0,4"/><TextBlock x:Name="PluginEmptyDescription" Text="לחץ על «רענון מהשרת» כדי להציג את התוספים ככרטיסים." FontSize="11" Foreground="#8794A8" HorizontalAlignment="Center"/></StackPanel>
+         <StackPanel HorizontalAlignment="Center"><TextBlock Text="▦" FontSize="32" Foreground="#A3B1C7" HorizontalAlignment="Center"/><TextBlock x:Name="PluginEmptyTitle" Text="{loc:Tr View_8beb32a1}" FontSize="15" FontWeight="Bold" Foreground="#4B5B72" HorizontalAlignment="Center" Margin="0,9,0,4"/><TextBlock x:Name="PluginEmptyDescription" Text="{loc:Tr View_5ddd90a4}" FontSize="11" Foreground="#8794A8" HorizontalAlignment="Center"/></StackPanel>
         </Border>
        </Grid>
       </Grid>
@@ -196,13 +196,13 @@
      <Grid Margin="0,14,0,0"><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
       <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="16" Padding="20" Margin="0,0,0,12">
        <StackPanel><Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{loc:Tr View_a94eb8d9}" FontSize="18" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="SummaryTitle" Text="{loc:Tr View_c556a0e2}" FontSize="15" FontWeight="SemiBold" Foreground="#3659D9" Margin="0,12,0,4"/></StackPanel></Grid>
-        <TextBlock x:Name="SummaryText" Text="בחר פעולה במרכז הבקרה או במסך התוספים. התוצאות יוצגו כאן בעברית ברורה." FontSize="13" Foreground="#56667D" TextWrapping="Wrap" LineHeight="23"/>
-        <Border Background="#F4F7FC" CornerRadius="12" Padding="12" Margin="0,14,0,0"><TextBlock Text="הפלט המקורי והפקודות הטכניות נשמרים בנפרד. להצגתם לחץ על «הצג טרמינל»." Foreground="#687991" FontSize="11" TextWrapping="Wrap"/></Border>
+        <TextBlock x:Name="SummaryText" Text="{loc:Tr View_518239dd}" FontSize="13" Foreground="#56667D" TextWrapping="Wrap" LineHeight="23"/>
+        <Border Background="#F4F7FC" CornerRadius="12" Padding="12" Margin="0,14,0,0"><TextBlock Text="{loc:Tr View_302a5221}" Foreground="#687991" FontSize="11" TextWrapping="Wrap"/></Border>
        </StackPanel>
       </Border>
       <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="16" Padding="17">
        <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-        <Grid Grid.Row="0" Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="היסטוריית פעולות בשרת הזה" FontSize="16" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="HistoryCountText" Text="עדיין לא נשמרו פעולות" FontSize="11" Foreground="#78879C" Margin="0,4,0,0"/></StackPanel><ComboBox x:Name="HistoryFilterBox" Grid.Column="1" Width="125" Height="34" Margin="8,0" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="HistoryFilterBox_SelectionChanged"><ComboBoxItem Content="{loc:Tr View_41d22d4e}"/><ComboBoxItem Content="{loc:Tr View_46e3c16e}"/><ComboBoxItem Content="{loc:Tr View_a55b918f}"/></ComboBox><Button Grid.Column="2" Content="{loc:Tr View_771f3ec2}" Click="ExportHistory_Click" Margin="0,0,8,0" Padding="11,7"/><Button Grid.Column="3" Content="{loc:Tr View_d8c7f696}" Click="ClearHistory_Click" Foreground="#B42318" Padding="11,7"/></Grid>
+        <Grid Grid.Row="0" Margin="0,0,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="{loc:Tr View_ccbae3cc}" FontSize="16" FontWeight="Bold" Foreground="#1D2B43"/><TextBlock x:Name="HistoryCountText" Text="{loc:Tr View_8739a5b5}" FontSize="11" Foreground="#78879C" Margin="0,4,0,0"/></StackPanel><ComboBox x:Name="HistoryFilterBox" Grid.Column="1" Width="125" Height="34" Margin="8,0" VerticalAlignment="Center" SelectedIndex="0" SelectionChanged="HistoryFilterBox_SelectionChanged"><ComboBoxItem Content="{loc:Tr View_41d22d4e}"/><ComboBoxItem Content="{loc:Tr View_46e3c16e}"/><ComboBoxItem Content="{loc:Tr View_a55b918f}"/></ComboBox><Button Grid.Column="2" Content="{loc:Tr View_771f3ec2}" Click="ExportHistory_Click" Margin="0,0,8,0" Padding="11,7"/><Button Grid.Column="3" Content="{loc:Tr View_d8c7f696}" Click="ClearHistory_Click" Foreground="#B42318" Padding="11,7"/></Grid>
         <Grid Grid.Row="1"><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsControl x:Name="HistoryItems"><ItemsControl.ItemTemplate><DataTemplate>
          <Border Background="#F8FAFD" BorderBrush="#E6EBF3" BorderThickness="1" CornerRadius="12" Padding="12" Margin="0,0,0,8">
           <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="145"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
@@ -212,7 +212,7 @@
           </Grid>
          </Border>
         </DataTemplate></ItemsControl.ItemTemplate></ItemsControl></ScrollViewer>
-         <Border x:Name="HistoryEmptyState" Background="#F8FAFD" BorderBrush="#E6EBF3" BorderThickness="1" CornerRadius="12" Padding="25" HorizontalAlignment="Stretch" VerticalAlignment="Center"><TextBlock Text="כאן תופיע היסטוריית הפעולות המקומית. היא נשמרת במחשב ואינה נשלחת לשרת." Foreground="#78879C" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"/></Border>
+         <Border x:Name="HistoryEmptyState" Background="#F8FAFD" BorderBrush="#E6EBF3" BorderThickness="1" CornerRadius="12" Padding="25" HorizontalAlignment="Stretch" VerticalAlignment="Center"><TextBlock Text="{loc:Tr View_e481fe8a}" Foreground="#78879C" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"/></Border>
         </Grid>
        </Grid>
       </Border>
@@ -226,6 +226,6 @@
     </Grid>
    </Border>
   </Grid>
-  <TextBlock Grid.Row="3" Text="המערכת מציגה מידע ופעולות בהתאם להרשאות שניתנו לחשבון בשרת." Foreground="#8994A6" FontSize="10" Margin="2,14,2,0"/>
+  <TextBlock Grid.Row="3" Text="{loc:Tr View_7156a392}" Foreground="#8994A6" FontSize="10" Margin="2,14,2,0"/>
  </Grid>
 </Window>

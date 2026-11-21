@@ -28,8 +28,8 @@
             <ComboBox x:Name="FilterBox" Grid.Column="1" Height="41" Margin="9,0" SelectedIndex="0"
                       SelectionChanged="FilterBox_SelectionChanged" VerticalContentAlignment="Center">
                 <ComboBoxItem Content="{loc:Tr View_4cd9ae96}"/>
-                <ComboBoxItem Content="הצלחות בלבד"/>
-                <ComboBoxItem Content="כישלונות בלבד"/>
+                <ComboBoxItem Content="{loc:Tr View_46e3c16e}"/>
+                <ComboBoxItem Content="{loc:Tr View_a55b918f}"/>
             </ComboBox>
             <Button Grid.Column="2" Content="{loc:Tr View_4891f52f}" Padding="17,9" Click="Export_Click"
                     Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
