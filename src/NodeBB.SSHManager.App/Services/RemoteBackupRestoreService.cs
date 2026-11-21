@@ -492,12 +492,12 @@ public sealed class RemoteBackupRestoreService
         if (expandedBytes is < 1 or > 100L * 1024 * 1024 * 1024)
             throw new ArgumentOutOfRangeException(nameof(expandedBytes));
 
-        return $"""
+        return """
 set -eu
-INSTALL={{ShellQuote(installationPath)}}
-WORK={{ShellQuote(workDirectory)}}
-EXPECTED_SHA256={{ShellQuote(expectedSha256)}}
-EXPECTED_BYTES={{expandedBytes}}
+INSTALL=__INSTALL__
+WORK=__WORK__
+EXPECTED_SHA256=__HASH__
+EXPECTED_BYTES=__BYTES__
 WORK_NAME="$(basename "$WORK")"
 PARENT="$(dirname "$INSTALL")"
 BASE="$(basename "$INSTALL")"
@@ -613,7 +613,11 @@ if ! mv -- "$STAGE" "$INSTALL"; then
 fi
 KEEP_ROLLBACK=1
 echo 'FULL_RESTORE_SWITCHED'
-""";
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal)
+            .Replace("__WORK__", ShellQuote(workDirectory), StringComparison.Ordinal)
+            .Replace("__HASH__", ShellQuote(expectedSha256), StringComparison.Ordinal)
+            .Replace("__BYTES__", expandedBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
+
     }
 
     internal static string BuildFullInstallationRollbackScript(string installationPath, string workDirectory)
@@ -621,10 +625,10 @@ echo 'FULL_RESTORE_SWITCHED'
         RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
             throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
-        return $"""
+        return """
 set -eu
-INSTALL={{ShellQuote(installationPath)}}
-WORK={{ShellQuote(workDirectory)}}
+INSTALL=__INSTALL__
+WORK=__WORK__
 WORK_NAME="$(basename "$WORK")"
 PARENT="$(dirname "$INSTALL")"
 ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
@@ -638,7 +642,9 @@ if ! mv -- "$ROLLBACK" "$INSTALL"; then
   exit 44
 fi
 echo 'FULL_RESTORE_ROLLED_BACK'
-""";
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal)
+            .Replace("__WORK__", ShellQuote(workDirectory), StringComparison.Ordinal);
+
     }
 
     internal static string BuildFullInstallationFinalizeScript(
@@ -647,17 +653,17 @@ echo 'FULL_RESTORE_ROLLED_BACK'
         RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
         if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
             throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
-        return $"""
+        return """
 set -eu
-INSTALL={{ShellQuote(installationPath)}}
-WORK={{ShellQuote(workDirectory)}}
+INSTALL=__INSTALL__
+WORK=__WORK__
 WORK_NAME="$(basename "$WORK")"
 PARENT="$(dirname "$INSTALL")"
 ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
 FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
 [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'ההתקנה הפעילה אינה תיקייה תקינה.' >&2; exit 46; }
 [ -f "$INSTALL/package.json" ] && [ ! -L "$INSTALL/package.json" ] || { echo 'חבילת NodeBB אינה נמצאת בהתקנה הפעילה.' >&2; exit 46; }
-if [ "{{(removeFailedReplacement ? "1" : "0")}}" = "1" ]; then
+if [ "__REMOVE_FAILED__" = "1" ]; then
   [ -d "$FAILED" ] && [ ! -L "$FAILED" ] || { echo 'תיקיית ההתקנה שנכשלה לא נמצאה.' >&2; exit 46; }
   rm -rf -- "$FAILED"
 else
@@ -666,7 +672,10 @@ else
 fi
 rm -rf -- "$WORK"
 echo 'FULL_RESTORE_FINALIZED'
-""";
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal)
+            .Replace("__WORK__", ShellQuote(workDirectory), StringComparison.Ordinal)
+            .Replace("__REMOVE_FAILED__", removeFailedReplacement ? "1" : "0", StringComparison.Ordinal);
+
     }
 
     private static string GetFullRestoreRollbackPath(string installationPath, string workDirectory)
