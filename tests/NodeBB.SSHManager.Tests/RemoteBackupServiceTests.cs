@@ -1,3 +1,5 @@
+using System;
+using System.IO;
 using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text;
@@ -15,7 +17,11 @@ public sealed class RemoteBackupServiceTests
         var path = Path.Combine(directory, "valid.tar.gz");
         try
         {
-            await CreateArchiveAsync(path, ("config.json", "{\"database\":\"mongo\"}"), ("public/uploads/image.jpg", "image-data"));
+            await CreateArchiveAsync(path, new (string Name, string Contents)[]
+            {
+                ("config.json", "{\"database\":\"mongo\"}"),
+                ("public/uploads/image.jpg", "image-data")
+            });
             var result = await RemoteBackupService.ValidateArchiveAsync(path);
             Assert.Equal(2, result.EntryCount);
             Assert.True(result.ExpandedBytes > 0);
@@ -34,7 +40,7 @@ public sealed class RemoteBackupServiceTests
             await File.WriteAllTextAsync(plain, "not a gzip archive with enough bytes");
             await Assert.ThrowsAsync<InvalidDataException>(() => RemoteBackupService.ValidateArchiveAsync(plain));
 
-            await CreateArchiveAsync(truncated, ("config.json", "{}"));
+            await CreateArchiveAsync(truncated, new (string Name, string Contents)[] { ("config.json", "{}") });
             var bytes = await File.ReadAllBytesAsync(truncated);
             await File.WriteAllBytesAsync(truncated, bytes[..^8]);
             await Assert.ThrowsAnyAsync<Exception>(() => RemoteBackupService.ValidateArchiveAsync(truncated));
