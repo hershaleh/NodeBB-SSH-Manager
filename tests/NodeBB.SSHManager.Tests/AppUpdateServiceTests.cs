@@ -217,8 +217,14 @@ public sealed class AppUpdateServiceTests
 
         public StubHandler(Func<HttpRequestMessage, HttpResponseMessage> respond) => _respond = respond;
 
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(_respond(request));
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            var response = _respond(request);
+            // HttpClient normally associates the request with the response. The test
+            // handler must model that behavior so redirect validation tests are realistic.
+            response.RequestMessage ??= new HttpRequestMessage(request.Method, request.RequestUri);
+            return Task.FromResult(response);
+        }
     }
 
 }
