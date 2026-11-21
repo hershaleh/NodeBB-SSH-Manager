@@ -418,6 +418,14 @@ public sealed class RemoteBackupRestoreService
                 !string.Equals(remoteHash.Output.Trim(), hash, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("אימות SHA-256 של הארכיון לאחר העלאה לשרת נכשל; השחזור בוטל.");
 
+            var preflight = await _session.ExecuteAsync(
+                BuildFullInstallationPreflightScript(installation.Path, work, hash, archiveInfo.ExpandedBytes),
+                cancellationToken);
+            if (preflight.ExitCode != 0)
+                throw new InvalidOperationException(string.IsNullOrWhiteSpace(preflight.Error)
+                    ? $"בדיקות ההכנה לשחזור נכשלו (קוד {preflight.ExitCode}); NodeBB לא נעצר ולא שונו קבצים."
+                    : SanitizeError(preflight.Error));
+
             runtime = await runtimeService.DetectAsync(installation, cancellationToken);
             var stop = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);
             if (stop.ExitCode != 0)
@@ -521,6 +529,57 @@ public sealed class RemoteBackupRestoreService
                 }
             }
         }
+    }
+
+    internal static string BuildFullInstallationPreflightScript(
+        string installationPath, string workDirectory, string expectedSha256, long expandedBytes)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        if (!Regex.IsMatch(workDirectory, @"^/tmp/nodebb-full-restore-[a-f0-9]{32}$"))
+            throw new ArgumentException("נתיב העבודה הזמני אינו תקין.", nameof(workDirectory));
+        if (!Regex.IsMatch(expectedSha256, @"^[a-f0-9]{64}$"))
+            throw new ArgumentException("טביעת SHA-256 אינה תקינה.", nameof(expectedSha256));
+        if (expandedBytes is < 1 or > 100L * 1024 * 1024 * 1024)
+            throw new ArgumentOutOfRangeException(nameof(expandedBytes));
+
+        return """
+set -eu
+INSTALL=__INSTALL__
+WORK=__WORK__
+EXPECTED_SHA256=__HASH__
+EXPECTED_BYTES=__BYTES__
+PARENT="$(dirname "$INSTALL")"
+BASE="$(basename "$INSTALL")"
+WORK_NAME="$(basename "$WORK")"
+STAGE="$PARENT/.nodebb-stage-$WORK_NAME"
+ROLLBACK="$PARENT/.nodebb-rollback-$WORK_NAME"
+FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
+[ -d "$WORK" ] && [ ! -L "$WORK" ] || { echo 'תיקיית העבודה הזמנית חסרה או אינה בטוחה.' >&2; exit 50; }
+[ -s "$WORK/incoming.tar.gz" ] && [ ! -L "$WORK/incoming.tar.gz" ] || { echo 'ארכיון ההתקנה שהועלה חסר.' >&2; exit 50; }
+command -v sha256sum >/dev/null 2>&1 && command -v tar >/dev/null 2>&1 && command -v node >/dev/null 2>&1 || { echo 'חסרים בשרת כלים נדרשים: sha256sum, tar או node.' >&2; exit 50; }
+ACTUAL_SHA256="$(sha256sum -- "$WORK/incoming.tar.gz" | awk '{print $1}')"
+[ "$ACTUAL_SHA256" = "$EXPECTED_SHA256" ] || { echo 'אימות SHA-256 של הארכיון נכשל.' >&2; exit 50; }
+[ -d "$PARENT" ] && [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'תיקיית ההתקנה הקיימת אינה תקינה.' >&2; exit 50; }
+PARENT_REAL="$(cd "$PARENT" && pwd -P)"
+[ "$PARENT_REAL/$BASE" = "$INSTALL" ] || { echo 'נתיב ההתקנה אינו קנוני או עובר דרך קישור סמלי.' >&2; exit 50; }
+[ -w "$PARENT" ] || { echo 'אין הרשאת כתיבה לתיקיית ההתקנה.' >&2; exit 50; }
+[ -f "$INSTALL/package.json" ] && [ ! -L "$INSTALL/package.json" ] || { echo 'ההתקנה הקיימת אינה מזוהה כחבילת NodeBB.' >&2; exit 50; }
+[ ! -e "$STAGE" ] && [ ! -e "$ROLLBACK" ] && [ ! -e "$FAILED" ] || { echo 'נמצאו תיקיות שחזור קודמות; לא תבוצע דריסה.' >&2; exit 50; }
+if [ "$(id -u)" != "0" ]; then
+  CURRENT_UID="$(id -u)"
+  CURRENT_GID="$(id -g)"
+  FOREIGN="$(find "$INSTALL" -xdev \( ! -user "$CURRENT_UID" -o ! -group "$CURRENT_GID" \) -print -quit)"
+  [ -z "$FOREIGN" ] || { echo 'חלק מקובצי ההתקנה שייכים למשתמש או לקבוצה אחרים; יש להתחבר בהרשאות מתאימות.' >&2; exit 50; }
+fi
+AVAILABLE_KB="$(df -Pk "$PARENT" | awk 'END {print $4}')"
+case "$AVAILABLE_KB" in ''|*[!0-9]*) echo 'לא ניתן לבדוק את המקום הפנוי בדיסק.' >&2; exit 50;; esac
+[ "$((AVAILABLE_KB * 1024))" -ge "$((EXPECTED_BYTES + 67108864))" ] || { echo 'אין די מקום פנוי בדיסק להכנת ההתקנה המשוחזרת.' >&2; exit 50; }
+tar -tzf "$WORK/incoming.tar.gz" >/dev/null || { echo 'בדיקת קריאת ארכיון TAR.GZ בשרת נכשלה.' >&2; exit 50; }
+echo 'FULL_RESTORE_PREFLIGHT_OK'
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal)
+            .Replace("__WORK__", ShellQuote(workDirectory), StringComparison.Ordinal)
+            .Replace("__HASH__", ShellQuote(expectedSha256), StringComparison.Ordinal)
+            .Replace("__BYTES__", expandedBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparison.Ordinal);
     }
 
     internal static string BuildFullInstallationRestoreScript(

@@ -18,6 +18,33 @@ public sealed class RemoteBackupRestoreServiceTests
     private const string ValidHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
     [Fact]
+    public void BuildFullInstallationPreflightScriptChecksDiskPermissionsArchiveAndExistingRecoveryPaths()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationPreflightScript(
+            "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
+        Assert.Contains("FULL_RESTORE_PREFLIGHT_OK", script);
+        Assert.Contains("sha256sum", script);
+        Assert.Contains("tar -tzf", script);
+        Assert.Contains("df -Pk", script);
+        Assert.Contains("FOREIGN=", script);
+        Assert.Contains(".nodebb-stage-", script);
+        Assert.Contains(".nodebb-rollback-", script);
+        Assert.Contains("NodeBB", script);
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb", FullWork, ValidHash, 1024)]
+    [InlineData("/srv/nodebb", "/tmp/wrong", ValidHash, 1024)]
+    [InlineData("/srv/nodebb", FullWork, "bad-hash", 1024)]
+    [InlineData("/srv/nodebb", FullWork, ValidHash, 0)]
+    [InlineData("/srv/nodebb", FullWork, ValidHash, 100L * 1024 * 1024 * 1024 + 1)]
+    public void BuildFullInstallationPreflightScriptRejectsUnsafeInputs(
+        string installationPath, string workDirectory, string hash, long expandedBytes) =>
+        Assert.ThrowsAny<ArgumentException>(() =>
+            RemoteBackupRestoreService.BuildFullInstallationPreflightScript(
+                installationPath, workDirectory, hash, expandedBytes));
+
+    [Fact]
     public void BuildFullInstallationRestoreScript_StagesValidatesAndKeepsEmergencyCopy()
     {
         var script = RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
