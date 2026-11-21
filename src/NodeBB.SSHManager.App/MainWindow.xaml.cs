@@ -7,6 +7,7 @@ using Microsoft.Win32;
 using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
 using NodeBB.SSHManager.Views;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager;
 
@@ -25,6 +26,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        LanguageSelector.SelectedIndex = LocalizationService.Instance.Language == "en" ? 1 : 0;
+        FlowDirection = LocalizationService.Instance.FlowDirection;
         ServersList.ItemsSource = _profiles;
         var profilesView = CollectionViewSource.GetDefaultView(_profiles);
         profilesView.Filter = FilterServerProfile;
@@ -37,6 +40,19 @@ public partial class MainWindow : Window
             DiagnosticLogService.Instance.Info("MainWindow", "ApplicationClosing", "Main window closed.");
             _sessionManager.Dispose();
         };
+    }
+
+    private void LanguageSelector_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (LanguageSelector?.SelectedItem is not System.Windows.Controls.ComboBoxItem item ||
+            item.Tag is not string language ||
+            (language != "he" && language != "en"))
+            return;
+
+        LocalizationService.Instance.SetLanguage(language);
+        FlowDirection = LocalizationService.Instance.FlowDirection;
+        DiagnosticLogService.Instance.Info("Localization", "LanguageChanged",
+            $"Application language changed to {language}.");
     }
 
     private void LoadProfiles()

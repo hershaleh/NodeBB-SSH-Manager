@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager;
 
@@ -51,6 +52,7 @@ public partial class App : Application
         var workArea = SystemParameters.WorkArea;
         var maxWidth = Math.Max(320, workArea.Width - 24);
         var maxHeight = Math.Max(320, workArea.Height - 24);
+        window.FlowDirection = LocalizationService.Instance.FlowDirection;
         window.MinWidth = Math.Min(window.MinWidth, maxWidth);
         window.MinHeight = Math.Min(window.MinHeight, maxHeight);
         window.MaxWidth = maxWidth;

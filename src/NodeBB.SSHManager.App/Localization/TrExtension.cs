@@ -1,0 +1,21 @@
+using System.Windows.Data;
+using System.Windows.Markup;
+
+namespace NodeBB.SSHManager.Localization;
+
+[MarkupExtensionReturnType(typeof(string))]
+public sealed class TrExtension : MarkupExtension
+{
+    public TrExtension() { }
+    public TrExtension(string key) => Key = key;
+    public string Key { get; set; } = string.Empty;
+
+    public override object ProvideValue(IServiceProvider serviceProvider) =>
+        new Binding($"[{Key}]")
+        {
+            Source = LocalizationService.Instance,
+            Mode = BindingMode.OneWay,
+            FallbackValue = Key,
+            TargetNullValue = Key
+        };
+}
