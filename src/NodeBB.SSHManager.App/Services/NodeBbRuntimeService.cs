@@ -140,9 +140,9 @@ printf 'MANUAL|CLI\n'
 
 
 
+
     /// <summary>
     /// Confirms that no process is listening on NodeBB's configured port after stop.
-    /// Fails closed when the server has no reliable listener-inspection utility.
     /// </summary>
     public async Task<bool> VerifyHttpStoppedAsync(
         NodeBbInstallation installation, CancellationToken cancellationToken = default)
@@ -174,97 +174,18 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
   console.error('יציאת NodeBB אינה תקינה.');
   process.exit(1);
 }
-function listeners() {
+function hasListener() {
   let result = spawnSync('ss', ['-ltnH'], { encoding: 'utf8' });
   if (result.status === 0) {
-    return result.stdout.split(/\r?\n/).some(line => {
-      const fields = line.trim().split(/\s+/);
+    return result.stdout.split(/\\r?\\n/).some(line => {
+      const fields = line.trim().split(/\\s+/);
       return fields[0] === 'LISTEN' && fields[3] && fields[3].endsWith(':' + port);
     });
   }
   result = spawnSync('netstat', ['-ltn'], { encoding: 'utf8' });
   if (result.status === 0) {
-    return result.stdout.split(/\r?\n/).some(line =>
-      /\bLISTEN\b/.test(line) && new RegExp(':' + port + '\\s*
-    /// A successful service-manager start command alone is not considered a healthy restore.
-    /// </summary>
-    public async Task<bool> VerifyHttpHealthAsync(
-        NodeBbInstallation installation, CancellationToken cancellationToken = default)
-    {
-        var result = await _session.ExecuteAsync(BuildHttpHealthCheckScript(installation.Path), cancellationToken);
-        return result.ExitCode == 0 &&
-            result.Output.Contains("NODEBB_HEALTHY", StringComparison.Ordinal);
-    }
-
-    internal static string BuildHttpHealthCheckScript(string installationPath)
-    {
-        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
-        return """
-set -eu
-INSTALL=__INSTALL__
-[ -f "$INSTALL/config.json" ] && [ ! -L "$INSTALL/config.json" ] || { echo 'קובץ config.json חסר לאחר ההפעלה.' >&2; exit 1; }
-node - "$INSTALL/config.json" <<'NODE'
-const fs = require('fs');
-const http = require('http');
-let config;
-try {
-  config = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-} catch {
-  console.error('לא ניתן לקרוא את config.json לצורך בדיקת תקינות NodeBB.');
-  process.exit(1);
-}
-const port = Number(config.port || 4567);
-let host = typeof config.bind_address === 'string' && config.bind_address
-  ? config.bind_address : '127.0.0.1';
-if (host === '0.0.0.0') host = '127.0.0.1';
-if (host === '::') host = '::1';
-if (!Number.isInteger(port) || port < 1 || port > 65535) {
-  console.error('יציאת NodeBB אינה תקינה.');
-  process.exit(1);
-}
-let attempts = 0;
-const maxAttempts = 30;
-function check() {
-  attempts++;
-  const request = http.get({ hostname: host, port, path: '/', timeout: 3000 }, response => {
-    response.resume();
-    if (response.statusCode >= 200 && response.statusCode < 400) {
-      console.log('NODEBB_HEALTHY');
-      process.exit(0);
-      return;
-    }
-    retry();
-  });
-  request.on('timeout', () => request.destroy(new Error('timeout')));
-  request.on('error', retry);
-}
-function retry() {
-  if (attempts >= maxAttempts) {
-    console.error('NodeBB לא התחיל להשיב לבקשות HTTP בתוך 60 שניות.');
-    process.exit(1);
-    return;
-  }
-  setTimeout(check, 2000);
-}
-check();
-NODE
-""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal);
-    }
-
-    private static string PrivilegedCommand(string command) => $"""
-if [ "$(id -u)" = "0" ]; then
-  {command}
-elif command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
-  sudo -n {command}
-else
-  echo 'הפעולה דורשת root או sudo ללא סיסמה; לא נעשה ניסיון לבקש סיסמה או לשנות הרשאות.' >&2
-  exit 77
-fi
-""";
-
-    private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";
-}
-).test(line.trim()));
+    return result.stdout.split(/\\r?\\n/).some(line =>
+      /\\bLISTEN\\b/.test(line) && new RegExp(':' + port + '\\\\s*$').test(line.trim()));
   }
   console.error('לא נמצאו ss או netstat; לא ניתן לאמת בבטחה שהפורט של NodeBB פנוי.');
   process.exit(1);
@@ -272,9 +193,10 @@ fi
 let attempts = 0;
 function check() {
   attempts++;
-  if (!listeners()) {
+  if (!hasListener()) {
     console.log('NODEBB_STOPPED');
     process.exit(0);
+    return;
   }
   if (attempts >= 10) {
     console.error('פורט NodeBB עדיין מאזין לאחר פקודת העצירה; ייתכן שהתהליך הופעל מחדש אוטומטית.');
@@ -290,7 +212,6 @@ NODE
 
     /// <summary>
     /// Confirms that the restored NodeBB instance answers HTTP requests locally.
-    /// A successful service-manager start command alone is not considered a healthy restore.
     /// </summary>
     public async Task<bool> VerifyHttpHealthAsync(
         NodeBbInstallation installation, CancellationToken cancellationToken = default)
@@ -328,6 +249,14 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 let attempts = 0;
 const maxAttempts = 30;
+function retry() {
+  if (attempts >= maxAttempts) {
+    console.error('NodeBB לא התחיל להשיב לבקשות HTTP בתוך 60 שניות.');
+    process.exit(1);
+    return;
+  }
+  setTimeout(check, 2000);
+}
 function check() {
   attempts++;
   const request = http.get({ hostname: host, port, path: '/', timeout: 3000 }, response => {
@@ -341,14 +270,6 @@ function check() {
   });
   request.on('timeout', () => request.destroy(new Error('timeout')));
   request.on('error', retry);
-}
-function retry() {
-  if (attempts >= maxAttempts) {
-    console.error('NodeBB לא התחיל להשיב לבקשות HTTP בתוך 60 שניות.');
-    process.exit(1);
-    return;
-  }
-  setTimeout(check, 2000);
 }
 check();
 NODE
