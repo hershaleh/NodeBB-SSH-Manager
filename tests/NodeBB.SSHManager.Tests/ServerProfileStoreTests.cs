@@ -144,6 +144,29 @@ public sealed class ServerProfileStoreTests : IDisposable
         Assert.False(File.Exists(FilePath));
     }
 
+    [Theory]
+    [InlineData("forum.example.org/path")]
+    [InlineData("forum.example.org\\\\share")]
+    [InlineData("forum.example.org@evil.example")]
+    public void Save_RejectsUriAndPathSyntaxInHost(string host)
+    {
+        var profile = CreateProfile();
+        profile.Host = host;
+        Assert.Throws<InvalidDataException>(() => new ServerProfileStore(FilePath).Save([profile]));
+    }
+
+    [Fact]
+    public void Save_RejectsControlCharactersInProfileIdentityFields()
+    {
+        var store = new ServerProfileStore(FilePath);
+        var name = CreateProfile();
+        name.Name = "Forum\\nInjected";
+        Assert.Throws<InvalidDataException>(() => store.Save([name]));
+        var username = CreateProfile();
+        username.Username = "nodebb\\radmin";
+        Assert.Throws<InvalidDataException>(() => store.Save([username]));
+    }
+
     [Fact]
     public void Save_RejectsDuplicateProfileIds()
     {

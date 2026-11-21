@@ -54,10 +54,12 @@ public sealed class ServerProfileTransferService
                 throw new InvalidDataException("קובץ הפרופילים מכיל רשומה ריקה או מזהה כפול.");
             if (p.Group is null || p.Group.Length > 80 || p.Group.Any(char.IsControl))
                 throw new InvalidDataException("אחד מפרופילי השרת מכיל שם קבוצה לא תקין.");
-            if (string.IsNullOrWhiteSpace(p.Name) || p.Name.Length > 120
+            if (string.IsNullOrWhiteSpace(p.Name) || p.Name.Length > 120 || p.Name.Any(char.IsControl)
                 || string.IsNullOrWhiteSpace(p.Host) || p.Host.Length > 253
-                || p.Host.Any(char.IsWhiteSpace) || p.Host.Contains(';') || p.Host.Contains('|')
-                || string.IsNullOrWhiteSpace(p.Username) || p.Username.Length > 128)
+                || p.Host.Any(char.IsControl) || p.Host.Any(char.IsWhiteSpace)
+                || p.Host.IndexOfAny([';', '|', '/', '\\', '@', '?', '#']) >= 0
+                || string.IsNullOrWhiteSpace(p.Username) || p.Username.Length > 128
+                || p.Username.Any(char.IsControl))
                 throw new InvalidDataException("אחד מפרופילי השרת מכיל שם, כתובת או משתמש לא תקינים.");
             if (p.Port is < 1 or > 65535 || !Enum.IsDefined(p.AuthenticationType))
                 throw new InvalidDataException("אחד מפרופילי השרת מכיל פורט או שיטת אימות לא תקינים.");

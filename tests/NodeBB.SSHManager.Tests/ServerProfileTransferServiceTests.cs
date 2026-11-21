@@ -44,6 +44,28 @@ public sealed class ServerProfileTransferServiceTests
         Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
     }
 
+    [Theory]
+    [InlineData("forum.example.org/path")]
+    [InlineData("forum.example.org\\\\share")]
+    [InlineData("forum.example.org@evil.example")]
+    public void Import_RejectsUriAndPathSyntaxInHost(string host)
+    {
+        var profile = CreateProfile();
+        profile.Host = host;
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
+    }
+
+    [Fact]
+    public void Import_RejectsControlCharactersInProfileIdentityFields()
+    {
+        var profile = CreateProfile();
+        profile.Name = "Forum\\nInjected";
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
+        profile = CreateProfile();
+        profile.Username = "nodebb\\radmin";
+        Assert.Throws<InvalidDataException>(() => _service.Import(JsonSerializer.Serialize(new[] { profile })));
+    }
+
     [Fact]
     public void Import_RejectsDuplicateIds()
     {

@@ -118,12 +118,13 @@ public sealed class ServerProfileStore
                 throw new InvalidDataException("לכל שרת חייב להיות מזהה ייחודי ותקין.");
             if (profile.Group is null || profile.Group.Length > 80 || profile.Group.Any(char.IsControl))
                 throw new InvalidDataException("שם הקבוצה אינו תקין (עד 80 תווים).");
-            if (string.IsNullOrWhiteSpace(profile.Name) || profile.Name.Length > 120
+            if (string.IsNullOrWhiteSpace(profile.Name) || profile.Name.Length > 120 || profile.Name.Any(char.IsControl)
                 || string.IsNullOrWhiteSpace(profile.Host) || profile.Host.Length > 253
-                || string.IsNullOrWhiteSpace(profile.Username) || profile.Username.Length > 128)
-                throw new InvalidDataException("שם השרת, כתובת השרת ושם המשתמש הם שדות חובה.");
-            if (profile.Host.Any(char.IsWhiteSpace) || profile.Host.Contains(';') || profile.Host.Contains('|'))
-                throw new InvalidDataException("כתובת השרת מכילה תווים שאינם מותרים.");
+                || profile.Host.Any(char.IsControl) || profile.Host.Any(char.IsWhiteSpace)
+                || profile.Host.IndexOfAny([';', '|', '/', '\\', '@', '?', '#']) >= 0
+                || string.IsNullOrWhiteSpace(profile.Username) || profile.Username.Length > 128
+                || profile.Username.Any(char.IsControl))
+                throw new InvalidDataException("שם השרת, כתובת השרת או שם המשתמש מכילים ערך לא תקין.");
             if (profile.Port is < 1 or > 65535)
                 throw new InvalidDataException("יציאת SSH חייבת להיות בין 1 ל־65535.");
             if (!Enum.IsDefined(profile.AuthenticationType))
