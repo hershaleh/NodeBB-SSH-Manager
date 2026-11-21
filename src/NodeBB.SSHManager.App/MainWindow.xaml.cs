@@ -774,7 +774,7 @@ public partial class MainWindow : Window
                 MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes)
                 return;
 
-            StatusText.Text = "מוריד ומאמת את מתקין העדכון...";
+            SelectedServerText.Text = "מוריד ומאמת את מתקין העדכון...";
             var installerPath = await _appUpdateService.DownloadInstallerAsync(update);
             var process = Process.Start(new ProcessStartInfo(installerPath) { UseShellExecute = true });
             if (process is null)

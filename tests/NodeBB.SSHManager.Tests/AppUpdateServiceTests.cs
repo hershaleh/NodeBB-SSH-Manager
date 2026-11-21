@@ -58,9 +58,7 @@ public sealed class AppUpdateServiceTests
     [Fact]
     public void ParseReleaseMetadata_RejectsUpdateWithoutChecksumManifest()
     {
-        var json = ReleaseJson.Replace(
-            """{"name": "SHA256SUMS.txt", "browser_download_url": "https://github.com/hershaleh/NodeBB-SSH-Manager/releases/download/v0.2.0/SHA256SUMS.txt"}""",
-            "", StringComparison.Ordinal);
+        var json = ReleaseJson.Replace("SHA256SUMS.txt", "checksums.txt", StringComparison.Ordinal);
         Assert.Throws<InvalidDataException>(() =>
             AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
     }

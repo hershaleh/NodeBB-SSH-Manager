@@ -129,11 +129,20 @@ public sealed class AppUpdateService
             await using (var input = await response.Content.ReadAsStreamAsync(cancellationToken))
             await using (var output = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 131072, true))
             {
-                await input.CopyToAsync(output, 131072, cancellationToken);
+                var buffer = new byte[131072];
+                long totalBytes = 0;
+                int read;
+                while ((read = await input.ReadAsync(buffer, cancellationToken)) > 0)
+                {
+                    totalBytes += read;
+                    if (totalBytes > MaximumInstallerBytes)
+                        throw new InvalidDataException("קובץ מתקין העדכון גדול מהמותר.");
+                    await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                }
                 await output.FlushAsync(cancellationToken);
                 output.Flush(true);
-                if (output.Length is <= 0 or > MaximumInstallerBytes)
-                    throw new InvalidDataException("גודל קובץ מתקין העדכון אינו תקין.");
+                if (output.Length <= 0)
+                    throw new InvalidDataException("קובץ מתקין העדכון ריק.");
             }
 
             await using var verifyStream = new FileStream(temporary, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
