@@ -39,6 +39,15 @@
         </LinearGradientBrush>
         <DropShadowEffect x:Key="CardShadow" Color="#1C2C49" BlurRadius="26" ShadowDepth="5" Opacity=".075"/>
         <DropShadowEffect x:Key="FloatingShadow" Color="#15233D" BlurRadius="34" ShadowDepth="9" Opacity=".16"/>
+        <Style x:Key="KeyboardFocusVisualStyle" TargetType="{x:Type Control}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type Control}">
+                        <Border BorderBrush="{StaticResource AccentBrush}" BorderThickness="2" CornerRadius="12" Margin="-3"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <Style TargetType="Window">
             <Setter Property="FontFamily" Value="Segoe UI Variable, Segoe UI"/>
@@ -75,7 +84,7 @@
             <Setter Property="FontSize" Value="12"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="FocusVisualStyle" Value="{StaticResource KeyboardFocusVisualStyle}"/>
             <Setter Property="RenderTransformOrigin" Value=".5,.5"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -122,7 +131,8 @@
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsKeyboardFocused" Value="True">
-                                <Setter TargetName="InputSurface" Property="BorderBrush" Value="#7188E8"/>
+                                <Setter TargetName="InputSurface" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="InputSurface" Property="BorderThickness" Value="2"/>
                                 <Setter TargetName="InputSurface" Property="Background" Value="#FFFFFF"/>
                             </Trigger>
                             <Trigger Property="IsEnabled" Value="False"><Setter TargetName="InputSurface" Property="Opacity" Value=".48"/></Trigger>
@@ -185,6 +195,10 @@
                                 <Setter Property="Foreground" Value="#3D55C5"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="TabSurface" Property="Background" Value="#E7ECF5"/></Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="TabSurface" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                                <Setter TargetName="TabSurface" Property="BorderThickness" Value="2"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -234,12 +248,15 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListViewItem">
-                        <Border x:Name="Row" Background="{TemplateBinding Background}" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                        <Border x:Name="Row" Background="{TemplateBinding Background}" BorderBrush="Transparent" BorderThickness="1" CornerRadius="9" Padding="{TemplateBinding Padding}">
                             <ContentPresenter/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Row" Property="Background" Value="#F0F3FC"/></Trigger>
                             <Trigger Property="IsSelected" Value="True"><Setter TargetName="Row" Property="Background" Value="#E9EDFF"/><Setter Property="Foreground" Value="#344CC2"/></Trigger>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                <Setter TargetName="Row" Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
