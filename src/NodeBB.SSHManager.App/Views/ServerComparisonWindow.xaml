@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.ServerComparisonWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="השוואת שרתים" Width="1200" Height="760" MinWidth="880" MinHeight="540"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+        Title="{loc:Tr View_f4f07305}" Width="1200" Height="760" MinWidth="880" MinHeight="540"
         WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
         FontFamily="Segoe UI Variable, Segoe UI">
     <Grid Margin="27">
@@ -10,9 +11,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="השוואת שרתים" FontSize="24" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="תמונת מצב מקבילה של תשתיות וגרסאות בכל השרתים המחוברים" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
-                    <TextBlock Text="סריקה לקריאה בלבד · אין שינוי בשרתים" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
+                    <TextBlock Text="{loc:Tr View_f4f07305}" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{loc:Tr View_f860d489}" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
+                    <TextBlock Text="{loc:Tr View_b13328}" Foreground="#8FA3C1" FontSize="10" Margin="0,4,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Width="54" Height="54" Background="#293B5C" CornerRadius="15">
                     <TextBlock Text="⇄" FontSize="29" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -21,7 +22,7 @@
         </Border>
         <Grid Grid.Row="1" Margin="0,0,0,13">
             <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <Button x:Name="RefreshButton" Content="↻  רענון השוואה" Click="Refresh_Click" Padding="17,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+            <Button x:Name="RefreshButton" Content="{loc:Tr View_d33458b1}" Click="Refresh_Click" Padding="17,10" Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
             <Border Grid.Column="1" Background="#E8EEF8" CornerRadius="10" Padding="12,8" Margin="12,0,0,0">
                 <TextBlock x:Name="StatusText" VerticalAlignment="Center" Foreground="#42536D" FontSize="11"/>
             </Border>
@@ -33,18 +34,18 @@
                       Background="White" BorderThickness="0" RowBackground="White" AlternatingRowBackground="#F7F9FD"
                       HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="שרת" Binding="{Binding Server}" MinWidth="125"/>
-                    <DataGridTextColumn Header="כתובת" Binding="{Binding Host}" MinWidth="145"/>
-                    <DataGridTextColumn Header="מערכת הפעלה" Binding="{Binding OperatingSystem}" MinWidth="170"/>
-                    <DataGridTextColumn Header="ליבה" Binding="{Binding Kernel}" MinWidth="120"/>
-                    <DataGridTextColumn Header="ארכיטקטורה" Binding="{Binding Architecture}" MinWidth="100"/>
+                    <DataGridTextColumn Header="{loc:Tr View_ffe7616a}" Binding="{Binding Server}" MinWidth="125"/>
+                    <DataGridTextColumn Header="{loc:Tr View_ee1e0440}" Binding="{Binding Host}" MinWidth="145"/>
+                    <DataGridTextColumn Header="{loc:Tr View_58fef8a0}" Binding="{Binding OperatingSystem}" MinWidth="170"/>
+                    <DataGridTextColumn Header="{loc:Tr View_e23cd213}" Binding="{Binding Kernel}" MinWidth="120"/>
+                    <DataGridTextColumn Header="{loc:Tr View_81d2fc47}" Binding="{Binding Architecture}" MinWidth="100"/>
                     <DataGridTextColumn Header="Node.js" Binding="{Binding Node}" MinWidth="95"/>
                     <DataGridTextColumn Header="npm" Binding="{Binding Npm}" MinWidth="85"/>
                     <DataGridTextColumn Header="Git" Binding="{Binding Git}" MinWidth="85"/>
                     <DataGridTextColumn Header="MongoDB" Binding="{Binding Mongo}" MinWidth="105"/>
                     <DataGridTextColumn Header="Redis" Binding="{Binding Redis}" MinWidth="95"/>
                     <DataGridTextColumn Header="Docker" Binding="{Binding Docker}" MinWidth="95"/>
-                    <DataGridTextColumn Header="תוצאה" Binding="{Binding Status}" MinWidth="170"/>
+                    <DataGridTextColumn Header="{loc:Tr View_6ee8633e}" Binding="{Binding Status}" MinWidth="170"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Border>

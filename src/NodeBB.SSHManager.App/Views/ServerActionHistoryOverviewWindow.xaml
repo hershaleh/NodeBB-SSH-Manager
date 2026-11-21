@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.ServerActionHistoryOverviewWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="היסטוריית פעולות — כל השרתים" Width="1120" Height="800" MinWidth="850" MinHeight="600"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+        Title="{loc:Tr View_5d3ade50}" Width="1120" Height="800" MinWidth="850" MinHeight="600"
         WindowStartupLocation="CenterOwner" Background="#F3F6FC" FlowDirection="RightToLeft"
         FontFamily="Segoe UI Variable, Segoe UI">
     <Grid Margin="27">
@@ -10,9 +11,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="מרכז פעילות והיסטוריה" FontSize="24" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="יומן פעולות מקומי מכל שרתי NodeBB השמורים במחשב" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
-                    <TextBlock x:Name="CountText" Text="טוען פעולות..." Foreground="#B5C4DA" FontSize="11" Margin="0,11,0,0"/>
+                    <TextBlock Text="{loc:Tr View_37c96a23}" FontSize="24" FontWeight="Bold" Foreground="White"/>
+                    <TextBlock Text="{loc:Tr View_b1d4d880}" Foreground="#B9C6DA" FontSize="11" Margin="0,7,0,0"/>
+                    <TextBlock x:Name="CountText" Text="{loc:Tr View_af21744f}" Foreground="#B5C4DA" FontSize="11" Margin="0,11,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Width="54" Height="54" Background="#293B5C" CornerRadius="15">
                     <TextBlock Text="◷" FontSize="29" Foreground="#B5C1FF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -23,14 +24,14 @@
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="180"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <TextBox x:Name="SearchBox" Height="41" Padding="13,9" FontSize="12" VerticalContentAlignment="Center"
                      Background="White" BorderBrush="#DDE5F0" TextChanged="SearchBox_TextChanged"
-                     ToolTip="חיפוש לפי שרת, כתובת, פעולה או יעד"/>
+                     ToolTip="{loc:Tr View_f4b53f5a}"/>
             <ComboBox x:Name="FilterBox" Grid.Column="1" Height="41" Margin="9,0" SelectedIndex="0"
                       SelectionChanged="FilterBox_SelectionChanged" VerticalContentAlignment="Center">
-                <ComboBoxItem Content="כל התוצאות"/>
+                <ComboBoxItem Content="{loc:Tr View_4cd9ae96}"/>
                 <ComboBoxItem Content="הצלחות בלבד"/>
                 <ComboBoxItem Content="כישלונות בלבד"/>
             </ComboBox>
-            <Button Grid.Column="2" Content="↓  ייצוא CSV" Padding="17,9" Click="Export_Click"
+            <Button Grid.Column="2" Content="{loc:Tr View_4891f52f}" Padding="17,9" Click="Export_Click"
                     Background="#4F63D9" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
         </Grid>
         <Border Grid.Row="2" Background="White" BorderBrush="#E4EAF3" BorderThickness="1" CornerRadius="16" Padding="14">
@@ -38,9 +39,9 @@
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <Grid Margin="5,2,5,12">
                     <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                    <TextBlock Text="מועד" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="1" Text="שרת ופעולה" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
-                    <TextBlock Grid.Column="2" Text="תוצאה" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                    <TextBlock Text="{loc:Tr View_e7f1660b}" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="1" Text="{loc:Tr View_5379002e}" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
+                    <TextBlock Grid.Column="2" Text="{loc:Tr View_6ee8633e}" Foreground="#64748B" FontSize="10" FontWeight="Bold"/>
                 </Grid>
                 <Grid Grid.Row="1">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -66,7 +67,7 @@
                         </ItemsControl>
                     </ScrollViewer>
                     <Border x:Name="EmptyState" Background="#F8FAFD" CornerRadius="12" Padding="24" VerticalAlignment="Center">
-                        <TextBlock x:Name="EmptyText" Text="לא נשמרו עדיין פעולות בשרתים." Foreground="#78879C" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"/>
+                        <TextBlock x:Name="EmptyText" Text="{loc:Tr View_a4899a1}" Foreground="#78879C" FontSize="12" TextAlignment="Center" TextWrapping="Wrap"/>
                     </Border>
                 </Grid>
             </Grid>
