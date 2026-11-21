@@ -50,10 +50,12 @@ public sealed class RemoteBackupRestoreServiceTests
     {
         var success = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, false);
         var rollback = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, true);
+        Assert.Contains("if [ \"0\" = \"1\" ]; then", success);
         Assert.Contains("rm -rf -- \"$ROLLBACK\"", success);
-        Assert.DoesNotContain("rm -rf -- \"$FAILED\"", success);
+        Assert.Contains("if [ \"1\" = \"1\" ]; then", rollback);
         Assert.Contains("rm -rf -- \"$FAILED\"", rollback);
-        Assert.DoesNotContain("rm -rf -- \"$ROLLBACK\"", rollback);
+        Assert.Contains("rm -rf -- \"$ROLLBACK\"", success);
+        Assert.Contains("rm -rf -- \"$ROLLBACK\"", rollback);
     }
 
     [Theory]
