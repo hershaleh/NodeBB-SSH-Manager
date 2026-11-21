@@ -156,6 +156,89 @@ public sealed class RemoteBackupRestoreServiceTests
         finally { Directory.Delete(directory, true); }
     }
 
+    [Fact]
+    public async Task ValidateFullInstallationArchive_AcceptsNodeBbRootAndReportsContents()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "full.tar.gz");
+        try
+        {
+            await CreateArchiveAsync(path,
+                (".", TarEntryType.Directory, ""),
+                ("./config.json", TarEntryType.RegularFile, ValidConfig),
+                ("./package.json", TarEntryType.RegularFile, "{\\"name\\":\\"nodebb\\"}"),
+                ("./public", TarEntryType.Directory, ""),
+                ("./public/uploads", TarEntryType.Directory, ""),
+                ("./public/uploads/photo.jpg", TarEntryType.RegularFile, "image"));
+            var info = await RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(path);
+            Assert.True(info.EntryCount >= 6);
+            Assert.True(info.ExpandedBytes > 0);
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Theory]
+    [InlineData("../escape.txt", TarEntryType.RegularFile)]
+    [InlineData("/etc/passwd", TarEntryType.RegularFile)]
+    [InlineData("node_modules\\\\evil.js", TarEntryType.RegularFile)]
+    [InlineData("config.json", TarEntryType.SymbolicLink)]
+    [InlineData("config.json", TarEntryType.HardLink)]
+    public async Task ValidateFullInstallationArchive_RejectsTraversalAndLinks(string name, TarEntryType type)
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "unsafe.tar.gz");
+        try
+        {
+            await CreateFullArchiveWithSpecialEntryAsync(path, name, type);
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(path));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateFullInstallationArchive_RequiresNodeBbMetadataAndRejectsWrongPackage()
+    {
+        var directory = CreateTempDirectory();
+        try
+        {
+            var missing = Path.Combine(directory, "missing.tar.gz");
+            await CreateArchiveAsync(missing,
+                ("config.json", TarEntryType.RegularFile, ValidConfig));
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(missing));
+
+            var wrongPackage = Path.Combine(directory, "wrong-package.tar.gz");
+            await CreateArchiveAsync(wrongPackage,
+                ("config.json", TarEntryType.RegularFile, ValidConfig),
+                ("package.json", TarEntryType.RegularFile, "{\\"name\\":\\"other-app\\"}"));
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(wrongPackage));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    private static async Task CreateFullArchiveWithSpecialEntryAsync(string path, string name, TarEntryType type)
+    {
+        await using var file = File.Create(path);
+        await using var gzip = new GZipStream(file, CompressionLevel.Optimal);
+        using var writer = new TarWriter(gzip, TarEntryFormat.Pax, leaveOpen: true);
+        var config = new PaxTarEntry(TarEntryType.RegularFile, "config.json")
+        {
+            DataStream = new MemoryStream(Encoding.UTF8.GetBytes(ValidConfig))
+        };
+        var package = new PaxTarEntry(TarEntryType.RegularFile, "package.json")
+        {
+            DataStream = new MemoryStream(Encoding.UTF8.GetBytes("{\\"name\\":\\"nodebb\\"}"))
+        };
+        writer.WriteEntry(config);
+        writer.WriteEntry(package);
+        var special = new PaxTarEntry(type, name);
+        if (type is TarEntryType.SymbolicLink or TarEntryType.HardLink)
+            special.LinkName = "../outside";
+        writer.WriteEntry(special);
+    }
+
     private static string CreateTempDirectory()
     {
         var directory = Path.Combine(Path.GetTempPath(), "NodeBBFileRestoreTests", Guid.NewGuid().ToString("N"));

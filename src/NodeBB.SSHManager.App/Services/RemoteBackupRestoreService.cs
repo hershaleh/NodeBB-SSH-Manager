@@ -6,7 +6,7 @@ using Renci.SshNet;
 
 namespace NodeBB.SSHManager.Services;
 
-public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool ContainsUploads);
+public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool ContainsUploads);\npublic sealed record FullInstallationArchiveInfo(int EntryCount, long ExpandedBytes);
 
 /// <summary>
 /// Restores only the safe configuration/uploads backup format. Full-installation archives are
@@ -112,6 +112,138 @@ public sealed class RemoteBackupRestoreService
         var drainBuffer = new byte[131072];
         while (await gzip.ReadAsync(drainBuffer, cancellationToken) > 0) { }
         return new EssentialBackupArchiveInfo(databaseType, containsUploads);
+    }
+
+    /// <summary>
+    /// Validates a full-installation archive before any remote staging or replacement.
+    /// Only regular files and directories are accepted; links and special files are rejected.
+    /// </summary>
+    public static async Task<FullInstallationArchiveInfo> ValidateFullInstallationArchiveAsync(
+        string archivePath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(archivePath) || !File.Exists(archivePath))
+            throw new FileNotFoundException("קובץ גיבוי ההתקנה המלאה לא נמצא.", archivePath);
+        if (new FileInfo(archivePath).Length < 20)
+            throw new InvalidDataException("ארכיון ההתקנה קצר מדי.");
+
+        await using var file = new FileStream(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+        var magic = new byte[2];
+        await file.ReadExactlyAsync(magic, cancellationToken);
+        if (magic[0] != 0x1f || magic[1] != 0x8b)
+            throw new InvalidDataException("הקובץ אינו ארכיון TAR.GZ.");
+
+        file.Position = 0;
+        try
+        {
+            await using var gzip = new GZipStream(file, CompressionMode.Decompress, true);
+            await using var reader = new TarReader(gzip, leaveOpen: true);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var configSeen = false;
+            var packageSeen = false;
+            var entryCount = 0;
+            long expandedBytes = 0;
+            TarEntry? entry;
+            while ((entry = await reader.GetNextEntryAsync(false, cancellationToken)) is not null)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if (++entryCount > 2_000_000)
+                    throw new InvalidDataException("ארכיון ההתקנה מכיל מספר חריג של פריטים.");
+
+                var path = NormalizeFullArchivePath(entry.Name);
+                if (path.Length == 0)
+                {
+                    if (entry.EntryType != TarEntryType.Directory)
+                        throw new InvalidDataException("רשומת השורש בארכיון חייבת להיות תיקייה.");
+                    continue;
+                }
+
+                if (entry.EntryType is not (TarEntryType.RegularFile or TarEntryType.V7RegularFile or TarEntryType.Directory))
+                    throw new InvalidDataException($"הארכיון מכיל קישור או קובץ מיוחד שאינו נתמך: {path}");
+                if ((entry.Mode & (UnixFileMode.SetUser | UnixFileMode.SetGroup | UnixFileMode.StickyBit)) != UnixFileMode.None)
+                    throw new InvalidDataException($"הארכיון מכיל הרשאות מסוכנות: {path}");
+                if (!seen.Add(path))
+                    throw new InvalidDataException($"הארכיון מכיל נתיב כפול: {path}");
+
+                if (entry.EntryType is TarEntryType.RegularFile or TarEntryType.V7RegularFile)
+                {
+                    if (entry.DataStream is null)
+                        throw new InvalidDataException($"קובץ בארכיון אינו מכיל נתונים: {path}");
+                    if (entry.Length < 0 || entry.Length > 100L * 1024 * 1024 * 1024 - expandedBytes)
+                        throw new InvalidDataException("גודל ההתקנה לאחר חילוץ חורג מהמגבלה של 100GB.");
+                    expandedBytes += entry.Length;
+
+                    if (path is "config.json" or "package.json")
+                    {
+                        if (entry.Length > 8 * 1024 * 1024)
+                            throw new InvalidDataException($"קובץ השורש גדול מדי: {path}");
+                        using var content = new MemoryStream((int)entry.Length);
+                        await entry.DataStream.CopyToAsync(content, cancellationToken);
+                        if (content.Length != entry.Length)
+                            throw new InvalidDataException($"קובץ השורש נקטע: {path}");
+                        content.Position = 0;
+                        using var document = await JsonDocument.ParseAsync(content, cancellationToken: cancellationToken);
+                        if (document.RootElement.ValueKind != JsonValueKind.Object)
+                            throw new InvalidDataException($"קובץ {path} חייב להכיל אובייקט JSON.");
+                        if (path == "config.json")
+                        {
+                            if (!document.RootElement.TryGetProperty("database", out var database) ||
+                                database.ValueKind != JsonValueKind.String ||
+                                database.GetString() is not ("mongo" or "postgres" or "redis"))
+                                throw new InvalidDataException("config.json בארכיון אינו מכיל סוג מסד נתונים נתמך.");
+                            configSeen = true;
+                        }
+                        else
+                        {
+                            if (!document.RootElement.TryGetProperty("name", out var packageName) ||
+                                packageName.ValueKind != JsonValueKind.String ||
+                                !string.Equals(packageName.GetString(), "nodebb", StringComparison.OrdinalIgnoreCase))
+                                throw new InvalidDataException("package.json אינו מזוהה כחבילת NodeBB.");
+                            packageSeen = true;
+                        }
+                    }
+                    else
+                    {
+                        await entry.DataStream.CopyToAsync(Stream.Null, cancellationToken);
+                    }
+                }
+            }
+
+            var drain = new byte[131072];
+            while (await gzip.ReadAsync(drain, cancellationToken) > 0)
+                cancellationToken.ThrowIfCancellationRequested();
+
+            if (!configSeen || !packageSeen)
+                throw new InvalidDataException("גיבוי התקנה מלאה חייב לכלול config.json ו-package.json תקינים בתיקיית השורש.");
+            return new FullInstallationArchiveInfo(entryCount, expandedBytes);
+        }
+        catch (EndOfStreamException ex)
+        {
+            throw new InvalidDataException("ארכיון ההתקנה נקטע או שאינו מכיל מבנה TAR שלם.", ex);
+        }
+        catch (InvalidDataException) { throw; }
+        catch (Exception ex) when (ex is IOException or JsonException or FormatException)
+        {
+            throw new InvalidDataException("לא ניתן לקרוא או לאמת את ארכיון ההתקנה.", ex);
+        }
+    }
+
+    internal static string NormalizeFullArchivePath(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name) || name.IndexOf('\\0') >= 0 || name.Any(char.IsControl) ||
+            name.Contains('\\\\') || name.Contains(':') || name.StartsWith("/", StringComparison.Ordinal))
+            throw new InvalidDataException("הארכיון מכיל נתיב לא בטוח.");
+
+        var normalized = name;
+        while (normalized.StartsWith("./", StringComparison.Ordinal))
+            normalized = normalized[2..];
+        normalized = normalized.TrimEnd('/');
+        if (normalized.Length == 0 || normalized == ".")
+            return string.Empty;
+
+        var segments = normalized.Split('/');
+        if (segments.Any(segment => segment.Length == 0 || segment is "." or ".."))
+            throw new InvalidDataException("הארכיון מכיל נתיב יחסי או מעבר לתיקייה אחרת.");
+        return normalized;
     }
 
     internal static string NormalizeArchivePath(string name)
