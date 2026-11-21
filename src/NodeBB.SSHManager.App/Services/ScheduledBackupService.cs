@@ -37,6 +37,9 @@ public sealed class ScheduledBackupStore
                     var schedule = JsonSerializer.Deserialize<ScheduledBackupDefinition>(clear)
                         ?? throw new InvalidDataException("קובץ תזמון ריק.");
                     schedule.Validate();
+                    var fileId = Path.GetFileNameWithoutExtension(path);
+                    if (!Guid.TryParseExact(fileId, "N", out var expectedId) || schedule.Id != expectedId)
+                        throw new InvalidDataException("מזהה התזמון בקובץ אינו תואם לשם הקובץ.");
                     schedules.Add(schedule);
                 }
                 finally

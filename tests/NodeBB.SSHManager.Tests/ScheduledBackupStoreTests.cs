@@ -56,6 +56,23 @@ public sealed class ScheduledBackupStoreTests
     }
 
     [Fact]
+    public void LoadAll_IgnoresScheduleCopiedUnderAnotherFileId()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "NodeBBScheduledBackupTests", Guid.NewGuid().ToString("N"));
+        try
+        {
+            var store = new ScheduledBackupStore(directory);
+            var schedule = CreateValid();
+            store.Save(schedule);
+            var original = Directory.GetFiles(directory, "*.schedule").Single();
+            File.Copy(original, Path.Combine(directory, Guid.NewGuid().ToString("N") + ".schedule"));
+
+            Assert.Single(store.LoadAll());
+        }
+        finally { try { if (Directory.Exists(directory)) Directory.Delete(directory, true); } catch { } }
+    }
+
+    [Fact]
     public void LoadRejectsOversizedScheduleFile()
     {
         var directory = Path.Combine(Path.GetTempPath(), "NodeBBScheduledBackupTests", Guid.NewGuid().ToString("N"));
