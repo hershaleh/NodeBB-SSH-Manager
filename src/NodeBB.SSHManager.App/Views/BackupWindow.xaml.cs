@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Windows;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Models;
@@ -96,7 +97,7 @@ public partial class BackupWindow : Window
                 : 0;
             StatusText.Text = encrypted ? "הגיבוי הוצפן ונשמר בהצלחה." : "הגיבוי נשמר בהצלחה.";
             if (removed > 0) StatusText.Text += $" הוסרו {removed} גיבויים ישנים לפי מדיניות השמירה.";
-            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? "מוצפן" : "ללא הצפנה")}\nגיבויים ישנים שהוסרו: {removed}",
+            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? LocalizationService.Instance.Translate("מוצפן") : LocalizationService.Instance.Translate("ללא הצפנה"))}\nגיבויים ישנים שהוסרו: {removed}",
                 "הגיבוי הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)

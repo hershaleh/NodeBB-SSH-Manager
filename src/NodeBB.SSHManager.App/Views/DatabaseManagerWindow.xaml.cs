@@ -1,3 +1,4 @@
+using NodeBB.SSHManager.Localization;
 using System.Windows;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Services;

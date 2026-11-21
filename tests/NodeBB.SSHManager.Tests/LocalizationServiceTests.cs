@@ -28,6 +28,8 @@ public sealed class LocalizationServiceTests
             var service = new LocalizationService(path);
             service.SetLanguage("en");
             Assert.Equal("en", service.Language);
+            Assert.Equal("Confirm password", service.Translate("אימות סיסמה"));
+            Assert.Equal("Encryption password (at least 12 characters)", service.Translate("סיסמת הצפנה (לפחות 12 תווים)"));
             Assert.Equal(FlowDirection.LeftToRight, service.FlowDirection);
             Assert.Equal("Dashboard", service["Dashboard_לוח_בקרה"]);
             Assert.Equal("Backup center", service["View_240265a6"]);
