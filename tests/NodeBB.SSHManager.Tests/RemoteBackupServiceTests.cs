@@ -15,7 +15,7 @@ public sealed class RemoteBackupServiceTests
         var path = Path.Combine(directory, "valid.tar.gz");
         try
         {
-            await CreateArchiveAsync(path, ("config.json", "{\\"database\\":\\"mongo\\"}"), ("public/uploads/image.jpg", "image-data"));
+            await CreateArchiveAsync(path, ("config.json", "{\"database\":\"mongo\"}"), ("public/uploads/image.jpg", "image-data"));
             var result = await RemoteBackupService.ValidateArchiveAsync(path);
             Assert.Equal(2, result.EntryCount);
             Assert.True(result.ExpandedBytes > 0);

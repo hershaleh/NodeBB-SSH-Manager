@@ -24,8 +24,10 @@ public sealed class DiagnosticLogService
     private static readonly Regex[] SecretPatterns =
     [
         new(@"(?i)([""']?(?:password|passwd|passphrase|token|api[_-]?key|secret)[""']?\s*[=:]\s*)[""']?[^,\s;""']+[""']?", RegexOptions.Compiled),
+        new(@"(?i)(--(?:password|passwd|passphrase|token|api[-_]?key|secret)(?:=|\s+))(?:""[^""]*""|'[^']*'|[^\s]+)", RegexOptions.Compiled),
         new(@"(?i)(authorization\s*:\s*bearer\s+)[A-Za-z0-9._~+/-]+=*", RegexOptions.Compiled),
-        new(@"(?i)(mongodb(?:\+srv)?://)[^\s""']+", RegexOptions.Compiled),
+        new(@"(?i)((?:mongodb(?:\+srv)?|postgres(?:ql)?|redis|mysql)://)[^\s""']+", RegexOptions.Compiled),
+        new(@"(?i)([a-z][a-z0-9+.-]*://)[^/@\s]+:[^/@\s]+@", RegexOptions.Compiled),
         new(@"(?i)(-----BEGIN [A-Z ]*PRIVATE KEY-----)[\s\S]*?(-----END [A-Z ]*PRIVATE KEY-----)", RegexOptions.Compiled)
     ];
 

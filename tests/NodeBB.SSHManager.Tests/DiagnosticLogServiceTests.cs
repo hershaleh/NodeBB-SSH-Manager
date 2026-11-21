@@ -50,12 +50,28 @@ public sealed class DiagnosticLogServiceTests
     [Theory]
     [InlineData("mongodb://admin:super-secret@db.example:27017/nodebb", "mongodb://[REDACTED]")]
     [InlineData("mongodb+srv://user:secret@cluster.example/nodebb?retryWrites=true", "mongodb+srv://[REDACTED]")]
-    public void Redact_RemovesMongoConnectionUris(string input, string expected)
+    [InlineData("postgres://admin:pg-secret@db.example:5432/nodebb", "postgres://[REDACTED]")]
+    [InlineData("redis://:redis-secret@cache.example:6379/0", "redis://[REDACTED]")]
+    public void Redact_RemovesDatabaseConnectionUris(string input, string expected)
     {
         var actual = DiagnosticLogService.Redact(input);
         Assert.Equal(expected, actual);
         Assert.DoesNotContain("super-secret", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("pg-secret", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("redis-secret", actual, StringComparison.Ordinal);
         Assert.DoesNotContain("secret@", actual, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("--password very-secret", "--password [REDACTED]")]
+    [InlineData("--token=very-secret", "--token=[REDACTED]")]
+    [InlineData("https://deploy-user:deploy-secret@example.invalid/path", "https://[REDACTED]@example.invalid/path")]
+    public void Redact_RemovesCommandLineAndUriCredentials(string input, string expected)
+    {
+        var actual = DiagnosticLogService.Redact(input);
+        Assert.Equal(expected, actual);
+        Assert.DoesNotContain("very-secret", actual, StringComparison.Ordinal);
+        Assert.DoesNotContain("deploy-secret", actual, StringComparison.Ordinal);
     }
 
     [Fact]
