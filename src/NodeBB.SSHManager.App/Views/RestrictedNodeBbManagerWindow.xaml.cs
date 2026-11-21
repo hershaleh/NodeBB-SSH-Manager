@@ -717,6 +717,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         // Tab selection is intentionally local; command execution remains explicit.
     }
+    private static string T(string text) => NodeBB.SSHManager.Localization.LocalizationService.Instance.Translate(text);
+
 }
 
 
@@ -752,6 +754,5 @@ public sealed class PluginCard(string name, string kindLabel, bool isActive, boo
     public Brush ToggleForeground => IsActive
         ? new SolidColorBrush(Color.FromRgb(154, 91, 19))
         : new SolidColorBrush(Color.FromRgb(22, 118, 79));
-    private static string T(string text) => NodeBB.SSHManager.Localization.LocalizationService.Instance.Translate(text);
 
 }
