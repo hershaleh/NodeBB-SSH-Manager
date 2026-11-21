@@ -1,3 +1,6 @@
+using System.Formats.Tar;
+using System.IO.Compression;
+
 namespace NodeBB.SSHManager.Services;
 
 public enum RemoteBackupKind
@@ -5,6 +8,8 @@ public enum RemoteBackupKind
     FullInstallation,
     ConfigurationAndUploads
 }
+
+public sealed record BackupArchiveValidationResult(int EntryCount, long ExpandedBytes);
 
 public sealed class RemoteBackupService
 {
@@ -44,10 +49,14 @@ public sealed class RemoteBackupService
                 await output.FlushAsync(cancellationToken);
             }
 
+            var validation = await ValidateArchiveAsync(partialDestination, cancellationToken);
+            if (validation.EntryCount == 0)
+                throw new InvalidDataException("ארכיון הגיבוי ריק ואינו מכיל קבצים.");
+
             File.Move(partialDestination, localDestination, true);
             var info = new FileInfo(localDestination);
             DiagnosticLogService.Instance.Info("Backup", "BackupCompleted",
-                $"Backup downloaded successfully; {info.Length} bytes.", _session.Profile.Name);
+                $"Backup downloaded and verified successfully; {info.Length} bytes, {validation.EntryCount} entries.", _session.Profile.Name);
         }
         catch (Exception ex)
         {
@@ -67,6 +76,54 @@ public sealed class RemoteBackupService
                     "Could not remove the temporary backup archive from the remote server.", ex, _session.Profile.Name);
             }
         }
+    }
+
+
+    /// <summary>
+    /// Fully reads the downloaded TAR.GZ so gzip checksums, TAR headers and every entry
+    /// are verified locally before the archive is promoted to its final destination.
+    /// This validates integrity only; it does not make a full-installation archive restorable.
+    /// </summary>
+    public static async Task<BackupArchiveValidationResult> ValidateArchiveAsync(
+        string archivePath, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(archivePath) || !File.Exists(archivePath))
+            throw new FileNotFoundException("קובץ הגיבוי הזמני לא נמצא.", archivePath);
+        if (new FileInfo(archivePath).Length < 20)
+            throw new InvalidDataException("ארכיון הגיבוי קצר מדי או פגום.");
+
+        await using var file = new FileStream(archivePath, FileMode.Open, FileAccess.Read, FileShare.Read, 131072, true);
+        var magic = new byte[2];
+        await file.ReadExactlyAsync(magic, cancellationToken);
+        if (magic[0] != 0x1f || magic[1] != 0x8b)
+            throw new InvalidDataException("הקובץ שהורד אינו ארכיון GZip תקין.");
+
+        file.Position = 0;
+        await using var gzip = new GZipStream(file, CompressionMode.Decompress, true);
+        await using var reader = new TarReader(gzip, leaveOpen: true);
+        var entryCount = 0;
+        long expandedBytes = 0;
+        TarEntry? entry;
+        while ((entry = await reader.GetNextEntryAsync(false, cancellationToken)) is not null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (++entryCount > 2_000_000)
+                throw new InvalidDataException("ארכיון הגיבוי מכיל מספר חריג של פריטים.");
+            if (entry.EntryType is TarEntryType.RegularFile or TarEntryType.V7RegularFile)
+            {
+                if (entry.Length < 0 || entry.Length > long.MaxValue - expandedBytes)
+                    throw new InvalidDataException("גודל תוכן הארכיון אינו תקין.");
+                expandedBytes += entry.Length;
+            }
+            if (entry.DataStream is not null)
+                await entry.DataStream.CopyToAsync(Stream.Null, cancellationToken);
+        }
+
+        var buffer = new byte[131072];
+        while (await gzip.ReadAsync(buffer, cancellationToken) > 0)
+            cancellationToken.ThrowIfCancellationRequested();
+
+        return new BackupArchiveValidationResult(entryCount, expandedBytes);
     }
 
     private static string BuildArchiveCommand(string installationPath, string archivePath, RemoteBackupKind kind)

@@ -40,14 +40,13 @@ public sealed class SshServerSession : IDisposable
             if (!Client.IsConnected) throw new InvalidOperationException("אין חיבור SSH פעיל.");
             cancellationToken.ThrowIfCancellationRequested();
 
-            // Once an SSH command starts, keep the session lock until SSH.NET has finished
-            // reading its result. Cancelling Task.Run itself would not stop the remote command
-            // and could otherwise allow Dispose to disconnect the client underneath it.
-            return await Task.Run(() =>
-            {
-                using var cmd = Client.RunCommand(command);
-                return (cmd.ExitStatus ?? -1, cmd.Result, cmd.Error);
-            });
+            // Keep the session lock until SSH.NET has completed or cancelled the command.
+            // A finite command timeout prevents a stalled remote process from blocking this
+            // session forever; callers can also cancel through the SSH.NET cancellation token.
+            using var cmd = Client.CreateCommand(command);
+            cmd.CommandTimeout = TimeSpan.FromMinutes(30);
+            await cmd.ExecuteAsync(cancellationToken);
+            return (cmd.ExitStatus ?? -1, cmd.Result, cmd.Error);
         }
         finally { _commandLock.Release(); }
     }
@@ -85,7 +84,11 @@ public sealed class SshServerSession : IDisposable
         {
             Timeout = TimeSpan.FromSeconds(20)
         };
-        var client = new SftpClient(info) { KeepAliveInterval = TimeSpan.FromSeconds(30) };
+        var client = new SftpClient(info)
+        {
+            KeepAliveInterval = TimeSpan.FromSeconds(30),
+            OperationTimeout = TimeSpan.FromMinutes(10)
+        };
         client.HostKeyReceived += (_, e) =>
         {
             var actual = "SHA256:" + e.FingerPrintSHA256;
