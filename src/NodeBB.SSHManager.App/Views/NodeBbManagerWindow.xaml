@@ -1,7 +1,8 @@
 <Window x:Class="NodeBB.SSHManager.Views.NodeBbManagerWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- Title="מרכז ניהול NodeBB" Width="1180" Height="850" MinWidth="940" MinHeight="680"
+        xmlns:loc="clr-namespace:NodeBB.SSHManager.Localization"
+ Title="{loc:Tr View_9d6dc942}" Width="1180" Height="850" MinWidth="940" MinHeight="680"
  WindowStartupLocation="CenterOwner" Background="{StaticResource CanvasBrush}" FlowDirection="RightToLeft" FontFamily="Segoe UI Variable, Segoe UI">
  <Window.Resources>
   <LinearGradientBrush x:Key="HeroBrush" StartPoint="0,0" EndPoint="1,1">
@@ -39,10 +40,10 @@
    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel>
      <TextBlock Text="NODEBB  /  CONTROL CENTER" Foreground="#AFC0DD" FontSize="10" FontWeight="SemiBold"/>
-     <TextBlock Text="מרכז ניהול NodeBB" FontSize="25" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
+     <TextBlock Text="{loc:Tr View_9d6dc942}" FontSize="25" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
      <TextBlock x:Name="ServerLabel" Foreground="#D0DAEA" FontSize="12" Margin="0,5,0,0"/>
     </StackPanel>
-    <Button Grid.Column="1" Content="מסוף SSH  ↗" Click="Terminal_Click" Padding="17,11"
+    <Button Grid.Column="1" Content="{loc:Tr View_6a69ade3}" Click="Terminal_Click" Padding="17,11"
             Background="#FFFFFF" Foreground="#243A60" BorderThickness="0" VerticalAlignment="Center"/>
    </Grid>
   </Border>
@@ -51,12 +52,12 @@
    <Grid>
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel VerticalAlignment="Center">
-     <TextBlock Text="התקנת NodeBB שנבחרה" Foreground="#8794A8" FontSize="10" FontWeight="SemiBold"/>
-     <TextBlock x:Name="SelectedInstallationText" Text="טרם נבחרה התקנה" Foreground="#202E45" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0"/>
+     <TextBlock Text="{loc:Tr View_7e8268ff}" Foreground="#8794A8" FontSize="10" FontWeight="SemiBold"/>
+     <TextBlock x:Name="SelectedInstallationText" Text="{loc:Tr View_7e531ae3}" Foreground="#202E45" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0"/>
     </StackPanel>
     <ComboBox x:Name="InstallationPicker" Grid.Column="1" Width="260" Height="39" Margin="12,0"
       Padding="8" VerticalContentAlignment="Center" SelectionChanged="InstallationPicker_SelectionChanged" DisplayMemberPath="Path"/>
-    <Button Grid.Column="2" x:Name="DiscoverButton" Content="⟳  סריקה מחדש" Click="Discover_Click" Padding="15,10"
+    <Button Grid.Column="2" x:Name="DiscoverButton" Content="{loc:Tr View_75657594}" Click="Discover_Click" Padding="15,10"
             Background="#EEF2FF" Foreground="#344CC2" BorderBrush="#D9E1FF" VerticalAlignment="Center"/>
    </Grid>
   </Border>
@@ -64,8 +65,8 @@
   <Grid Grid.Row="2" Margin="2,0,2,14">
    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
    <StackPanel>
-    <TextBlock Text="כלי הניהול" FontSize="20" FontWeight="Bold" Foreground="#1B2940"/>
-    <TextBlock Text="כל פעולה מחוברת לכלי הניהול המתאים. פעולות רגישות דורשות אישור." FontSize="11" Foreground="#8290A5" Margin="0,4,0,0"/>
+    <TextBlock Text="{loc:Tr View_7211c6eb}" FontSize="20" FontWeight="Bold" Foreground="#1B2940"/>
+    <TextBlock Text="{loc:Tr View_933e5e64}" FontSize="11" Foreground="#8290A5" Margin="0,4,0,0"/>
    </StackPanel>
    <Border Grid.Column="1" Background="#EDF2FA" CornerRadius="11" Padding="12,8" VerticalAlignment="Center" MaxWidth="370">
     <TextBlock x:Name="StatusText" Foreground="#50617A" FontSize="11" TextWrapping="Wrap"/>
@@ -77,91 +78,91 @@
     <Button Style="{StaticResource TileButton}" Click="Packages_Click" Margin="0,0,11,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="ניהול הרחבות" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_1ac360e}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#EEF1FF" CornerRadius="12" Width="43" Height="43"><TextBlock Text="▦" FontSize="23" Foreground="#526BDF" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="תוספים ועיצובים" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="רשימת חבילות, התקנה, עדכון והפעלה" Foreground="#8794A8" FontSize="11" TextWrapping="Wrap"/>
+      <TextBlock Text="{loc:Tr View_2e260059}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_cfefc77f}" Foreground="#8794A8" FontSize="11" TextWrapping="Wrap"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Backups_Click" Margin="5,0,6,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="הגנה על הנתונים" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_b67740c2}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#EAF7F0" CornerRadius="12" Width="43" Height="43"><TextBlock Text="◫" FontSize="23" Foreground="#16865A" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="גיבוי ושחזור" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="יצירת גיבויים וניהול שחזור" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_7fe5f6c5}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_32ff6063}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Upgrade_Click" Margin="6,0,0,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="תחזוקת גרסה" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_b8c4b05}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#FFF4E5" CornerRadius="12" Width="43" Height="43"><TextBlock Text="↥" FontSize="23" Foreground="#B76E12" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="עדכוני NodeBB" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="בדיקת גרסה ושדרוג מבוקר" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_afb9af5f}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_a8beeb91}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Logs_Click" Margin="0,0,11,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="מעקב ותיעוד" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_f0cee563}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#F0EBFF" CornerRadius="12" Width="43" Height="43"><TextBlock Text="≋" FontSize="23" Foreground="#7654C8" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="יומני מערכת" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="איתור שגיאות ומעקב פעילות" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_bfac209d}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_5c9de13}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Database_Click" Margin="5,0,6,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="אחסון ומידע" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_2c11e6bc}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#E8F5FA" CornerRadius="12" Width="43" Height="43"><TextBlock Text="◉" FontSize="23" Foreground="#2784A5" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
       <TextBlock Text="מסד נתונים" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="כלי מידע וניהול מסד הנתונים" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_33c659f}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Security_Click" Margin="6,0,0,11">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="הגנה והרשאות" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_2b8b8c66}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#FFF0F0" CornerRadius="12" Width="43" Height="43"><TextBlock Text="◇" FontSize="23" Foreground="#C34B4B" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="אבטחה וביקורת" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="בדיקות אבטחה והרשאות" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_fc3eff42}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_92b8e05}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Monitoring_Click" Margin="0,0,11,0">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="מצב ותשתיות" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_ebe2e84}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#EAF7F0" CornerRadius="12" Width="43" Height="43"><TextBlock Text="⌁" FontSize="23" Foreground="#16865A" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="ניטור שרת" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="משאבים, תהליכים ומצב השירות" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_8346d9ce}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_ee6d6660}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Diagnostics_Click" Margin="5,0,6,0">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="בדיקות מערכת" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_699c61f3}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#EEF1FF" CornerRadius="12" Width="43" Height="43"><TextBlock Text="⌕" FontSize="23" Foreground="#526BDF" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="אבחון ותקלות" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="בדיקות מערכת וקישוריות" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_e531a66a}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_a84ddda6}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
     <Button Style="{StaticResource TileButton}" Click="Services_Click" Margin="6,0,0,0">
      <StackPanel>
       <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-       <TextBlock Text="תהליכי מערכת" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
+       <TextBlock Text="{loc:Tr View_6ec1b935}" FontSize="10" Foreground="#8492A8" VerticalAlignment="Center"/>
        <Border Grid.Column="1" Background="#F1F3F7" CornerRadius="12" Width="43" Height="43"><TextBlock Text="⚙" FontSize="22" Foreground="#667085" HorizontalAlignment="Center" VerticalAlignment="Center"/></Border>
       </Grid>
-      <TextBlock Text="שירותי מערכת" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
-      <TextBlock Text="ניהול שירותים ותהליכי שרת" Foreground="#8794A8" FontSize="11"/>
+      <TextBlock Text="{loc:Tr View_fb49f534}" FontSize="16" FontWeight="Bold" Margin="0,14,0,5"/>
+      <TextBlock Text="{loc:Tr View_cd3c72e7}" Foreground="#8794A8" FontSize="11"/>
      </StackPanel>
     </Button>
    </UniformGrid>
@@ -169,12 +170,12 @@
 
   <Border Grid.Row="4" Background="#17263E" CornerRadius="15" Padding="12,11" Margin="0,14,0,0">
    <DockPanel LastChildFill="True">
-    <TextBlock Text="פעולות מהירות" Foreground="#D9E3F2" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,16,0"/>
+    <TextBlock Text="{loc:Tr View_c603c62b}" Foreground="#D9E3F2" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Margin="0,0,16,0"/>
     <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
-     <Button Content="הפעל" Click="Start_Click" Margin="0,0,7,0" Padding="14,8" Background="#245743" Foreground="White" BorderThickness="0"/>
-     <Button Content="עצור" Click="Stop_Click" Margin="0,0,7,0" Padding="14,8" Background="#6A3F49" Foreground="White" BorderThickness="0"/>
-     <Button Content="הפעלה מחדש" Click="Restart_Click" Margin="0,0,7,0" Padding="14,8"/>
-     <Button Content="בנייה מחדש" Click="Build_Click" Margin="0" Padding="14,8"/>
+     <Button Content="{loc:Tr View_28e6401b}" Click="Start_Click" Margin="0,0,7,0" Padding="14,8" Background="#245743" Foreground="White" BorderThickness="0"/>
+     <Button Content="{loc:Tr View_44dbbd04}" Click="Stop_Click" Margin="0,0,7,0" Padding="14,8" Background="#6A3F49" Foreground="White" BorderThickness="0"/>
+     <Button Content="{loc:Tr View_2d109534}" Click="Restart_Click" Margin="0,0,7,0" Padding="14,8"/>
+     <Button Content="{loc:Tr View_b8768af1}" Click="Build_Click" Margin="0" Padding="14,8"/>
     </StackPanel>
    </DockPanel>
   </Border>
