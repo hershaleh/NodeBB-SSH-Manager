@@ -36,7 +36,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         TerminalOutputBox.Text = initialHelp;
         PluginCards.ItemsSource = _allPlugins;
         SummaryTitle.Text = T("החיבור לשרת מוכן");
-        SummaryText.Text = "אפשר לנהל תוספים, ליצור גיבוי, לבדוק את מצב הפורום ולהפעיל פעולות תחזוקה. המידע יוצג כאן בעברית.";
+        SummaryText.Text = T("אפשר לנהל תוספים, ליצור גיבוי, לבדוק את מצב הפורום ולהפעיל פעולות תחזוקה. המידע יוצג כאן בעברית.");
         UploadZipButton.Visibility = InstallSourceBox.SelectedIndex == 2 ? Visibility.Visible : Visibility.Collapsed;
         RefreshActionHistory();
     }
@@ -54,12 +54,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private async void Status_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.StatusAsync(), "בדיקת מצב הפורום");
     private async void Build_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "להריץ ./nodebb build בשרת?", "בנייה מחדש", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, T("להריץ ./nodebb build בשרת?"), T("בנייה מחדש"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => _service.BuildAsync(), "בנייה");
     }
     private async void Restart_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "להפעיל מחדש את שירות NodeBB?", "הפעלה מחדש", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, T("להפעיל מחדש את שירות NodeBB?"), T("הפעלה מחדש"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => _service.RestartAsync(), "הפעלה מחדש");
     }
     private async void Logs_Click(object sender, RoutedEventArgs e)
@@ -69,7 +69,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         await RunAsync(() => _service.LogsAsync(lines), "לוגים");
     }
     private async void Zips_Click(object sender, RoutedEventArgs e) => await RunAsync(() => _service.ListZipsAsync(), "קובצי ZIP");
-    private async void Help_Click(object sender, RoutedEventArgs e) { await RunAsync(() => _service.HelpAsync(), "הצגת עזרה"); SummaryTitle.Text = T("העזרה הטכנית זמינה בטרמינל"); SummaryText.Text = "רשימת הפקודות והתחביר המקורי הועברו לחלון הטרמינל. ממשק הניהול עצמו נשאר בעברית."; }
+    private async void Help_Click(object sender, RoutedEventArgs e) { await RunAsync(() => _service.HelpAsync(), "הצגת עזרה"); SummaryTitle.Text = T("העזרה הטכנית זמינה בטרמינל"); SummaryText.Text = T("רשימת הפקודות והתחביר המקורי הועברו לחלון הטרמינל. ממשק הניהול עצמו נשאר בעברית."); }
 
     private void InstallSourceBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
@@ -94,8 +94,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
-        if (MessageBox.Show(this, $"להעלות לשרת את הקובץ {info.Name} ({info.Length / 1024.0 / 1024.0:F1}MB)?",
-                "אישור העלאת ZIP", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"להעלות לשרת את הקובץ {info.Name} ({info.Length / 1024.0 / 1024.0:F1} MB)?"),
+                T("אישור העלאת ZIP"), MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
 
         await RunAsync(() => _service.UploadZipAsync(dialog.FileName), "העלאת ZIP");
         if (_lastOutput.Contains("הסתיים בהצלחה", StringComparison.Ordinal))
@@ -103,8 +103,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
             TargetBox.Text = info.Name;
             InstallSourceBox.SelectedIndex = 2;
             ManagerTabs.SelectedIndex = 1;
-            MessageBox.Show(this, $"הקובץ {info.Name} הועלה לשרת בהצלחה. כעת לחץ על 'התקן' כדי להתקין אותו.",
-                "העלאת ZIP הושלמה", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"הקובץ {info.Name} הועלה לשרת בהצלחה. כעת לחץ על 'התקן' כדי להתקין אותו."),
+                T("העלאת ZIP הושלמה"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 
@@ -114,7 +114,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var source = (InstallSourceBox.SelectedIndex);
         try { if (source == 0) RestrictedNodeBbCliService.ValidatePackage(target); else if (source == 1) RestrictedNodeBbCliService.ValidateGitHubTarget(target); else RestrictedNodeBbCliService.ValidateZipName(target); }
         catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("יעד התקנה לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-        if (MessageBox.Show(this, $"להתקין את היעד הבא?\n\n{target}\n\nהשרת מבצע גיבוי אוטומטי לפני התקנה.", "אישור התקנה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"להתקין את היעד הבא?\n\n{target}\n\nהשרת מבצע גיבוי אוטומטי לפני התקנה."), T("אישור התקנה"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => source switch { 0 => _service.InstallNpmAsync(target), 1 => _service.InstallGitHubAsync(target), _ => _service.InstallZipAsync(target) }, "התקנה");
     }
     private async void Update_Click(object sender, RoutedEventArgs e) => await PackageActionAsync("עדכון", _service.UpdateAsync);
@@ -126,7 +126,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var file = TargetBox.Text.Trim();
         try { RestrictedNodeBbCliService.ValidateZipName(file); }
         catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("שם קובץ לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-        if (MessageBox.Show(this, $"למחוק את קובץ ההעלאה {file} מהשרת?", "מחיקת ZIP", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"למחוק את קובץ ההעלאה {file} מהשרת?"), T("מחיקת ZIP"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => _service.DeleteZipAsync(file), "מחיקת ZIP");
     }
 
@@ -135,7 +135,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var package = TargetBox.Text.Trim();
         try { RestrictedNodeBbCliService.ValidatePackage(package); }
         catch (Exception ex) { MessageBox.Show(this, T(ex.Message), T("שם חבילה לא תקין"), MessageBoxButton.OK, MessageBoxImage.Warning); return; }
-        if (MessageBox.Show(this, $"{label} את {package}?", "אישור פעולה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"{label} את {package}?"), T("אישור פעולה"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         await RunAsync(() => action(package, CancellationToken.None), label);
     }
 
@@ -176,7 +176,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             {
                 var failedCount = Math.Max(0, affectedPackages.Length - successfulPackages.Length);
                 SummaryTitle.Text = T(label) + " — " + T("הושלם חלקית");
-                SummaryText.Text = $"הפעולה הצליחה עבור {successfulPackages.Length} מתוך {affectedPackages.Length} חבילות. {failedCount} פעולות נכשלו; בדוק את הפלט המלא לפני ניסיון חוזר.";
+                SummaryText.Text = LocalizationService.Instance.TranslateFormat($"הפעולה הצליחה עבור {successfulPackages.Length} מתוך {affectedPackages.Length} חבילות. {failedCount} פעולות נכשלו; בדוק את הפלט המלא לפני ניסיון חוזר.");
             }
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), result.ExitCode == 0, SummaryText.Text);
             if (result.ExitCode == 0 || successfulPackages.Length > 0)
@@ -428,8 +428,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
         UpdatePluginSelectionCount();
         PluginEmptyState.Visibility = filtered.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         PluginCards.Visibility = filtered.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
-        PluginEmptyTitle.Text = _allPlugins.Count == 0 ? "עדיין לא נטענה רשימת התוספים" : "לא נמצאו תוצאות לחיפוש";
-        PluginEmptyDescription.Text = _allPlugins.Count == 0 ? "לחץ על «רענון מהשרת» כדי להציג את התוספים." : "נסה מונח חיפוש אחר.";
+        PluginEmptyTitle.Text = _allPlugins.Count == 0 ? T("עדיין לא נטענה רשימת התוספים") : T("לא נמצאו תוצאות לחיפוש");
+        PluginEmptyDescription.Text = _allPlugins.Count == 0 ? T("לחץ על «רענון מהשרת» כדי להציג את התוספים.") : T("נסה מונח חיפוש אחר.");
     }
 
     private void PluginKindFilter_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -442,17 +442,17 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var names = _allPlugins.Select(plugin => plugin.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
         if (names.Length == 0)
         {
-            PluginActionStatus.Text = "אין רשימת תוספים להעתקה. רענן תחילה מהשרת.";
+            PluginActionStatus.Text = T("אין רשימת תוספים להעתקה. רענן תחילה מהשרת.");
             return;
         }
         try
         {
             Clipboard.SetText(string.Join(Environment.NewLine, names));
-            PluginActionStatus.Text = $"הועתקו {names.Length} שמות חבילות ללוח.";
+            PluginActionStatus.Text = LocalizationService.Instance.TranslateFormat($"הועתקו {names.Length} שמות חבילות ללוח.");
         }
         catch (Exception ex)
         {
-            PluginActionStatus.Text = "לא ניתן להעתיק את רשימת התוספים.";
+            PluginActionStatus.Text = T("לא ניתן להעתיק את רשימת התוספים.");
             DiagnosticLogService.Instance.Warning("RestrictedCLI", "CopyPluginListFailed",
                 "Could not copy plugin package list to clipboard.", ex, ServerLabel.Text);
         }
@@ -463,7 +463,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var names = _allPlugins.Select(plugin => plugin.Name).OrderBy(name => name, StringComparer.OrdinalIgnoreCase).ToArray();
         if (names.Length == 0)
         {
-            PluginActionStatus.Text = "אין רשימת תוספים לייצוא. רענן תחילה מהשרת.";
+            PluginActionStatus.Text = T("אין רשימת תוספים לייצוא. רענן תחילה מהשרת.");
             return;
         }
         var dialog = new SaveFileDialog
@@ -478,11 +478,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
         try
         {
             File.WriteAllText(dialog.FileName, string.Join(Environment.NewLine, names), new System.Text.UTF8Encoding(true));
-            PluginActionStatus.Text = $"הרשימה יוצאה בהצלחה ({names.Length} פריטים).";
+            PluginActionStatus.Text = LocalizationService.Instance.TranslateFormat($"הרשימה יוצאה בהצלחה ({names.Length} פריטים).");
         }
         catch (Exception ex)
         {
-            PluginActionStatus.Text = "ייצוא הרשימה נכשל. בדוק הרשאות כתיבה ליעד.";
+            PluginActionStatus.Text = T("ייצוא הרשימה נכשל. בדוק הרשאות כתיבה ליעד.");
             DiagnosticLogService.Instance.Warning("RestrictedCLI", "ExportPluginListFailed",
                 "Could not export plugin package list.", ex, ServerLabel.Text);
         }
@@ -491,7 +491,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private void UpdatePluginSelectionCount()
     {
         var count = _allPlugins.Count(plugin => plugin.IsSelected);
-        PluginSelectionCount.Text = count == 0 ? "לא נבחרו פריטים" : $"נבחרו {count} פריטים";
+        PluginSelectionCount.Text = count == 0 ? T("לא נבחרו פריטים") : LocalizationService.Instance.TranslateFormat($"נבחרו {count} פריטים");
     }
 
     private void SelectVisiblePlugins_Click(object sender, RoutedEventArgs e)
@@ -528,7 +528,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             .ToArray();
         if (selected.Length == 0)
         {
-            PluginActionStatus.Text = "בחר לפחות פריט אחד בכרטיסי התוספים.";
+            PluginActionStatus.Text = T("בחר לפחות פריט אחד בכרטיסי התוספים.");
             return;
         }
 
@@ -574,11 +574,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
         try
         {
             Clipboard.SetText(package);
-            PluginActionStatus.Text = $"שם החבילה {package} הועתק ללוח.";
+            PluginActionStatus.Text = LocalizationService.Instance.TranslateFormat($"שם החבילה {package} הועתק ללוח.");
         }
         catch (Exception ex)
         {
-            PluginActionStatus.Text = "לא ניתן להעתיק את שם החבילה.";
+            PluginActionStatus.Text = T("לא ניתן להעתיק את שם החבילה.");
             DiagnosticLogService.Instance.Warning("RestrictedCLI", "CopyPluginNameFailed",
                 "Could not copy plugin package name to clipboard.", ex, ServerLabel.Text);
         }
@@ -633,7 +633,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private void RefreshActionHistory()
     {
         _historyEntries = new ServerActionHistoryService().GetForServer(_session.Profile.Host, _session.Profile.Port);
-        HistoryCountText.Text = _historyEntries.Count == 0 ? "עדיין לא נשמרו פעולות" : $"נשמרו {_historyEntries.Count} פעולות אחרונות";
+        HistoryCountText.Text = _historyEntries.Count == 0 ? T("עדיין לא נשמרו פעולות") : LocalizationService.Instance.TranslateFormat($"נשמרו {_historyEntries.Count} פעולות אחרונות");
         ApplyHistoryFilter();
     }
 
@@ -651,9 +651,9 @@ public partial class RestrictedNodeBbManagerWindow : Window
             entry.Summary)).ToArray();
         HistoryEmptyState.Visibility = entries.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
         if (_historyEntries.Count > 0 && entries.Length == 0)
-            HistoryCountText.Text = "אין פעולות התואמות למסנן";
+            HistoryCountText.Text = T("אין פעולות התואמות למסנן");
         else if (_historyEntries.Count > 0)
-            HistoryCountText.Text = $"מוצגות {entries.Length} מתוך {_historyEntries.Count} פעולות";
+            HistoryCountText.Text = LocalizationService.Instance.TranslateFormat($"מוצגות {entries.Length} מתוך {_historyEntries.Count} פעולות");
     }
 
     private void HistoryFilterBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -668,7 +668,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             filter == 0 || (filter == 1 && entry.Succeeded) || (filter == 2 && !entry.Succeeded)).ToArray();
         if (entries.Length == 0)
         {
-            MessageBox.Show(this, "אין פעולות לייצוא במסנן הנוכחי.", "ייצוא היסטוריה",
+            MessageBox.Show(this, T("אין פעולות לייצוא במסנן הנוכחי."), T("ייצוא היסטוריה"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -685,12 +685,12 @@ public partial class RestrictedNodeBbManagerWindow : Window
         try
         {
             File.WriteAllText(dialog.FileName, ServerActionHistoryService.ExportCsv(entries), new System.Text.UTF8Encoding(true));
-            MessageBox.Show(this, $"יוצאו {entries.Length} פעולות בהצלחה.", "ייצוא היסטוריה",
+            MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"יוצאו {entries.Length} פעולות בהצלחה."), T("ייצוא היסטוריה"),
                 MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, "ייצוא ההיסטוריה נכשל. בדוק הרשאות כתיבה ליעד.", "שגיאה",
+            MessageBox.Show(this, T("ייצוא ההיסטוריה נכשל. בדוק הרשאות כתיבה ליעד."), T("שגיאה"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             DiagnosticLogService.Instance.Warning("ActionHistory", "ExportFailed",
                 "Could not export server action history.", ex, ServerLabel.Text);
@@ -699,7 +699,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
     private void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
-        if (MessageBox.Show(this, "למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו.",
+        if (MessageBox.Show(this, T("למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו."),
             "מחיקת היסטוריה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         new ServerActionHistoryService().ClearForServer(_session.Profile.Host, _session.Profile.Port);
         RefreshActionHistory();
@@ -710,7 +710,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         TerminalPanel.Visibility = TerminalPanel.Visibility == Visibility.Visible
             ? Visibility.Collapsed : Visibility.Visible;
         if (TerminalPanel.Visibility == Visibility.Visible)
-            TerminalOutputBox.Text = string.IsNullOrWhiteSpace(_lastOutput) ? "עדיין אין פלט טכני להצגה." : _lastOutput;
+            TerminalOutputBox.Text = string.IsNullOrWhiteSpace(_lastOutput) ? T("עדיין אין פלט טכני להצגה.") : _lastOutput;
     }
 
     private void ManagerTabs_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)

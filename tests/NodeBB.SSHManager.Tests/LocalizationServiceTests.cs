@@ -200,6 +200,22 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void RestrictedManagerMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+
+        Assert.Equal("Rebuild", service["Restricted_RebuildTitle"]);
+        Assert.Equal("Delete ZIP", service["Restricted_DeleteZipTitle"]);
+        Assert.Equal("No actions match the filter", service["Restricted_HistoryNoMatches"]);
+        Assert.Equal("The plugin list was refreshed.", service["Restricted_PluginListUpdated"]);
+        Assert.Equal("The status check completed. The response does not clearly establish whether the service is active; see the original terminal output.",
+            service["Restricted_EmptyStatus"]);
+        Assert.Equal("The operation succeeded for 3 of 5 packages. 2 actions failed; review the full output before retrying.",
+            service.TranslateFormat($"הפעולה הצליחה עבור {3} מתוך {5} חבילות. {2} פעולות נכשלו; בדוק את הפלט המלא לפני ניסיון חוזר."));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
