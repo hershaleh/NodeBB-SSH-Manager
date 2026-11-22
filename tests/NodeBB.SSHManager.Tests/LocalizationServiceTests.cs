@@ -109,7 +109,6 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
-    [Fact]
     public void SharedWindowCaptionsTranslateInBothLanguages()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
@@ -125,6 +124,7 @@ public sealed class LocalizationServiceTests
         Assert.Equal("UTF-8 · Interactive shell", service["Ui_Interactive_Shell"]);
     }
 
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
