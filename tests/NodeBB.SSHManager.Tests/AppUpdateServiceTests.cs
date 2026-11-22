@@ -204,6 +204,23 @@ public sealed class AppUpdateServiceTests
             service.DownloadInstallerAsync(CreateUpdateInfo()));
     }
 
+    [Fact]
+    public async Task CheckAsync_RejectsUntrustedFinalRedirectTarget()
+    {
+        using var client = new HttpClient(new StubHandler(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(ReleaseJson)
+            };
+            response.RequestMessage = new HttpRequestMessage(HttpMethod.Get,
+                new Uri("https://example.invalid/releases/latest"));
+            return response;
+        }));
+        var service = new AppUpdateService(client);
+        await Assert.ThrowsAsync<InvalidDataException>(() => service.CheckAsync());
+    }
+
     private static AppUpdateInfo CreateUpdateInfo() => new(
         new Version(0, 2, 0),
         "v0.2.0",

@@ -51,6 +51,7 @@ public sealed class AppUpdateService
     {
         var current = GetCurrentVersion();
         using var response = await _http.GetAsync(LatestReleaseApi, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        EnsureTrustedApiResponse(response);
         if (response.StatusCode == HttpStatusCode.NotFound)
             return new AppUpdateCheckResult(current, null, false, null, "עדיין לא פורסמה גרסה יציבה של התוכנה.");
 
@@ -226,6 +227,16 @@ public sealed class AppUpdateService
         uri.IsAbsoluteUri && uri.Scheme == Uri.UriSchemeHttps &&
         string.Equals(uri.Host, "github.com", StringComparison.OrdinalIgnoreCase) &&
         uri.IsDefaultPort && string.IsNullOrEmpty(uri.UserInfo);
+
+    private static void EnsureTrustedApiResponse(HttpResponseMessage response)
+    {
+        var finalUri = response.RequestMessage?.RequestUri;
+        if (finalUri is null || !finalUri.IsAbsoluteUri ||
+            finalUri.Scheme != Uri.UriSchemeHttps || !finalUri.IsDefaultPort ||
+            !string.IsNullOrEmpty(finalUri.UserInfo) ||
+            !string.Equals(finalUri.Host, "api.github.com", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("בדיקת העדכונים הופנתה לשרת שאינו GitHub API המאושר.");
+    }
 
     private static void EnsureTrustedDownloadResponse(HttpResponseMessage response)
     {
