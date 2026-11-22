@@ -137,7 +137,7 @@ public sealed class NodeBbRemoteServiceTests
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not-json"));
 
-        Assert.Throws<JsonException>(() =>
+        Assert.ThrowsAny<JsonException>(() =>
         {
             NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream);
         });
