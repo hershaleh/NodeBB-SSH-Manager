@@ -79,7 +79,9 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("if [ \"$KEEP_ROLLBACK\" = \"0\" ]; then rm -rf -- \"$STAGE\"; fi", script);
         Assert.Contains("rm -rf -- \"$WORK\"", script);
         Assert.Contains("KEEP_ROLLBACK=1", script);
-        Assert.Contains("exit 42", script);
+        Assert.Contains("result=42", script);
+        Assert.Contains("exit \"$result\"", script);
+        Assert.DoesNotContain("rm -rf -- \"$FAILED\"", script);
     }
 
     [Theory]

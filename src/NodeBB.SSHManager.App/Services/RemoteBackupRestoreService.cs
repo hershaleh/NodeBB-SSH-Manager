@@ -708,7 +708,7 @@ cleanup() {
     set +e
     if [ -e "$INSTALL" ]; then mv "$INSTALL" "$FAILED" || result=42; fi
     if [ ! -e "$INSTALL" ]; then mv "$ROLLBACK" "$INSTALL" || result=42; fi
-    if [ "$result" -eq 0 ]; then rm -rf -- "$FAILED"; fi
+    if [ -d "$FAILED" ] && [ ! -L "$FAILED" ]; then echo "FULL_RESTORE_FAILED_TREE_PRESERVED|$FAILED"; fi
     set -e
   fi
   if [ "$KEEP_ROLLBACK" = "0" ]; then rm -rf -- "$STAGE"; fi
