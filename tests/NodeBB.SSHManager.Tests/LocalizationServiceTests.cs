@@ -234,6 +234,22 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void RestrictedManagerDynamicActionStatusesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Update in progress…", service.TranslateFormat($"עדכון מתבצע…"));
+        Assert.Equal("Update completed.", service.TranslateFormat($"עדכון הושלם."));
+        Assert.Equal("⚠ Update partially completed: 2 succeeded, 1 failed.",
+            service.TranslateFormat($"⚠ עדכון הושלם חלקית: {2} הצלחות, {1} כישלונות."));
+        Assert.Equal("Update did not complete. Permission denied.",
+            service.TranslateFormat($"עדכון לא הושלם. Permission denied."));
+        Assert.Equal("The plugin list was refreshed.", service.Translate("רשימת התוספים עודכנה."));
+        Assert.Equal("The action completed, but refreshing the list failed. You can refresh it manually.",
+            service.Translate("הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית."));
+    }
+
+    [Fact]
     public void RestrictedManagerActionLabelsTranslateToEnglish()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

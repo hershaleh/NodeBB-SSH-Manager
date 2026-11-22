@@ -153,7 +153,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         IsEnabled = false;
         SummaryTitle.Text = T(label) + " — " + T("בביצוע");
         SummaryText.Text = T("הבקשה נשלחה לשרת. ממתין לתשובה...");
-        if (keepPluginView) PluginActionStatus.Text = label + " מתבצע…";
+        if (keepPluginView) PluginActionStatus.Text = LocalizationService.Instance.TranslateFormat($"{label} מתבצע…");
         try
         {
             var result = await operation();
@@ -201,10 +201,10 @@ public partial class RestrictedNodeBbManagerWindow : Window
             if (keepPluginView)
             {
                 PluginActionStatus.Text = result.ExitCode == 0
-                    ? "✓ " + label + " הושלם."
+                    ? "✓ " + LocalizationService.Instance.TranslateFormat($"{label} הושלם.")
                     : partialSuccess
-                        ? $"⚠ {label} הושלם חלקית: {successfulPackages.Length} הצלחות, {affectedPackages.Length - successfulPackages.Length} כישלונות."
-                        : "⚠ " + label + " לא הושלם. " + TranslateError(raw);
+                        ? LocalizationService.Instance.TranslateFormat($"⚠ {label} הושלם חלקית: {successfulPackages.Length} הצלחות, {affectedPackages.Length - successfulPackages.Length} כישלונות.")
+                        : "⚠ " + LocalizationService.Instance.TranslateFormat($"{label} לא הושלם. {TranslateError(raw)}");
                 ManagerTabs.SelectedIndex = 1;
             }
             // Refresh cards after successful mutations, while preserving the original action output.
@@ -219,13 +219,13 @@ public partial class RestrictedNodeBbManagerWindow : Window
                             new[] { refreshed.Output, refreshed.Error }
                                 .Where(value => !string.IsNullOrWhiteSpace(value)));
                         UpdatePluginCards(refreshedRaw);
-                        PluginActionStatus.Text += " רשימת התוספים עודכנה.";
+                        PluginActionStatus.Text += " " + T("רשימת התוספים עודכנה.");
                     }
-                    else PluginActionStatus.Text += " הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.";
+                    else PluginActionStatus.Text += " " + T("הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.");
                 }
                 catch (Exception refreshError)
                 {
-                    PluginActionStatus.Text += " הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.";
+                    PluginActionStatus.Text += " " + T("הפעולה הושלמה, אך רענון הרשימה נכשל; אפשר לרענן ידנית.");
                     DiagnosticLogService.Instance.Warning("RestrictedCLI", "PluginRefreshAfterActionFailed",
                         "Could not refresh plugin list after a successful action.", refreshError, "restricted server");
                 }
@@ -240,7 +240,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), false, SummaryText.Text);
             if (keepPluginView)
             {
-                PluginActionStatus.Text = "⚠ " + label + " לא הושלם. " + TranslateError(ex.Message);
+                PluginActionStatus.Text = "⚠ " + LocalizationService.Instance.TranslateFormat($"{label} לא הושלם. {TranslateError(ex.Message)}");
                 ManagerTabs.SelectedIndex = 1;
             }
             DiagnosticLogService.Instance.Error("RestrictedCLI", "UiActionFailed", ex);
