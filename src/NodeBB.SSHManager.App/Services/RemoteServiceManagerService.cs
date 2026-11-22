@@ -6,7 +6,7 @@ public sealed record RemoteServiceEntry(string Name, string State, string Detail
 
 public sealed class RemoteServiceManagerService
 {
-    private static readonly Regex SafeName = new(@"^[A-Za-z0-9_.@:-]{1,128}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
+    private static readonly Regex SafeName = new(@"^[A-Za-z0-9_][A-Za-z0-9_.@:-]{0,127}$", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private readonly SshServerSession _session;
     public RemoteServiceManagerService(SshServerSession session) => _session = session;
     public static bool IsSafeServiceName(string? name) => !string.IsNullOrWhiteSpace(name) && SafeName.IsMatch(name);
