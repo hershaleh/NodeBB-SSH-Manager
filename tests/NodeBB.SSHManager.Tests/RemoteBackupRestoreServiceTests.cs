@@ -97,6 +97,141 @@ public sealed class RemoteBackupRestoreServiceTests
                 installationPath, workDirectory, hash, expandedBytes));
 
     [Fact]
+    public void BuildFullInstallationPreflightScript_FailureMatrixNeverMutatesInstallation()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationPreflightScript(
+            "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
+
+        Assert.Contains("[ -d \"$WORK\" ] && [ ! -L \"$WORK\" ]", script);
+        Assert.Contains("[ -s \"$WORK/incoming.tar.gz\" ] && [ ! -L \"$WORK/incoming.tar.gz\" ]", script);
+        Assert.Contains("[ \"$ACTUAL_SHA256\" = \"$EXPECTED_SHA256\" ]", script);
+        Assert.Contains("[ ! -e \"$STAGE\" ] && [ ! -e \"$ROLLBACK\" ] && [ ! -e \"$FAILED\" ]", script);
+        Assert.Contains("df -Pk", script);
+        Assert.Contains("du -skx", script);
+        Assert.Contains("tar -tzf", script);
+        Assert.Contains("exit 50", script);
+        Assert.Contains("FULL_RESTORE_PREFLIGHT_OK", script);
+        Assert.DoesNotContain("mkdir", script);
+        Assert.DoesNotContain("mv --", script);
+        Assert.DoesNotContain("rm -rf", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationRestoreScript_ValidatesEverythingBeforeBeginningSwap()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
+            "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
+
+        var validationMarkers = new[]
+        {
+            "[ -d \"$WORK\" ]",
+            "[ -s \"$WORK/incoming.tar.gz\" ]",
+            "ACTUAL_SHA256=",
+            "tar -tzf",
+            "mkdir -m 700 \"$STAGE\"",
+            "node - \"$INSTALL/package.json\"",
+            "SPECIAL="
+        };
+        var swap = script.IndexOf("SWAP_STARTED=1", StringComparison.Ordinal);
+        Assert.True(swap > 0);
+        foreach (var marker in validationMarkers)
+        {
+            var position = script.IndexOf(marker, StringComparison.Ordinal);
+            Assert.True(position >= 0 && position < swap, $"Expected '{marker}' before the swap begins.");
+        }
+
+        Assert.Contains("exit 40", script);
+        Assert.Contains("exit 41", script);
+        Assert.Contains("mv -- \"$INSTALL\" \"$ROLLBACK\"", script);
+        Assert.Contains("mv -- \"$STAGE\" \"$INSTALL\"", script);
+        Assert.Contains("result=42", script);
+        Assert.Contains("FULL_RESTORE_SWITCHED", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationRollbackScript_FailureMatrixPreservesBothTreesWhenMovesFail()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRollbackScript("/srv/nodebb", FullWork);
+
+        Assert.Contains("[ -d \"$ROLLBACK\" ] && [ ! -L \"$ROLLBACK\" ]", script);
+        Assert.Contains("[ -d \"$INSTALL\" ] && [ ! -L \"$INSTALL\" ]", script);
+        Assert.Contains("[ ! -e \"$FAILED\" ]", script);
+        Assert.Contains("mv -- \"$INSTALL\" \"$FAILED\" || exit 44", script);
+        Assert.Contains("mv -- \"$ROLLBACK\" \"$INSTALL\" || result=45", script);
+        Assert.Contains("mv -- \"$FAILED\" \"$INSTALL\" ||", script);
+        Assert.Contains("trap recover_interrupted_rollback EXIT", script);
+        Assert.Contains("exit 45", script);
+        Assert.DoesNotContain("rm -rf", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationFinalizeScript_ValidatesPreservationTargetBeforeRemovingWorkspace()
+    {
+        var success = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, false);
+        var rollback = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, true);
+
+        Assert.True(success.IndexOf("[ -d \"$ROLLBACK\" ]", StringComparison.Ordinal) <
+                    success.IndexOf("rm -rf -- \"$WORK\"", StringComparison.Ordinal));
+        Assert.True(rollback.IndexOf("[ -d \"$FAILED\" ]", StringComparison.Ordinal) <
+                    rollback.IndexOf("rm -rf -- \"$WORK\"", StringComparison.Ordinal));
+        Assert.Contains("exit 46", success);
+        Assert.Contains("exit 46", rollback);
+        Assert.DoesNotContain("rm -rf -- \"$ROLLBACK\"", success);
+        Assert.DoesNotContain("rm -rf -- \"$FAILED\"", rollback);
+    }
+
+    [Fact]
+    public void RestoreFullInstallationAsync_OrdersPreflightStopSwapHealthRollbackAndFinalizeSafely()
+    {
+        var source = File.ReadAllText(FindServiceSource());
+        var start = source.IndexOf("public async Task RestoreFullInstallationAsync(", StringComparison.Ordinal);
+        Assert.True(start >= 0);
+        var end = source.IndexOf("public async Task<string> InspectFullInstallationRecoveryAsync(", start, StringComparison.Ordinal);
+        Assert.True(end > start);
+        var method = source[start..end];
+
+        AssertOrdered(method,
+            "ValidateFullInstallationArchiveAsync",
+            "mkdir -m 700",
+            "UploadFile",
+            "sha256sum --",
+            "BuildFullInstallationPreflightScript",
+            "ExecuteLifecycleAsync(installation, runtime, \"stop\"",
+            "VerifyHttpStoppedAsync",
+            "BuildFullInstallationRestoreScript",
+            "ExecuteLifecycleAsync(installation, runtime, \"start\"",
+            "BuildFullInstallationRollbackScript",
+            "BuildFullInstallationFinalizeScript");
+        Assert.Contains("recoveryRequired = true", method);
+        Assert.Contains("CancellationToken.None", method);
+        Assert.Contains("if (switched)", method);
+        Assert.Contains("if (workCreated && !scriptStarted)", method);
+    }
+
+    private static void AssertOrdered(string source, params string[] markers)
+    {
+        var previous = -1;
+        foreach (var marker in markers)
+        {
+            var current = source.IndexOf(marker, previous + 1, StringComparison.Ordinal);
+            Assert.True(current > previous, $"Expected '{marker}' after the preceding restore phase.");
+            previous = current;
+        }
+    }
+
+    private static string FindServiceSource()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null)
+        {
+            var candidate = Path.Combine(directory.FullName, "src", "NodeBB.SSHManager.App", "Services", "RemoteBackupRestoreService.cs");
+            if (File.Exists(candidate)) return candidate;
+            directory = directory.Parent;
+        }
+        throw new FileNotFoundException("Could not locate RemoteBackupRestoreService.cs for restore orchestration assertions.");
+    }
+
+    [Fact]
     public void BuildFullInstallationRestoreScript_StagesValidatesAndKeepsEmergencyCopy()
     {
         var script = RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
