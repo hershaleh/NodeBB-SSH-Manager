@@ -239,9 +239,9 @@ public sealed class LocalizationServiceTests
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
         service.SetLanguage("en");
         Assert.Contains("remove all selected packages", service.Translate("הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה."));
-        Assert.Equal("Perform Bulk update on 4 items?\n\nplugin-a\n\nThe action will run on all selected packages, one by one. The server creates an automatic backup before each change.",
+        Assert.Equal("Perform Bulk update on 4 items?\n\nplugin-a\n\nThis action will run on all selected packages, one by one. The server creates an automatic backup before each change.",
             string.Format(service["Restricted_BulkConfirm"], service["Restricted_BulkUpdate"], 4, "plugin-a", service["Restricted_BulkSafe"]));
-        Assert.Equal("Perform Bulk disable on 2 items?\n\nplugin-a\nplugin-b\n\nThe action will run on all selected packages, one by one. The server creates an automatic backup before each change.",
+        Assert.Equal("Perform Bulk disable on 2 items?\n\nplugin-a\nplugin-b\n\nThis action will run on all selected packages, one by one. The server creates an automatic backup before each change.",
             string.Format(service["Restricted_BulkConfirm"], service["Restricted_BulkDisable"], 2, "plugin-a\nplugin-b", service["Restricted_BulkSafe"]));
         Assert.Equal("Perform Bulk removal on 1 items?\n\nplugin-a\n\nThis action will remove all selected packages. The server creates an automatic backup before each change. A completed removal cannot be undone.",
             string.Format(service["Restricted_BulkConfirm"], service["Restricted_BulkRemove"], 1, "plugin-a", service["Restricted_BulkDestructive"]));
