@@ -11,7 +11,7 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="58"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="SERVER CAPABILITY SCAN" Foreground="#AFC0DD" FontSize="9" FontWeight="Bold" FlowDirection="LeftToRight"/>
+                    <TextBlock Text="{loc:Tr Ui_Server_Capability_Scan}" Foreground="#AFC0DD" FontSize="9" FontWeight="Bold" FlowDirection="LeftToRight"/>
                     <TextBlock Text="{loc:Tr View_5449b4ec}" FontSize="25" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
                     <TextBlock x:Name="ServerLabel" Foreground="#C5D1E2" FontSize="12" Margin="0,6,0,0"/>
                     <TextBlock Text="{loc:Tr View_e6390f91}" Foreground="#91A4C1" FontSize="11" Margin="0,5,0,0"/>

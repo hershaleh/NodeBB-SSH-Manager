@@ -11,8 +11,8 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
                 <StackPanel>
-                    <TextBlock Text="SECURE SHELL SESSION" Foreground="#91A6C5" FontSize="9" FontWeight="Bold"/>
-                    <TextBlock x:Name="ServerLabel" Text="SSH Terminal" FontSize="14" FontWeight="SemiBold" Foreground="#E6EDF7" Margin="0,5,0,0"/>
+                    <TextBlock Text="{loc:Tr Ui_Secure_Shell_Session}" Foreground="#91A6C5" FontSize="9" FontWeight="Bold"/>
+                    <TextBlock x:Name="ServerLabel" Text="{loc:Tr Ui_Ssh_Terminal}" FontSize="14" FontWeight="SemiBold" Foreground="#E6EDF7" Margin="0,5,0,0"/>
                 </StackPanel>
                 <Border Grid.Column="1" Background="#1F493B" BorderBrush="#2C7156" BorderThickness="1" CornerRadius="9" Padding="11,7" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
@@ -26,8 +26,8 @@
             <Grid>
                 <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                 <DockPanel Grid.Row="0" Margin="0,0,0,9">
-                    <TextBlock Text="OUTPUT" Foreground="#7488A5" FontSize="9" FontWeight="Bold"/>
-                    <TextBlock DockPanel.Dock="Right" Text="UTF-8 · Interactive shell" Foreground="#667A97" FontSize="9"/>
+                    <TextBlock Text="{loc:Tr Ui_Output}" Foreground="#7488A5" FontSize="9" FontWeight="Bold"/>
+                    <TextBlock DockPanel.Dock="Right" Text="{loc:Tr Ui_Interactive_Shell}" Foreground="#667A97" FontSize="9"/>
                 </DockPanel>
                 <TextBox x:Name="OutputBox" Grid.Row="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
                          VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto"

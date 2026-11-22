@@ -39,7 +39,7 @@
   <Border Grid.Row="0" Background="{StaticResource HeroBrush}" CornerRadius="21" Padding="24" Margin="0,0,0,18">
    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel>
-     <TextBlock Text="NODEBB  /  CONTROL CENTER" Foreground="#AFC0DD" FontSize="10" FontWeight="SemiBold"/>
+     <TextBlock Text="{loc:Tr Ui_NodeBB_Control_Center}" Foreground="#AFC0DD" FontSize="10" FontWeight="SemiBold"/>
      <TextBlock Text="{loc:Tr View_9d6dc942}" FontSize="25" FontWeight="Bold" Foreground="White" Margin="0,6,0,0"/>
      <TextBlock x:Name="ServerLabel" Foreground="#D0DAEA" FontSize="12" Margin="0,5,0,0"/>
     </StackPanel>

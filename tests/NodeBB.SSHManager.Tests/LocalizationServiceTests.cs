@@ -109,6 +109,22 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    [Fact]
+    public void SharedWindowCaptionsTranslateInBothLanguages()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+
+        Assert.Equal("מרכז הבקרה של NodeBB", service["Ui_NodeBB_Control_Center"]);
+        Assert.Equal("סריקת יכולות השרת", service["Ui_Server_Capability_Scan"]);
+
+        service.SetLanguage("en");
+        Assert.Equal("NODEBB  /  CONTROL CENTER", service["Ui_NodeBB_Control_Center"]);
+        Assert.Equal("SERVER CAPABILITY SCAN", service["Ui_Server_Capability_Scan"]);
+        Assert.Equal("LIVE SERVER TELEMETRY", service["Ui_Live_Server_Telemetry"]);
+        Assert.Equal("SECURE SHELL SESSION", service["Ui_Secure_Shell_Session"]);
+        Assert.Equal("UTF-8 · Interactive shell", service["Ui_Interactive_Shell"]);
+    }
+
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
