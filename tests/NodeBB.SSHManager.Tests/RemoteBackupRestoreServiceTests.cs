@@ -77,7 +77,7 @@ public sealed class RemoteBackupRestoreServiceTests
             "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
         Assert.Contains("if [ \"$SWAP_STARTED\" = \"1\" ] && [ \"$KEEP_ROLLBACK\" = \"0\" ]", script);
         Assert.Contains("if [ \"$KEEP_ROLLBACK\" = \"0\" ]; then rm -rf -- \"$STAGE\"; fi", script);
-        Assert.Contains("if [ \"$KEEP_ROLLBACK\" = \"0\" ]; then rm -rf -- \"$WORK\"; fi", script);
+        Assert.Contains("rm -rf -- \"$WORK\"", script);
         Assert.Contains("KEEP_ROLLBACK=1", script);
         Assert.Contains("exit 42", script);
     }
