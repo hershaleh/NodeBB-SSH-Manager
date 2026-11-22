@@ -184,8 +184,10 @@ public sealed class NodeBbRemoteService
     public async Task<(int ExitCode, string Output, string Error)> RunLifecycleAsync(
         NodeBbInstallation installation, string action, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(installation);
         if (action is not ("start" or "stop" or "restart" or "build"))
             throw new ArgumentOutOfRangeException(nameof(action));
+        RemotePathSafety.ValidateNodeBbInstallationPath(installation.Path);
 
         DiagnosticLogService.Instance.Info("NodeBB", "LifecycleStarted", $"NodeBB {action} requested for {installation.Path}.", _session.Profile.Name);
         if (action == "build")
@@ -202,7 +204,47 @@ public sealed class NodeBbRemoteService
         var runtimeService = new NodeBbRuntimeService(_session);
         var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
         var result = await runtimeService.ExecuteLifecycleAsync(installation, runtime, action, cancellationToken);
-        return (result.ExitCode, $"מנהל הפעלה שזוהה: {runtime.Manager} ({runtime.Identifier}){Environment.NewLine}{result.Output}", result.Error);
+        var described = (result.ExitCode, $"מנהל הפעלה שזוהה: {runtime.Manager} ({runtime.Identifier}){Environment.NewLine}{result.Output}", result.Error);
+        return await VerifyLifecycleOutcomeAsync(
+            action,
+            described,
+            () => runtimeService.VerifyHttpStoppedAsync(installation, cancellationToken),
+            () => runtimeService.VerifyHttpHealthAsync(installation, cancellationToken));
+    }
+
+    internal static async Task<(int ExitCode, string Output, string Error)> VerifyLifecycleOutcomeAsync(
+        string action,
+        (int ExitCode, string Output, string Error) commandResult,
+        Func<Task<bool>> verifyStopped,
+        Func<Task<bool>> verifyHealthy)
+    {
+        ArgumentNullException.ThrowIfNull(verifyStopped);
+        ArgumentNullException.ThrowIfNull(verifyHealthy);
+        if (commandResult.ExitCode != 0 || action == "build")
+            return commandResult;
+
+        try
+        {
+            if (action == "stop")
+            {
+                if (await verifyStopped())
+                    return (commandResult.ExitCode, commandResult.Output + Environment.NewLine + "אומת: אין תהליך שמאזין ביציאת NodeBB.", commandResult.Error);
+                return (1, commandResult.Output, "פקודת העצירה הסתיימה בהצלחה, אך עדיין לא ניתן לאמת שיציאת NodeBB הפסיקה להאזין. בדוק את מצב השירות לפני ניסיון נוסף.");
+            }
+
+            if (action is "start" or "restart")
+            {
+                if (await verifyHealthy())
+                    return (commandResult.ExitCode, commandResult.Output + Environment.NewLine + "אומת: ממשק HTTP של NodeBB מגיב באופן תקין.", commandResult.Error);
+                return (1, commandResult.Output, "פקודת ההפעלה הסתיימה, אך NodeBB לא סיפק תגובת API תקינה. בדוק את יומני NodeBB ואת מצב מסד הנתונים.");
+            }
+
+            throw new ArgumentOutOfRangeException(nameof(action));
+        }
+        catch (Exception ex)
+        {
+            return (1, commandResult.Output, $"הפקודה הסתיימה, אך אימות מצב NodeBB נכשל: {ex.Message}");
+        }
     }
 
     private static string ShellQuote(string value) => "'" + value.Replace("'", "'\\''") + "'";
