@@ -7,6 +7,56 @@ public sealed class NodeBbRuntimeServiceTests
 {
 
 
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    [InlineData("/srv/nodebb\\other")]
+    public void ValidateLifecycleRequest_RejectsUnsafeInstallationPaths(string path)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            NodeBbRuntimeService.ValidateLifecycleRequest(
+                new NodeBbInstallation(path, "4.0.0"),
+                new NodeBbRuntimeInfo("MANUAL", "CLI"),
+                "start"));
+    }
+
+    [Theory]
+    [InlineData("pause")]
+    [InlineData("delete")]
+    [InlineData("")]
+    public void ValidateLifecycleRequest_RejectsUnsupportedActions(string action)
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            NodeBbRuntimeService.ValidateLifecycleRequest(
+                new NodeBbInstallation("/srv/nodebb", "4.0.0"),
+                new NodeBbRuntimeInfo("MANUAL", "CLI"),
+                action));
+    }
+
+    [Theory]
+    [InlineData("SYSTEMD", "nodebb;touch /tmp/pwned")]
+    [InlineData("DOCKER", "nodebb")]
+    [InlineData("PM2", "1;id")]
+    [InlineData("UNKNOWN", "nodebb")]
+    public void ValidateLifecycleRequest_RejectsUnsafeManagerIdentifiers(string manager, string identifier)
+    {
+        Assert.Throws<InvalidOperationException>(() =>
+            NodeBbRuntimeService.ValidateLifecycleRequest(
+                new NodeBbInstallation("/srv/nodebb", "4.0.0"),
+                new NodeBbRuntimeInfo(manager, identifier),
+                "stop"));
+    }
+
+    [Fact]
+    public void ValidateLifecycleRequest_AcceptsSupportedRequest()
+    {
+        NodeBbRuntimeService.ValidateLifecycleRequest(
+            new NodeBbInstallation("/srv/nodebb", "4.0.0"),
+            new NodeBbRuntimeInfo("SYSTEMD", "nodebb.service"),
+            "restart");
+    }
+
     [Fact]
     public void BuildHttpStoppedCheckScript_InspectsListeningPortAndFailsClosedWithoutTools()
     {

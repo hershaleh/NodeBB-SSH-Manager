@@ -24,7 +24,10 @@ public sealed class NodeBbRuntimeService
     public async Task<NodeBbRuntimeInfo> DetectAsync(
         NodeBbInstallation installation, CancellationToken cancellationToken = default)
     {
-        var script = $$$"""
+        ArgumentNullException.ThrowIfNull(installation);
+        RemotePathSafety.ValidateNodeBbInstallationPath(installation.Path);
+
+        var script = $$"""
 INSTALL_PATH={{{ShellQuote(installation.Path)}}}
 if command -v systemctl >/dev/null 2>&1 && [ -d /run/systemd/system ]; then
   for f in /etc/systemd/system/*.service /lib/systemd/system/*.service /usr/lib/systemd/system/*.service; do
@@ -106,10 +109,7 @@ printf 'MANUAL|CLI\n'
         NodeBbInstallation installation, NodeBbRuntimeInfo runtime, string action,
         CancellationToken cancellationToken = default)
     {
-        if (action is not ("start" or "stop" or "restart"))
-            throw new ArgumentOutOfRangeException(nameof(action));
-        if (!IsSafeIdentifier(runtime.Manager, runtime.Identifier))
-            throw new InvalidOperationException("מזהה מנהל השירותים אינו תקין.");
+        ValidateLifecycleRequest(installation, runtime, action);
 
         var path = ShellQuote(installation.Path);
         var identifier = ShellQuote(runtime.Identifier);
@@ -317,6 +317,18 @@ function check() {
 check();
 NODE
 """.Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal);
+    }
+
+    internal static void ValidateLifecycleRequest(
+        NodeBbInstallation installation, NodeBbRuntimeInfo runtime, string action)
+    {
+        ArgumentNullException.ThrowIfNull(installation);
+        ArgumentNullException.ThrowIfNull(runtime);
+        RemotePathSafety.ValidateNodeBbInstallationPath(installation.Path);
+        if (action is not ("start" or "stop" or "restart"))
+            throw new ArgumentOutOfRangeException(nameof(action));
+        if (!IsSafeIdentifier(runtime.Manager, runtime.Identifier))
+            throw new InvalidOperationException("מזהה מנהל השירותים אינו תקין.");
     }
 
     private static string PrivilegedCommand(string command) => $"""
