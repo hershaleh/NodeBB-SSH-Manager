@@ -261,6 +261,58 @@ public partial class DatabaseManagerWindow : Window
         }
     }
 
+    private async void RedisRestore_Click(object sender, RoutedEventArgs e)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = T("בחירת גיבוי Redis מלא ומוצפן"),
+            Filter = T("גיבוי NodeBB מוצפן|*.nbbbackup|כל הקבצים|*.*"),
+            CheckFileExists = true, Multiselect = false
+        };
+        if (dialog.ShowDialog(this) != true) return;
+        var password = RestorePasswordBox.Password;
+        if (password.Length < 12)
+        {
+            MessageBox.Show(this, T("יש להזין סיסמה בת 12 תווים לפחות."), T("סיסמת גיבוי"), MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+        var confirmation = MessageBox.Show(this,
+            T("אזהרה: קובץ Redis מכיל את כל שרת Redis, ולא רק את נתוני NodeBB. השחזור יחליף את קובץ ה-RDB של השרת המקומי כולו, כולל מסדי נתונים לוגיים ושירותים נוספים. נדרש שירות systemd יחיד ומזוהה. לפני ההחלפה יישמר עותק RDB קודם. להמשיך?"),
+            T("אישור שחזור Redis מלא"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No);
+        if (confirmation != MessageBoxResult.Yes) return;
+
+        RedisRestoreButton.IsEnabled = false;
+        RedisBackupButton.IsEnabled = false;
+        RefreshButton.IsEnabled = false;
+        StatusText.Text = T("מפענח ובודק את קובץ RDB...");
+        var tempRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NodeBB SSH Manager", "Temp");
+        var decrypted = Path.Combine(tempRoot, "redis-restore-" + Guid.NewGuid().ToString("N") + ".rdb");
+        try
+        {
+            Directory.CreateDirectory(tempRoot);
+            await BackupEncryptionService.DecryptFileAsync(dialog.FileName, decrypted, password);
+            await RedisDatabaseBackupService.ValidateRdbAsync(decrypted);
+            StatusText.Text = T("קובץ RDB תקין. בודק את שירות Redis ויוצר נקודת חזרה...");
+            await new RedisDatabaseRestoreService(_session).RestoreAsync(_installation, decrypted);
+            StatusText.Text = T("שחזור Redis הושלם בהצלחה.");
+            MessageBox.Show(this, T("שרת Redis שוחזר בהצלחה. השחזור כלל את כל מסדי Redis בשרת."), T("השחזור הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("DatabaseUI", "RedisRestoreFailed", ex, _session.Profile.Name);
+            StatusText.Text = T("שחזור Redis נכשל: ") + ex.Message;
+            MessageBox.Show(this, ex.Message, T("שגיאה בשחזור Redis"), MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+        finally
+        {
+            try { if (File.Exists(decrypted)) File.Delete(decrypted); } catch { }
+            RestorePasswordBox.Clear();
+            RedisRestoreButton.IsEnabled = true;
+            RedisBackupButton.IsEnabled = true;
+            RefreshButton.IsEnabled = true;
+        }
+    }
+
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
@@ -283,6 +335,9 @@ public partial class DatabaseManagerWindow : Window
             DatabaseRestoreButton.Visibility = isMongo ? Visibility.Visible : Visibility.Collapsed;
             PostgresRestoreButton.Visibility = isPostgres ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupButton.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
+            RedisRestoreButton.Content = T("שחזור Redis מלא (כל השרת)");
+            RedisRestoreButton.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
+            if (isRedis) MongoRestorePanel.Visibility = Visibility.Visible;
             PostgresBackupButton.Visibility = isPostgres ? Visibility.Visible : Visibility.Collapsed;
             RedisBackupNote.Visibility = isRedis ? Visibility.Visible : Visibility.Collapsed;
             StatusText.Text = T("התצורה נקראה בהצלחה.");

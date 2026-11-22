@@ -108,6 +108,7 @@
                         <TextBlock Text="{loc:Tr View_2fb5ebbd}" TextWrapping="Wrap" Foreground="#718096" FontSize="11" Margin="0,6,0,13"/>
                         <TextBlock Text="{loc:Tr View_d393e18c}" Style="{StaticResource DbLabel}"/>
                         <PasswordBox x:Name="RestorePasswordBox" Padding="10" Height="40"/>
+                        <Button x:Name="RedisRestoreButton" Content="שחזור Redis מלא (כל השרת)" Click="RedisRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Visibility="Collapsed" Margin="0,12,0,0"/>
                         <Button x:Name="PostgresRestoreButton" Content="{loc:Tr View_74d55278}" Click="PostgresRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Visibility="Collapsed" Margin="0,12,0,0"/>
                         <Button x:Name="DatabaseRestoreButton" Content="{loc:Tr View_661c2e9c}" Click="DatabaseRestore_Click" HorizontalAlignment="Stretch" Padding="15,11" Background="#A83F4B" Foreground="White" BorderThickness="0" Margin="0,12,0,0"/>
                         <Border Background="#FFF5E8" CornerRadius="10" Padding="11" Margin="0,12,0,0">
