@@ -38,7 +38,7 @@ public sealed class RemoteBackupRestoreServiceTests
     [InlineData("INSTALLATION|present|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "NO_RECOVERY_ARTIFACTS")]
     [InlineData("INSTALLATION|missing|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "INSTALLATION|missing|/srv/nodebb")]
     [InlineData("INSTALLATION|unexpected-type|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "INSTALLATION|unexpected-type|/srv/nodebb")]
-    [InlineData("INSTALLATION|present|/srv/nodebb\nRECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x\n", "RECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x")]
+    [InlineData("INSTALLATION|present|/srv/nodebb\nRECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x\n", "INSTALLATION|present|/srv/nodebb\nRECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x")]
     public void NormalizeFullInstallationRecoveryInspectionOutput_OnlyReportsCleanWhenInstallationIsPresentAndNoArtifactsExist(
         string output, string expected)
     {

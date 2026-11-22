@@ -570,7 +570,9 @@ public sealed class RemoteBackupRestoreService
         var hasArtifacts = lines.Any(line => line.StartsWith("RECOVERY_ARTIFACT|", StringComparison.Ordinal));
         var hasNoArtifactsMarker = lines.Contains("NO_RECOVERY_ARTIFACTS", StringComparer.Ordinal);
 
-        if (installationLine == "INSTALLATION|present|" && !hasArtifacts && hasNoArtifactsMarker)
+        if (installationLine is not null &&
+            installationLine.StartsWith("INSTALLATION|present|", StringComparison.Ordinal) &&
+            !hasArtifacts && hasNoArtifactsMarker)
             return "NO_RECOVERY_ARTIFACTS";
 
         if (installationLine is null)
