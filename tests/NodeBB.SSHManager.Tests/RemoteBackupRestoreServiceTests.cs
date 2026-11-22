@@ -18,6 +18,22 @@ public sealed class RemoteBackupRestoreServiceTests
     private const string ValidHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 
+    [Theory]
+    [InlineData(true, false, false, false, false, false, true)]
+    [InlineData(true, false, false, true, true, false, true)]
+    [InlineData(true, false, false, true, false, false, false)]
+    [InlineData(true, false, false, true, true, true, false)]
+    [InlineData(true, true, false, true, true, false, false)]
+    [InlineData(true, false, true, true, true, false, false)]
+    [InlineData(false, false, false, false, false, false, false)]
+    public void ShouldRestartOriginalAfterRestoreFailure_OnlyWhenRemoteStateIsKnownSafe(
+        bool stopped, bool switched, bool restartAttempted, bool scriptStarted,
+        bool restoreCommandReturned, bool recoveryRequired, bool expected)
+    {
+        Assert.Equal(expected, RemoteBackupRestoreService.ShouldRestartOriginalAfterRestoreFailure(
+            stopped, switched, restartAttempted, scriptStarted, restoreCommandReturned, recoveryRequired));
+    }
+
     [Fact]
     public void BuildFullInstallationRecoveryInspectionScript_IsReadOnlyAndFindsEveryRecoveryArtifactType()
     {

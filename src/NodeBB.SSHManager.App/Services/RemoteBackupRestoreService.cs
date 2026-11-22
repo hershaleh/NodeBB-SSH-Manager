@@ -384,6 +384,7 @@ public sealed class RemoteBackupRestoreService
         var hash = await ComputeSha256Async(localArchive, cancellationToken);
         var workCreated = false;
         var scriptStarted = false;
+        var restoreCommandReturned = false;
         var stopped = false;
         var switched = false;
         var restartAttempted = false;
@@ -444,6 +445,7 @@ public sealed class RemoteBackupRestoreService
             var restore = await _session.ExecuteAsync(
                 BuildFullInstallationRestoreScript(installation.Path, work, hash, archiveInfo.ExpandedBytes),
                 cancellationToken);
+            restoreCommandReturned = true;
             if (restore.ExitCode == 42)
             {
                 recoveryRequired = true;
@@ -511,7 +513,8 @@ public sealed class RemoteBackupRestoreService
             DiagnosticLogService.Instance.Error("FullRestore", "RestoreFailed", ex, _session.Profile.Name);
             if (recoveryRequired)
                 throw new InvalidOperationException(ex.Message + $" עותק החירום: {rollbackPath}", ex);
-            if (stopped && !switched && !restartAttempted && runtime is not null)
+            if (runtime is not null && ShouldRestartOriginalAfterRestoreFailure(
+                stopped, switched, restartAttempted, scriptStarted, restoreCommandReturned, recoveryRequired))
             {
                 try
                 {
@@ -551,6 +554,12 @@ public sealed class RemoteBackupRestoreService
     /// Read-only inspection of interrupted full-installation restore artifacts.
     /// This method never changes or removes remote files.
     /// </summary>
+    internal static bool ShouldRestartOriginalAfterRestoreFailure(
+        bool stopped, bool switched, bool restartAttempted, bool scriptStarted,
+        bool restoreCommandReturned, bool recoveryRequired) =>
+        stopped && !switched && !restartAttempted && !recoveryRequired &&
+        (!scriptStarted || restoreCommandReturned);
+
     public async Task<string> InspectFullInstallationRecoveryAsync(
         NodeBbInstallation installation, CancellationToken cancellationToken = default)
     {
