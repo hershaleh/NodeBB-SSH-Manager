@@ -86,6 +86,18 @@ public sealed class LocalizationServiceTests
         Assert.Equal("CSV file (*.csv)|*.csv", service.Translate("קובץ CSV (*.csv)|*.csv"));
     }
 
+
+    [Fact]
+    public void BackupWindowMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("The encryption password must contain at least 12 characters.", service.Translate("סיסמת ההצפנה חייבת להכיל לפחות 12 תווים."));
+        Assert.Equal("Creating the backup on the server and downloading it...", service.Translate("יוצר גיבוי בשרת ומוריד אותו למחשב..."));
+        Assert.Equal("Confirm full installation restore", service.Translate("אישור שחזור התקנה מלאה"));
+        Assert.Equal("The scheduled backup completed successfully.", service.Translate("הגיבוי המתוזמן הושלם בהצלחה."));
+    }
+
     [Fact]
     public void RejectsUnsupportedLanguage()
     {
