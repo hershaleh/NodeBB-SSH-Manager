@@ -5,6 +5,7 @@ using System.Windows.Input;
 using Microsoft.Win32;
 using Renci.SshNet.Sftp;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
@@ -13,7 +14,7 @@ public sealed class RemoteFileItem
     public string Name { get; init; } = "";
     public string FullPath { get; init; } = "";
     public bool IsDirectory { get; init; }
-    public string Kind => IsDirectory ? "תיקייה" : "קובץ";
+    public string Kind => IsDirectory ? LocalizationService.Instance["Sftp_Directory"] : LocalizationService.Instance["Sftp_File"];
     public string SizeDisplay { get; init; } = "—";
     public string ModifiedDisplay { get; init; } = "—";
 }
@@ -48,14 +49,14 @@ public partial class SftpFileManagerWindow : Window
     {
         try
         {
-            StatusText.Text = "מתחבר...";
+            StatusText.Text = LocalizationService.Instance["Sftp_Connecting"];
             await WithSftpLockAsync(() => { _client.Connect(); return true; });
             await LoadDirectoryAsync(_currentPath);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "ConnectOrListFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שגיאה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_Error"], ex.Message);
         }
     }
 
@@ -79,12 +80,12 @@ public partial class SftpFileManagerWindow : Window
             PathBox.Text = safePath;
             _items.Clear();
             foreach (var item in list) _items.Add(item);
-            StatusText.Text = $"{_items.Count} פריטים";
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_Items"], _items.Count);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "DirectoryListingFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שגיאה בטעינת התיקייה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_ListError"], ex.Message);
         }
     }
 
@@ -101,20 +102,20 @@ public partial class SftpFileManagerWindow : Window
     private async void Navigate_Click(object sender, RoutedEventArgs e)
     {
         var requested = PathBox.Text.Trim();
-        if (string.IsNullOrWhiteSpace(requested)) { StatusText.Text = "הזן נתיב מוחלט."; return; }
+        if (string.IsNullOrWhiteSpace(requested)) { StatusText.Text = LocalizationService.Instance["Sftp_AbsolutePath"]; return; }
         await LoadDirectoryAsync(requested);
     }
 
     private async void CreateDirectory_Click(object sender, RoutedEventArgs e)
     {
-        var name = PromptForName("יצירת תיקייה", "שם התיקייה החדשה:");
+        var name = PromptForName(LocalizationService.Instance["Sftp_CreateDirectory"], LocalizationService.Instance["Sftp_NewDirectory"]);
         if (name is null) return;
         try
         {
             var remotePath = SftpPathSafety.Combine(_currentPath, name);
             await WithSftpLockAsync(() =>
             {
-                if (_client.Exists(remotePath)) throw new IOException("כבר קיים פריט בשם הזה.");
+                if (_client.Exists(remotePath)) throw new IOException(LocalizationService.Instance["Sftp_AlreadyExists"]);
                 _client.CreateDirectory(remotePath);
                 return true;
             });
@@ -124,14 +125,14 @@ public partial class SftpFileManagerWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "DirectoryCreateFailed", ex, _session.Profile.Name);
-            StatusText.Text = "יצירת התיקייה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_CreateFailed"], ex.Message);
         }
     }
 
     private async void Rename_Click(object sender, RoutedEventArgs e)
     {
-        if (FilesList.SelectedItem is not RemoteFileItem item) { StatusText.Text = "בחר פריט לשינוי שם."; return; }
-        var newName = PromptForName("שינוי שם", "השם החדש:", item.Name);
+        if (FilesList.SelectedItem is not RemoteFileItem item) { StatusText.Text = LocalizationService.Instance["Sftp_SelectRename"]; return; }
+        var newName = PromptForName(LocalizationService.Instance["Sftp_Rename"], LocalizationService.Instance["Sftp_NewName"], item.Name);
         if (newName is null || string.Equals(newName, item.Name, StringComparison.Ordinal)) return;
         try
         {
@@ -139,7 +140,7 @@ public partial class SftpFileManagerWindow : Window
             await WithSftpLockAsync(() =>
             {
                 var source = SftpPathSafety.NormalizeAbsolutePath(item.FullPath);
-                if (_client.Exists(destination)) throw new IOException("כבר קיים פריט בשם החדש.");
+                if (_client.Exists(destination)) throw new IOException(LocalizationService.Instance["Sftp_AlreadyExistsNew"]);
                 if (item.IsDirectory) _client.RenameFile(source, destination);
                 else _client.RenameFile(source, destination);
                 return true;
@@ -150,7 +151,7 @@ public partial class SftpFileManagerWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "RemoteRenameFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שינוי השם נכשל: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_RenameFailed"], ex.Message);
         }
     }
 
@@ -167,8 +168,8 @@ public partial class SftpFileManagerWindow : Window
         var input = new System.Windows.Controls.TextBox { Text = initialValue, Height = 32, VerticalContentAlignment = VerticalAlignment.Center };
         panel.Children.Add(input);
         var buttons = new System.Windows.Controls.StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0, 14, 0, 0) };
-        var ok = new System.Windows.Controls.Button { Content = "אישור", Width = 90, IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
-        var cancel = new System.Windows.Controls.Button { Content = "ביטול", Width = 90, IsCancel = true };
+        var ok = new System.Windows.Controls.Button { Content = LocalizationService.Instance["Sftp_Ok"], Width = 90, IsDefault = true, Margin = new Thickness(0, 0, 8, 0) };
+        var cancel = new System.Windows.Controls.Button { Content = LocalizationService.Instance["Sftp_Cancel"], Width = 90, IsCancel = true };
         ok.Click += (_, _) => { try { SftpPathSafety.ValidateName(input.Text.Trim()); dialog.DialogResult = true; dialog.Close(); } catch (Exception ex) { MessageBox.Show(dialog, ex.Message, title, MessageBoxButton.OK, MessageBoxImage.Warning); } };
         buttons.Children.Add(ok); buttons.Children.Add(cancel); panel.Children.Add(buttons);
         dialog.Content = panel;
@@ -190,7 +191,7 @@ public partial class SftpFileManagerWindow : Window
 
     private async void Upload_Click(object sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFileDialog { Title = "בחירת קובץ להעלאה", CheckFileExists = true };
+        var dialog = new OpenFileDialog { Title = LocalizationService.Instance["Sftp_SelectUpload"], CheckFileExists = true };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
@@ -198,16 +199,16 @@ public partial class SftpFileManagerWindow : Window
             var remotePath = SftpPathSafety.Combine(_currentPath, fileName);
             var replaceApproved = await WithSftpLockAsync(() => _client.Exists(remotePath));
             if (replaceApproved &&
-                MessageBox.Show(this, $"הקובץ '{fileName}' כבר קיים בשרת. להחליף אותו?",
-                    "אישור החלפה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
+                MessageBox.Show(this, string.Format(LocalizationService.Instance["Sftp_ReplacePrompt"], fileName),
+                    LocalizationService.Instance["Sftp_ConfirmReplace"], MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes)
                 return;
 
-            StatusText.Text = "מעלה קובץ...";
+            StatusText.Text = LocalizationService.Instance["Sftp_Uploading"];
             await WithSftpLockAsync(() =>
             {
                 var existsNow = _client.Exists(remotePath);
                 if (existsNow && !replaceApproved)
-                    throw new IOException("קובץ באותו שם נוצר בשרת לאחר בדיקת ההחלפה. לא בוצעה דריסה.");
+                    throw new IOException(LocalizationService.Instance["Sftp_Race"]);
 
                 var token = Guid.NewGuid().ToString("N");
                 var temporaryPath = SftpPathSafety.Combine(_currentPath, $".{fileName}.upload-{token}");
@@ -254,23 +255,23 @@ public partial class SftpFileManagerWindow : Window
             });
             await LoadDirectoryAsync(_currentPath);
             DiagnosticLogService.Instance.Info("SFTP", "UploadCompleted", $"Uploaded a file to {_currentPath}.", _session.Profile.Name);
-            StatusText.Text = "ההעלאה הושלמה";
+            StatusText.Text = LocalizationService.Instance["Sftp_UploadDone"];
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "UploadFailed", ex, _session.Profile.Name);
-            StatusText.Text = "ההעלאה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_UploadFailed"], ex.Message);
         }
     }
 
     private async void Download_Click(object sender, RoutedEventArgs e)
     {
-        if (FilesList.SelectedItem is not RemoteFileItem { IsDirectory: false } item) { StatusText.Text = "בחר קובץ להורדה."; return; }
-        var dialog = new SaveFileDialog { FileName = item.Name, Title = "שמירת קובץ" };
+        if (FilesList.SelectedItem is not RemoteFileItem { IsDirectory: false } item) { StatusText.Text = LocalizationService.Instance["Sftp_SelectDownload"]; return; }
+        var dialog = new SaveFileDialog { FileName = item.Name, Title = LocalizationService.Instance["Sftp_SaveFile"] };
         if (dialog.ShowDialog(this) != true) return;
         try
         {
-            StatusText.Text = "מוריד קובץ...";
+            StatusText.Text = LocalizationService.Instance["Sftp_Downloading"];
             var destination = Path.GetFullPath(dialog.FileName);
             var remotePath = SftpPathSafety.NormalizeAbsolutePath(item.FullPath);
             var temporaryPath = destination + ".partial-" + Guid.NewGuid().ToString("N");
@@ -291,19 +292,19 @@ public partial class SftpFileManagerWindow : Window
                 throw;
             }
             DiagnosticLogService.Instance.Info("SFTP", "DownloadCompleted", $"Downloaded remote file {item.FullPath}.", _session.Profile.Name);
-            StatusText.Text = "ההורדה הושלמה";
+            StatusText.Text = LocalizationService.Instance["Sftp_DownloadDone"];
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "DownloadFailed", ex, _session.Profile.Name);
-            StatusText.Text = "ההורדה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_DownloadFailed"], ex.Message);
         }
     }
 
     private async void Delete_Click(object sender, RoutedEventArgs e)
     {
-        if (FilesList.SelectedItem is not RemoteFileItem item) { StatusText.Text = "בחר פריט למחיקה."; return; }
-        if (MessageBox.Show(this, $"למחוק את '{item.Name}' מהשרת? פעולה זו אינה הפיכה.", "אישור מחיקה",
+        if (FilesList.SelectedItem is not RemoteFileItem item) { StatusText.Text = LocalizationService.Instance["Sftp_SelectDelete"]; return; }
+        if (MessageBox.Show(this, string.Format(LocalizationService.Instance["Sftp_DeletePrompt"], item.Name), LocalizationService.Instance["Sftp_ConfirmDelete"],
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         try
         {
@@ -320,7 +321,7 @@ public partial class SftpFileManagerWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SFTP", "RemoteDeleteFailed", ex, _session.Profile.Name);
-            StatusText.Text = "המחיקה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Sftp_DeleteFailed"], ex.Message);
         }
     }
 

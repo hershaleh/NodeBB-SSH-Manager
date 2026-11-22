@@ -109,6 +109,21 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void SftpMonitoringComparisonAndManagementMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Directory", service["Sftp_Directory"]);
+        Assert.Equal("Connecting...", service["Sftp_Connecting"]);
+        Assert.Equal("Delete 'config.json' from the server? This action cannot be undone.", string.Format(service["Sftp_DeletePrompt"], "config.json"));
+        Assert.Equal("Automatic refresh is on (60 seconds).", string.Format(service["Monitor_AutoOn"], "60"));
+        Assert.Equal("Collecting data from connected servers...", service["Compare_Collecting"]);
+        Assert.Equal("Found 4 plugins and themes.", string.Format(service["Plugin_Found"], 4));
+        Assert.Equal("Service manager: systemd", string.Format(service["Service_Manager"], "systemd"));
+        Assert.Equal("Do you want to start service 'nodebb' on server production?", string.Format(service["Service_Confirm"], "start", "nodebb", "production"));
+    }
+
+    [Fact]
     public void PluginAndServiceWindowCaptionsTranslateToEnglish()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

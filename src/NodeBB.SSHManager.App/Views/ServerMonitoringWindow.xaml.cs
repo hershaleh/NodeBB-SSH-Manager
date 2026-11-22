@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
@@ -29,13 +30,13 @@ public partial class ServerMonitoringWindow : Window
     {
         UpdateRefreshInterval();
         _refreshTimer.Start();
-        StatusText.Text = $"רענון אוטומטי פעיל ({_refreshTimer.Interval.TotalSeconds:0} שניות).";
+        StatusText.Text = string.Format(LocalizationService.Instance["Monitor_AutoOn"], _refreshTimer.Interval.TotalSeconds.ToString("0", System.Globalization.CultureInfo.CurrentCulture));
     }
 
     private void AutoRefresh_Unchecked(object sender, RoutedEventArgs e)
     {
         _refreshTimer.Stop();
-        StatusText.Text = "רענון אוטומטי כבוי.";
+        StatusText.Text = LocalizationService.Instance["Monitor_AutoOff"];
     }
 
     private void AutoRefreshInterval_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => UpdateRefreshInterval();
@@ -46,7 +47,7 @@ public partial class ServerMonitoringWindow : Window
             !double.TryParse(item.Tag?.ToString(), out var seconds)) return;
         _refreshTimer.Interval = TimeSpan.FromSeconds(seconds);
         if (AutoRefreshCheckBox?.IsChecked == true && _refreshTimer.IsEnabled)
-            StatusText.Text = $"רענון אוטומטי פעיל ({seconds:0} שניות).";
+            StatusText.Text = string.Format(LocalizationService.Instance["Monitor_AutoOn"], seconds.ToString("0", System.Globalization.CultureInfo.CurrentCulture));
     }
 
     private async Task RefreshAsync()
@@ -54,12 +55,12 @@ public partial class ServerMonitoringWindow : Window
         if (_refreshing) return;
         _refreshing = true;
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "אוסף נתונים...";
+        StatusText.Text = LocalizationService.Instance["Monitor_Collecting"];
         try
         {
             var metrics = await _service.CollectAsync();
             UptimeText.Text = metrics.Uptime;
-            LoadText.Text = $"{metrics.LoadAverage} · {metrics.CpuCount} ליבות";
+            LoadText.Text = string.Format(LocalizationService.Instance["Monitor_Load"], metrics.LoadAverage, metrics.CpuCount);
             MemoryText.Text = metrics.MemoryUsagePercent is int memoryPercent
                 ? $"{metrics.Memory} ({memoryPercent}%)"
                 : metrics.Memory;
@@ -68,16 +69,16 @@ public partial class ServerMonitoringWindow : Window
 
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent, metrics.CpuCount);
             HealthAlertsText.Text = alerts.Count == 0
-                ? "לא זוהו חריגות במדדים הזמינים. מדדים שלא ניתן היה לאסוף אינם נחשבים לתקינים או לחריגים."
+                ? LocalizationService.Instance["Monitor_Healthy"]
                 : string.Join(Environment.NewLine, alerts.Select(alert => "• " + alert));
             HealthPanel.Background = alerts.Count == 0 ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose;
-            CollectedAtText.Text = $"נאסף: {metrics.CollectedAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
-            StatusText.Text = "הנתונים עודכנו.";
+            CollectedAtText.Text = string.Format(LocalizationService.Instance["Monitor_CollectedAt"], metrics.CollectedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
+            StatusText.Text = LocalizationService.Instance["Monitor_Updated"];
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("MonitoringUI", "RefreshFailed", ex, _session.Profile.Name);
-            StatusText.Text = "איסוף הנתונים נכשל: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Monitor_Failed"], ex.Message);
         }
         finally { RefreshButton.IsEnabled = true; _refreshing = false; }
     }

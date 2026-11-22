@@ -41,12 +41,12 @@ public partial class PluginThemeManagerWindow : Window
             var items = await _service.ListInstalledAsync(_installation);
             _packages.Clear();
             foreach (var item in items) _packages.Add(item);
-            StatusText.Text = $"נמצאו {_packages.Count} תוספים וערכות עיצוב.";
+            StatusText.Text = string.Format(LocalizationService.Instance["Plugin_Found"], _packages.Count);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("PackagesUI", "InventoryDisplayFailed", ex, _session.Profile.Name);
-            StatusText.Text = "טעינת הרשימה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Plugin_LoadFailed"], ex.Message);
         }
         finally { RefreshButton.IsEnabled = true; }
     }
@@ -75,20 +75,20 @@ public partial class PluginThemeManagerWindow : Window
 
         var description = action switch
         {
-            PackageAction.Install => $"להתקין את {packageName}",
-            PackageAction.Update => $"לעדכן את {packageName} לגרסה האחרונה",
-            PackageAction.Remove => $"להסיר את {packageName}",
-            PackageAction.Activate => $"להפעיל את התוסף {packageName}",
-            PackageAction.Deactivate => $"להשבית ולאפס את התוסף {packageName}",
-            _ => "לבצע פעולה"
+            PackageAction.Install => string.Format(LocalizationService.Instance["Plugin_Install"], packageName),
+            PackageAction.Update => string.Format(LocalizationService.Instance["Plugin_Update"], packageName),
+            PackageAction.Remove => string.Format(LocalizationService.Instance["Plugin_Remove"], packageName),
+            PackageAction.Activate => string.Format(LocalizationService.Instance["Plugin_Activate"], packageName),
+            PackageAction.Deactivate => string.Format(LocalizationService.Instance["Plugin_Deactivate"], packageName),
+            _ => LocalizationService.Instance["Plugin_Action"]
         };
         var warning = action switch
         {
-            PackageAction.Remove or PackageAction.Update => "\n\nפעולה זו עשויה להשפיע על תאימות הפורום. ודא שיש גיבוי תקין.",
-            PackageAction.Deactivate => "\n\nNodeBB משתמש בפקודת reset -p להשבתת תוסף. הפקודה עשויה לאפס גם הגדרות או מצב השייכים לתוסף. ודא שיש גיבוי לפני ההמשך.",
-            _ => "\n\nייתכן שתידרש בנייה מחדש או הפעלה מחדש של NodeBB."
+            PackageAction.Remove or PackageAction.Update => LocalizationService.Instance["Plugin_WarnRisk"],
+            PackageAction.Deactivate => LocalizationService.Instance["Plugin_WarnDeactivate"],
+            _ => LocalizationService.Instance["Plugin_WarnBuild"]
         };
-        if (MessageBox.Show(this, $"האם {description}?{warning}", "אישור שינוי חבילה",
+        if (MessageBox.Show(this, string.Format(LocalizationService.Instance["Plugin_Confirm"], description, warning), LocalizationService.Instance["Audit_Service_ConfirmTitle"],
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
         SetBusy(true, LocalizationService.Instance["Audit_Plugin_ActionRunning"]);
@@ -99,8 +99,8 @@ public partial class PluginThemeManagerWindow : Window
                 new[] { result.Output.Trim(), result.Error.Trim() }.Where(value => !string.IsNullOrWhiteSpace(value)));
             StatusText.Text = result.ExitCode == 0
                 ? LocalizationService.Instance["Audit_Plugin_ActionSuccess"]
-                : $"הפעולה נכשלה (קוד {result.ExitCode}).";
-            MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
+                : string.Format(LocalizationService.Instance["Plugin_Failed"], result.ExitCode);
+            MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", LocalizationService.Instance["Plugin_Result"],
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);
             if (result.ExitCode == 0)
                 await RefreshAsync();
@@ -108,7 +108,7 @@ public partial class PluginThemeManagerWindow : Window
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("PackagesUI", "PackageActionFailed", ex, _session.Profile.Name);
-            StatusText.Text = "הפעולה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Plugin_ActionFailed"], ex.Message);
         }
         finally { SetBusy(false, StatusText.Text); }
     }

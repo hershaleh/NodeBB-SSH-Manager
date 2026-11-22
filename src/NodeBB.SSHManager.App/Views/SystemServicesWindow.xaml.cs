@@ -32,15 +32,15 @@ public partial class SystemServicesWindow : Window
         {
             var result = await _service.ListAsync();
             _manager = result.Manager;
-            ManagerText.Text = $"מנהל שירותים: {_manager}";
+            ManagerText.Text = string.Format(LocalizationService.Instance["Service_Manager"], _manager);
             _items.Clear();
             foreach (var item in result.Services) _items.Add(item);
-            StatusText.Text = $"נמצאו {_items.Count} שירותים.";
+            StatusText.Text = string.Format(LocalizationService.Instance["Service_Found"], _items.Count);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SystemServicesUI", "InventoryFailed", ex, _session.Profile.Name);
-            StatusText.Text = "סריקת השירותים נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Service_ScanFailed"], ex.Message);
         }
         finally { IsEnabled = true; }
     }
@@ -49,21 +49,21 @@ public partial class SystemServicesWindow : Window
     {
         if (ServicesList.SelectedItem is not RemoteServiceEntry selected) { StatusText.Text = LocalizationService.Instance["Audit_Service_Select"]; return; }
         var action = (sender as FrameworkElement)?.Tag?.ToString() ?? "";
-        var verb = action switch { "start" => "להפעיל", "stop" => "לעצור", "restart" => "לאתחל", _ => "לבצע פעולה על" };
-        if (MessageBox.Show(this, $"האם {verb} את השירות '{selected.Name}' בשרת {_session.Profile.Name}?",
+        var verb = action switch { "start" => LocalizationService.Instance["Service_Start"], "stop" => LocalizationService.Instance["Service_Stop"], "restart" => LocalizationService.Instance["Service_Restart"], _ => LocalizationService.Instance["Service_Act"] };
+        if (MessageBox.Show(this, string.Format(LocalizationService.Instance["Service_Confirm"], verb, selected.Name, _session.Profile.Name),
                 LocalizationService.Instance["Audit_Service_ConfirmTitle"], MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         IsEnabled = false;
         try
         {
             var result = await _service.ExecuteAsync(_manager, selected.Name, action);
-            StatusText.Text = result.ExitCode == 0 ? $"הפעולה הסתיימה בהצלחה עבור {selected.Name}." :
-                $"הפעולה נכשלה (קוד {result.ExitCode}): {result.Error}";
+            StatusText.Text = result.ExitCode == 0 ? string.Format(LocalizationService.Instance["Service_Success"], selected.Name) :
+                string.Format(LocalizationService.Instance["Service_Failed"], result.ExitCode, result.Error);
             await RefreshAsync();
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SystemServicesUI", "ActionFailed", ex, _session.Profile.Name);
-            StatusText.Text = "הפעולה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Service_ActionFailed"], ex.Message);
         }
         finally { IsEnabled = true; }
     }

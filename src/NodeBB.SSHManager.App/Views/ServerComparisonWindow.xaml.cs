@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
@@ -29,18 +30,18 @@ public partial class ServerComparisonWindow : Window
         if (_refreshing) return;
         _refreshing = true;
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "אוסף נתונים מהשרתים המחוברים...";
+        StatusText.Text = LocalizationService.Instance["Compare_Collecting"];
         try
         {
             var results = await Task.WhenAll(_sessions.Select(CollectOneAsync));
             _rows.Clear();
             foreach (var row in results) _rows.Add(row);
-            var succeeded = results.Count(row => row.Status == "נאסף בהצלחה");
-            StatusText.Text = $"נאספו נתונים מ־{succeeded} מתוך {_sessions.Length} שרתים.";
+            var succeeded = results.Count(row => row.Status == LocalizationService.Instance["Compare_Success"]);
+            StatusText.Text = string.Format(LocalizationService.Instance["Compare_SuccessCount"], succeeded, _sessions.Length);
         }
         catch (Exception ex)
         {
-            StatusText.Text = "ההשוואה נכשלה: " + ex.Message;
+            StatusText.Text = string.Format(LocalizationService.Instance["Compare_Failed"], ex.Message);
             DiagnosticLogService.Instance.Error("ServerComparison", "RefreshFailed", ex);
         }
         finally { RefreshButton.IsEnabled = true; _refreshing = false; }
@@ -54,19 +55,19 @@ public partial class ServerComparisonWindow : Window
             var help = probe.Output + Environment.NewLine + probe.Error;
             if (help.Contains("NodeBB Plugin Management CLI (Restricted)", StringComparison.OrdinalIgnoreCase)
                 || help.Contains("nodebb-plugins>", StringComparison.OrdinalIgnoreCase))
-                return Empty(session, "חשבון SSH מוגבל — לא נתמכת פקודת מערכת");
+                return Empty(session, LocalizationService.Instance["Compare_Restricted"]);
 
             var inventory = await new RemoteCapabilityService(session).DetectAsync();
             return new ServerComparisonRow(session.Profile.Name, session.Profile.HostDisplay,
                 inventory.OperatingSystem, inventory.Kernel, inventory.Architecture,
                 inventory.NodeVersion, inventory.NpmVersion, inventory.GitVersion,
-                inventory.MongoVersion, inventory.RedisVersion, inventory.DockerVersion, "נאסף בהצלחה");
+                inventory.MongoVersion, inventory.RedisVersion, inventory.DockerVersion, LocalizationService.Instance["Compare_Success"]);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Warning("ServerComparison", "ServerCollectionFailed",
                 "A server could not be included in the comparison.", ex, session.Profile.Name);
-            return Empty(session, "לא ניתן לאסוף נתונים: " + ex.Message);
+            return Empty(session, string.Format(LocalizationService.Instance["Compare_Unavailable"], ex.Message));
         }
     }
 
