@@ -35,6 +35,37 @@ public sealed class RemoteBackupRestoreServiceTests
     }
 
     [Theory]
+    [InlineData("INSTALLATION|present|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "NO_RECOVERY_ARTIFACTS")]
+    [InlineData("INSTALLATION|missing|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "INSTALLATION|missing|/srv/nodebb")]
+    [InlineData("INSTALLATION|unexpected-type|/srv/nodebb\nNO_RECOVERY_ARTIFACTS\n", "INSTALLATION|unexpected-type|/srv/nodebb")]
+    [InlineData("INSTALLATION|present|/srv/nodebb\nRECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x\n", "RECOVERY_ARTIFACT|rollback|directory|/srv/.nodebb-rollback-x")]
+    public void NormalizeFullInstallationRecoveryInspectionOutput_OnlyReportsCleanWhenInstallationIsPresentAndNoArtifactsExist(
+        string output, string expected)
+    {
+        var result = RemoteBackupRestoreService.NormalizeFullInstallationRecoveryInspectionOutput(output);
+        Assert.Equal(expected, result);
+    }
+
+    [Fact]
+    public void NormalizeFullInstallationRecoveryInspectionOutput_RejectsEmptyOrMalformedOutput()
+    {
+        Assert.Equal("RECOVERY_INSPECTION_EMPTY",
+            RemoteBackupRestoreService.NormalizeFullInstallationRecoveryInspectionOutput(""));
+        Assert.StartsWith("RECOVERY_INSPECTION_INVALID_OUTPUT",
+            RemoteBackupRestoreService.NormalizeFullInstallationRecoveryInspectionOutput("NO_RECOVERY_ARTIFACTS"));
+    }
+
+    [Fact]
+    public void BuildFullInstallationRecoveryInspectionScript_UsesPrintfNewlineEscapes()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRecoveryInspectionScript("/srv/nodebb");
+        Assert.Contains("printf 'INSTALLATION|present|%s\\n'", script);
+        Assert.Contains("printf 'RECOVERY_ARTIFACT|%s|%s|%s\\n'", script);
+        Assert.Contains("printf 'NO_RECOVERY_ARTIFACTS\\n'", script);
+        Assert.DoesNotContain("%s\\\\n", script);
+    }
+
+    [Theory]
     [InlineData("relative/nodebb")]
     [InlineData("/")]
     [InlineData("/srv/nodebb/../other")]

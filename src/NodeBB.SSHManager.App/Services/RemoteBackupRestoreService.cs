@@ -554,9 +554,29 @@ public sealed class RemoteBackupRestoreService
             throw new InvalidOperationException(string.IsNullOrWhiteSpace(result.Error)
                 ? $"בדיקת מצבי שחזור קודמים נכשלה (קוד {result.ExitCode})."
                 : SanitizeError(result.Error));
-        return string.IsNullOrWhiteSpace(result.Output)
-            ? "NO_RECOVERY_ARTIFACTS"
-            : result.Output.Trim();
+        return NormalizeFullInstallationRecoveryInspectionOutput(result.Output);
+    }
+
+    internal static string NormalizeFullInstallationRecoveryInspectionOutput(string? output)
+    {
+        if (string.IsNullOrWhiteSpace(output))
+            return "RECOVERY_INSPECTION_EMPTY";
+
+        var lines = output.Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(line => line.Trim())
+            .Where(line => line.Length > 0)
+            .ToArray();
+        var installationLine = lines.FirstOrDefault(line => line.StartsWith("INSTALLATION|", StringComparison.Ordinal));
+        var hasArtifacts = lines.Any(line => line.StartsWith("RECOVERY_ARTIFACT|", StringComparison.Ordinal));
+        var hasNoArtifactsMarker = lines.Contains("NO_RECOVERY_ARTIFACTS", StringComparer.Ordinal);
+
+        if (installationLine == "INSTALLATION|present|" && !hasArtifacts && hasNoArtifactsMarker)
+            return "NO_RECOVERY_ARTIFACTS";
+
+        if (installationLine is null)
+            return "RECOVERY_INSPECTION_INVALID_OUTPUT" + Environment.NewLine + string.Join(Environment.NewLine, lines);
+
+        return string.Join(Environment.NewLine, lines.Where(line => line != "NO_RECOVERY_ARTIFACTS"));
     }
 
     internal static string BuildFullInstallationRecoveryInspectionScript(string installationPath)
@@ -568,11 +588,11 @@ INSTALL=__INSTALL__
 PARENT="$(dirname "$INSTALL")"
 [ -d "$PARENT" ] && [ ! -L "$PARENT" ] || { echo 'תיקיית האב של ההתקנה אינה זמינה או בטוחה.' >&2; exit 47; }
 if [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ]; then
-  printf 'INSTALLATION|present|%s\\n' "$INSTALL"
+  printf 'INSTALLATION|present|%s\n' "$INSTALL"
 elif [ -e "$INSTALL" ] || [ -L "$INSTALL" ]; then
-  printf 'INSTALLATION|unexpected-type|%s\\n' "$INSTALL"
+  printf 'INSTALLATION|unexpected-type|%s\n' "$INSTALL"
 else
-  printf 'INSTALLATION|missing|%s\\n' "$INSTALL"
+  printf 'INSTALLATION|missing|%s\n' "$INSTALL"
 fi
 FOUND=0
 report_artifact() {
@@ -584,13 +604,13 @@ report_artifact() {
   else return 0
   fi
   FOUND=1
-  printf 'RECOVERY_ARTIFACT|%s|%s|%s\\n' "$kind" "$state" "$path"
+  printf 'RECOVERY_ARTIFACT|%s|%s|%s\n' "$kind" "$state" "$path"
 }
 for path in "$PARENT"/.nodebb-stage-nodebb-full-restore-*; do report_artifact "$path" stage; done
 for path in "$PARENT"/.nodebb-rollback-nodebb-full-restore-*; do report_artifact "$path" rollback; done
 for path in "$PARENT"/.nodebb-failed-nodebb-full-restore-*; do report_artifact "$path" failed; done
 for path in /tmp/nodebb-full-restore-*; do report_artifact "$path" work; done
-if [ "$FOUND" -eq 0 ]; then printf 'NO_RECOVERY_ARTIFACTS\\n'; fi
+if [ "$FOUND" -eq 0 ]; then printf 'NO_RECOVERY_ARTIFACTS\n'; fi
 """.Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal);
     }
 

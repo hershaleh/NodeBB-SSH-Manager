@@ -398,11 +398,26 @@ public partial class BackupWindow : Window
                 .InspectFullInstallationRecoveryAsync(_installation);
             if (report == "NO_RECOVERY_ARTIFACTS")
             {
-                RecoveryStatusText.Text = T("לא נמצאו תיקיות שחזור או קובצי עבודה שנותרו מהפעלה קודמת.");
+                RecoveryStatusText.Text = T("ההתקנה קיימת ותקינה; לא נמצאו תיקיות שחזור או קובצי עבודה שנותרו מהפעלה קודמת.");
             }
             else
             {
-                RecoveryStatusText.Text = T("נמצאו פריטי שחזור. לא בוצע בהם שום שינוי:")
+                var installationMissing = report.Contains("INSTALLATION|missing|", StringComparison.Ordinal);
+                var installationUnexpected = report.Contains("INSTALLATION|unexpected-type|", StringComparison.Ordinal);
+                var installationWarning = installationMissing
+                    ? T("אזהרה: תיקיית ההתקנה אינה קיימת.")
+                    : installationUnexpected
+                        ? T("אזהרה: נתיב ההתקנה קיים אך אינו תיקייה רגילה ובטוחה.")
+                        : report.Contains("INSTALLATION|present|", StringComparison.Ordinal)
+                            ? string.Empty
+                            : T("אזהרה: לא ניתן לאמת את מצב תיקיית ההתקנה.");
+
+                RecoveryStatusText.Text = (installationWarning.Length > 0
+                        ? installationWarning + Environment.NewLine
+                        : string.Empty)
+                    + (report.Contains("RECOVERY_ARTIFACT|", StringComparison.Ordinal)
+                        ? T("נמצאו פריטי שחזור. לא בוצע בהם שום שינוי:")
+                        : T("לא נמצאו פריטי שחזור, אך מצב ההתקנה דורש בדיקה:"))
                     + Environment.NewLine + report
                     + Environment.NewLine + T("אין למחוק פריטים אלה ואין להתחיל שחזור נוסף לפני בדיקה ידנית של מצב ההתקנה.");
             }
