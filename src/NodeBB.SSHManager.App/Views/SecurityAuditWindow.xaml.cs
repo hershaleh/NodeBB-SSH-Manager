@@ -28,7 +28,8 @@ public partial class SecurityAuditWindow : Window
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = LocalizationService.Instance["SecurityAudit_Checking"];
+        var localization = LocalizationService.Instance;
+        StatusText.Text = localization["SecurityAudit_Checking"];
         try
         {
             var findings = await _service.RunAsync(_installation);
@@ -36,12 +37,12 @@ public partial class SecurityAuditWindow : Window
             foreach (var finding in findings) _items.Add(finding);
             var critical = findings.Count(x => x.Severity == "קריטי");
             var warnings = findings.Count(x => x.Severity == "אזהרה");
-            StatusText.Text = $"הבדיקה הושלמה. {critical} קריטיות, {warnings} אזהרות.";
+            StatusText.Text = localization.TranslateFormat($"הבדיקה הושלמה. {critical} קריטיות, {warnings} אזהרות.");
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("SecurityAuditUI", "RefreshFailed", ex, _session.Profile.Name);
-            StatusText.Text = LocalizationService.Instance.Translate("בדיקת האבטחה נכשלה: ") + ex.Message;
+            StatusText.Text = localization.TranslateFormat($"בדיקת האבטחה נכשלה: {ex.Message}");
         }
         finally { RefreshButton.IsEnabled = true; }
     }

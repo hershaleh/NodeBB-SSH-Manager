@@ -182,6 +182,24 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void DiagnosticsSecurityAuditAndHistoryExportMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+
+        Assert.Equal("Save diagnostics report", service["Diagnostics_SaveTitle"]);
+        Assert.Equal("ZIP archive|*.zip", service["Diagnostics_ZipFilter"]);
+        Assert.Equal("The report was saved to:\nC:/reports/report.zip",
+            service.TranslateFormat($"הדוח נשמר בנתיב:\n{"C:/reports/report.zip"}"));
+        Assert.Equal("Audit completed. 2 critical findings, 3 warnings.",
+            service.TranslateFormat($"הבדיקה הושלמה. {2} קריטיות, {3} אזהרות."));
+        Assert.Equal("Security audit failed: network timeout",
+            service.TranslateFormat($"בדיקת האבטחה נכשלה: {"network timeout"}"));
+        Assert.Equal("Export all-server history", service["History_ExportAllTitle"]);
+        Assert.Equal("Exported 7 actions.", service.TranslateFormat($"יוצאו {7} פעולות."));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

@@ -15,30 +15,31 @@ public partial class DiagnosticsWindow : Window
 
     private async void Export_Click(object sender, RoutedEventArgs e)
     {
+        var localization = LocalizationService.Instance;
         var dialog = new SaveFileDialog
         {
-            Title = LocalizationService.Instance.Translate("שמירת דוח אבחון"),
+            Title = localization["Diagnostics_SaveTitle"],
             FileName = $"NodeBB-SSH-Diagnostics-{DateTime.Now:yyyyMMdd-HHmm}.zip",
-            Filter = LocalizationService.Instance.Translate("קובץ ZIP|*.zip"),
+            Filter = localization["Diagnostics_ZipFilter"],
             DefaultExt = ".zip",
             AddExtension = true
         };
         if (dialog.ShowDialog(this) != true) return;
 
         IsEnabled = false;
-        StatusText.Text = LocalizationService.Instance.Translate("אוסף יומנים ומכין דוח...");
+        StatusText.Text = localization["Diagnostics_Collecting"];
         try
         {
             await DiagnosticLogService.Instance.ExportReportAsync(dialog.FileName);
-            StatusText.Text = LocalizationService.Instance.Translate("דוח האבחון נשמר בהצלחה.");
-            MessageBox.Show(this, $"הדוח נשמר בנתיב:\n{dialog.FileName}", "הייצוא הושלם",
-                MessageBoxButton.OK, MessageBoxImage.Information);
+            StatusText.Text = localization["Diagnostics_Saved"];
+            MessageBox.Show(this, localization.TranslateFormat($"הדוח נשמר בנתיב:\n{dialog.FileName}"),
+                localization["Diagnostics_ExportDone"], MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("Diagnostics", "ReportExportFailed", ex);
-            StatusText.Text = LocalizationService.Instance.Translate("ייצוא הדוח נכשל.");
-            MessageBox.Show(this, ex.Message, "שגיאה בייצוא", MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = localization["Diagnostics_ExportFailed"];
+            MessageBox.Show(this, ex.Message, localization["Diagnostics_ExportError"], MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally { IsEnabled = true; }
     }

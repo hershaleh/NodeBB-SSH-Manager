@@ -55,16 +55,17 @@ public partial class ServerActionHistoryOverviewWindow : Window
 
     private void Export_Click(object sender, RoutedEventArgs e)
     {
+        var localization = LocalizationService.Instance;
         var filtered = GetFilteredEntries();
         if (filtered.Length == 0)
         {
-            MessageBox.Show(this, LocalizationService.Instance["History_NoExportResults"], LocalizationService.Instance["History_ExportTitle"], MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, localization["History_NoExportResults"], localization["History_ExportTitle"], MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
         var dialog = new SaveFileDialog
         {
-            Title = "ייצוא היסטוריית כל השרתים",
-            Filter = LocalizationService.Instance["History_CsvFilter"],
+            Title = localization["History_ExportAllTitle"],
+            Filter = localization["History_CsvFilter"],
             FileName = "nodebb-all-servers-history.csv",
             AddExtension = true,
             DefaultExt = ".csv"
@@ -73,13 +74,14 @@ public partial class ServerActionHistoryOverviewWindow : Window
         try
         {
             File.WriteAllText(dialog.FileName, ServerActionHistoryService.ExportCsv(filtered), new System.Text.UTF8Encoding(true));
-            MessageBox.Show(this, $"יוצאו {filtered.Length} פעולות.", "הייצוא הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
+            MessageBox.Show(this, localization.TranslateFormat($"יוצאו {filtered.Length} פעולות."),
+                localization["History_ExportDone"], MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Warning("ActionHistory", "GlobalExportFailed",
                 "Could not export global action history.", ex);
-            MessageBox.Show(this, LocalizationService.Instance["History_ExportFailed"], LocalizationService.Instance["History_Error"], MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, localization["History_ExportFailed"], localization["History_Error"], MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }
