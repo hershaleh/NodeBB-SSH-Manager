@@ -60,6 +60,28 @@ public sealed class RemoteBackupRestoreServiceTests
         Assert.Contains("NodeBB", script);
     }
 
+
+    [Fact]
+    public void BuildFullInstallationRollbackScript_NeverDeletesEmergencyOrFailedInstallationTrees()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRollbackScript("/srv/nodebb", FullWork);
+        Assert.DoesNotContain("rm -rf", script);
+        Assert.Contains("mv -- \"$INSTALL\" \"$FAILED\"", script);
+        Assert.Contains("mv -- \"$ROLLBACK\" \"$INSTALL\"", script);
+    }
+
+    [Fact]
+    public void BuildFullInstallationRestoreScript_OnlyRemovesStagingAfterSafeRollbackAndKeepsEmergencyCopyOnUncertainFailure()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRestoreScript(
+            "/srv/nodebb", FullWork, ValidHash, 1024 * 1024);
+        Assert.Contains("if [ \"$SWAP_STARTED\" = \"1\" ] && [ \"$KEEP_ROLLBACK\" = \"0\" ]", script);
+        Assert.Contains("if [ \"$KEEP_ROLLBACK\" = \"0\" ]; then rm -rf -- \"$STAGE\"; fi", script);
+        Assert.Contains("if [ \"$KEEP_ROLLBACK\" = \"0\" ]; then rm -rf -- \"$WORK\"; fi", script);
+        Assert.Contains("KEEP_ROLLBACK=1", script);
+        Assert.Contains("exit 42", script);
+    }
+
     [Theory]
     [InlineData("relative/nodebb", FullWork, ValidHash, 1024)]
     [InlineData("/srv/nodebb", "/tmp/wrong", ValidHash, 1024)]
@@ -119,11 +141,13 @@ public sealed class RemoteBackupRestoreServiceTests
         var success = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, false);
         var rollback = RemoteBackupRestoreService.BuildFullInstallationFinalizeScript("/srv/nodebb", FullWork, true);
         Assert.Contains("if [ \"0\" = \"1\" ]; then", success);
-        Assert.Contains("rm -rf -- \"$ROLLBACK\"", success);
+        Assert.Contains("FULL_RESTORE_ROLLBACK_PRESERVED|$ROLLBACK", success);
         Assert.Contains("if [ \"1\" = \"1\" ]; then", rollback);
-        Assert.Contains("rm -rf -- \"$FAILED\"", rollback);
-        Assert.Contains("rm -rf -- \"$ROLLBACK\"", success);
-        Assert.Contains("rm -rf -- \"$ROLLBACK\"", rollback);
+        Assert.Contains("FULL_RESTORE_FAILED_TREE_PRESERVED|$FAILED", rollback);
+        Assert.DoesNotContain("rm -rf -- \"$ROLLBACK\"", success);
+        Assert.DoesNotContain("rm -rf -- \"$FAILED\"", rollback);
+        Assert.Contains("rm -rf -- \"$WORK\"", success);
+        Assert.Contains("rm -rf -- \"$WORK\"", rollback);
     }
 
     [Theory]

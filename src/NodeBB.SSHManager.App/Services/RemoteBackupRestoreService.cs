@@ -480,8 +480,11 @@ public sealed class RemoteBackupRestoreService
                     var cleanupOld = await _session.ExecuteAsync(
                         BuildFullInstallationFinalizeScript(installation.Path, work, true), CancellationToken.None);
                     if (cleanupOld.ExitCode != 0)
-                        DiagnosticLogService.Instance.Warning("FullRestore", "FailedTreeCleanupPending",
-                            "The previous installation was restored, but the failed replacement directory remains on the server.", null, _session.Profile.Name);
+                        DiagnosticLogService.Instance.Warning("FullRestore", "FailedTreePreservationCheckFailed",
+                            "The original installation was restored, but the failed replacement preservation check failed. Inspect the recovery artifacts before another restore.", null, _session.Profile.Name);
+                    else
+                        DiagnosticLogService.Instance.Warning("FullRestore", "FailedReplacementPreserved",
+                            "The original installation was restored. The failed replacement was deliberately preserved for manual inspection and cleanup.", null, _session.Profile.Name);
                 }
                 throw new InvalidOperationException(originalInstallationHealthy
                     ? "ההתקנה המשוחזרת לא הצליחה לעבור בדיקת HTTP. ההתקנה המקורית הוחזרה, הופעלה ונבדקה בהצלחה."
@@ -492,8 +495,11 @@ public sealed class RemoteBackupRestoreService
             var finalize = await _session.ExecuteAsync(
                 BuildFullInstallationFinalizeScript(installation.Path, work, false), CancellationToken.None);
             if (finalize.ExitCode != 0)
-                DiagnosticLogService.Instance.Warning("FullRestore", "RollbackCleanupPending",
-                    $"NodeBB was restored and started, but the emergency copy remains at {rollbackPath}.", null, _session.Profile.Name);
+                DiagnosticLogService.Instance.Warning("FullRestore", "RollbackPreservationCheckFailed",
+                    $"NodeBB was restored and started, but the emergency-copy preservation check failed. Inspect {rollbackPath} before any further restore.", null, _session.Profile.Name);
+            else
+                DiagnosticLogService.Instance.Warning("FullRestore", "OriginalInstallationPreserved",
+                    $"NodeBB was restored and started. The complete previous installation was deliberately preserved at {rollbackPath}; review and remove it manually only after verification.", null, _session.Profile.Name);
 
             DiagnosticLogService.Instance.Info("FullRestore", "RestoreCompleted",
                 $"Full NodeBB installation restored and started; {archiveInfo.EntryCount} archive entries, database contents unchanged.",
@@ -869,11 +875,11 @@ FAILED="$PARENT/.nodebb-failed-$WORK_NAME"
 [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ] || { echo 'ההתקנה הפעילה אינה תיקייה תקינה.' >&2; exit 46; }
 [ -f "$INSTALL/package.json" ] && [ ! -L "$INSTALL/package.json" ] || { echo 'חבילת NodeBB אינה נמצאת בהתקנה הפעילה.' >&2; exit 46; }
 if [ "__REMOVE_FAILED__" = "1" ]; then
-  [ -d "$FAILED" ] && [ ! -L "$FAILED" ] || { echo 'תיקיית ההתקנה שנכשלה לא נמצאה.' >&2; exit 46; }
-  rm -rf -- "$FAILED"
+  [ -d "$FAILED" ] && [ ! -L "$FAILED" ] || { echo 'תיקיית ההתקנה שנכשלה לא נמצאה; לא בוצע ניקוי.' >&2; exit 46; }
+  echo "FULL_RESTORE_FAILED_TREE_PRESERVED|$FAILED"
 else
-  [ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ] || { echo 'עותק החירום לא נמצא; לא ניתן לאשר ניקוי.' >&2; exit 46; }
-  rm -rf -- "$ROLLBACK"
+  [ -d "$ROLLBACK" ] && [ ! -L "$ROLLBACK" ] || { echo 'עותק החירום לא נמצא; לא בוצע ניקוי.' >&2; exit 46; }
+  echo "FULL_RESTORE_ROLLBACK_PRESERVED|$ROLLBACK"
 fi
 rm -rf -- "$WORK"
 echo 'FULL_RESTORE_FINALIZED'
