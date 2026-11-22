@@ -49,7 +49,7 @@ public sealed class RemoteBackupService
                 await output.FlushAsync(cancellationToken);
             }
 
-            var validation = await ValidateArchiveAsync(partialDestination, cancellationToken);
+            var validation = await ValidateBackupForKindAsync(partialDestination, kind, cancellationToken);
             if (validation.EntryCount == 0)
                 throw new InvalidDataException("ארכיון הגיבוי ריק ואינו מכיל קבצים.");
 
@@ -145,6 +145,31 @@ public sealed class RemoteBackupService
         {
             throw new InvalidDataException("ארכיון הגיבוי נקטע לפני סופו או שאינו מכיל מבנה TAR שלם.", ex);
         }
+    }
+
+    internal static async Task<BackupArchiveValidationResult> ValidateBackupForKindAsync(
+        string archivePath, RemoteBackupKind kind, CancellationToken cancellationToken = default)
+    {
+        return kind switch
+        {
+            RemoteBackupKind.FullInstallation => await ValidateFullInstallationBackupAsync(archivePath, cancellationToken),
+            RemoteBackupKind.ConfigurationAndUploads => await ValidateEssentialBackupAsync(archivePath, cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind))
+        };
+    }
+
+    private static async Task<BackupArchiveValidationResult> ValidateFullInstallationBackupAsync(
+        string archivePath, CancellationToken cancellationToken)
+    {
+        var info = await RemoteBackupRestoreService.ValidateFullInstallationArchiveAsync(archivePath, cancellationToken);
+        return new BackupArchiveValidationResult(info.EntryCount, info.ExpandedBytes);
+    }
+
+    private static async Task<BackupArchiveValidationResult> ValidateEssentialBackupAsync(
+        string archivePath, CancellationToken cancellationToken)
+    {
+        var info = await RemoteBackupRestoreService.ValidateEssentialArchiveAsync(archivePath, cancellationToken);
+        return new BackupArchiveValidationResult(info.EntryCount, info.ExpandedBytes);
     }
 
     private static string BuildArchiveCommand(string installationPath, string archivePath, RemoteBackupKind kind)

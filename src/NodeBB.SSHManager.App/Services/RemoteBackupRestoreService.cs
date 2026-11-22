@@ -7,7 +7,8 @@ using Renci.SshNet;
 
 namespace NodeBB.SSHManager.Services;
 
-public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool ContainsUploads);
+public sealed record EssentialBackupArchiveInfo(
+    string DatabaseType, bool ContainsUploads, int EntryCount = 0, long ExpandedBytes = 0);
 public sealed record FullInstallationArchiveInfo(int EntryCount, long ExpandedBytes);
 
 /// <summary>
@@ -114,7 +115,7 @@ public sealed class RemoteBackupRestoreService
             throw new InvalidDataException("הארכיון אינו מכיל config.json תקין.");
         var drainBuffer = new byte[131072];
         while (await gzip.ReadAsync(drainBuffer, cancellationToken) > 0) { }
-        return new EssentialBackupArchiveInfo(databaseType, containsUploads);
+        return new EssentialBackupArchiveInfo(databaseType, containsUploads, entryCount, totalExpanded);
     }
 
     /// <summary>

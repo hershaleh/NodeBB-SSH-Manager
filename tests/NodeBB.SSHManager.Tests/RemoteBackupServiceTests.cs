@@ -61,6 +61,66 @@ public sealed class RemoteBackupServiceTests
         finally { Directory.Delete(directory, true); }
     }
 
+    [Fact]
+    public async Task ValidateBackupForKind_AcceptsRestorableFullInstallationArchive()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "full.tar.gz");
+        try
+        {
+            await CreateArchiveAsync(path, new (string Name, string Contents)[]
+            {
+                ("config.json", "{\"database\":\"mongo\"}"),
+                ("package.json", "{\"name\":\"nodebb\",\"version\":\"4.0.0\"}"),
+                ("nodebb", "#!/usr/bin/env node")
+            });
+
+            var result = await RemoteBackupService.ValidateBackupForKindAsync(path, RemoteBackupKind.FullInstallation);
+
+            Assert.Equal(3, result.EntryCount);
+            Assert.True(result.ExpandedBytes > 0);
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateBackupForKind_RejectsFullArchiveThatCannotBeRestored()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "invalid-full.tar.gz");
+        try
+        {
+            await CreateArchiveAsync(path, new (string Name, string Contents)[]
+            {
+                ("config.json", "{\"database\":\"mongo\"}"),
+                ("package.json", "{\"name\":\"another-app\"}"),
+                ("nodebb", "#!/usr/bin/env node")
+            });
+
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupService.ValidateBackupForKindAsync(path, RemoteBackupKind.FullInstallation));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
+    [Fact]
+    public async Task ValidateBackupForKind_RequiresValidNodeBbConfigForConfigurationBackup()
+    {
+        var directory = CreateTempDirectory();
+        var path = Path.Combine(directory, "invalid-config.tar.gz");
+        try
+        {
+            await CreateArchiveAsync(path, new (string Name, string Contents)[]
+            {
+                ("README.md", "not a NodeBB backup")
+            });
+
+            await Assert.ThrowsAsync<InvalidDataException>(() =>
+                RemoteBackupService.ValidateBackupForKindAsync(path, RemoteBackupKind.ConfigurationAndUploads));
+        }
+        finally { Directory.Delete(directory, true); }
+    }
+
     private static string CreateTempDirectory()
     {
         var directory = Path.Combine(Path.GetTempPath(), "NodeBBRemoteBackupTests", Guid.NewGuid().ToString("N"));
