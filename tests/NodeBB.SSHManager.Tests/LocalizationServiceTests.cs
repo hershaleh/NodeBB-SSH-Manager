@@ -234,6 +234,20 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void RestrictedBulkAndHistoryDialogsTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Contains("remove all selected packages", service.Translate("הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה."));
+        Assert.Equal("Perform Update on 4 items?\n\nplugin-a\n\nThe server creates an automatic backup before each change.",
+            service.TranslateFormat($"עדכון עבור {4} פריטים?\n\nplugin-a\n\nהשרת מבצע גיבוי אוטומטי לפני כל שינוי."));
+        Assert.Equal("Delete this server's local action history? This does not change anything on the server.",
+            service.Translate("למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו."));
+        Assert.Equal("CSV file (*.csv)|*.csv", service.Translate("קובץ CSV (*.csv)|*.csv"));
+        Assert.Equal("Succeeded", service.Translate("הצליח"));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

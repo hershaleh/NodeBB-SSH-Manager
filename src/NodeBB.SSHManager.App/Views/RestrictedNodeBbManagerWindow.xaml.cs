@@ -469,8 +469,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
         }
         var dialog = new SaveFileDialog
         {
-            Title = "ייצוא רשימת תוספי NodeBB",
-            Filter = "קובץ טקסט (*.txt)|*.txt",
+            Title = T("ייצוא רשימת תוספי NodeBB"),
+            Filter = T("קובץ טקסט (*.txt)|*.txt"),
             FileName = "nodebb-packages.txt",
             AddExtension = true,
             DefaultExt = ".txt"
@@ -535,11 +535,11 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
         var destructive = label == "הסרה מרובה";
         var warning = destructive
-            ? "הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה."
-            : "הפעולה תתבצע על כל החבילות שנבחרו, אחת אחרי השנייה. השרת מבצע גיבוי אוטומטי לפני כל שינוי.";
+            ? T("הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה.")
+            : T("הפעולה תתבצע על כל החבילות שנבחרו, אחת אחרי השנייה. השרת מבצע גיבוי אוטומטי לפני כל שינוי.");
         if (MessageBox.Show(this,
-            $"{label} עבור {selected.Length} פריטים?\n\n{string.Join(Environment.NewLine, selected)}\n\n{warning}",
-            "אישור פעולה מרובה", MessageBoxButton.YesNo,
+            LocalizationService.Instance.TranslateFormat($"{label} עבור {selected.Length} פריטים?\n\n{string.Join(Environment.NewLine, selected)}\n\n{warning}"),
+            T("אישור פעולה מרובה"), MessageBoxButton.YesNo,
             destructive ? MessageBoxImage.Warning : MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
 
@@ -557,7 +557,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
                     (string.IsNullOrWhiteSpace(details) ? string.Empty : Environment.NewLine + details));
                 if (result.ExitCode != 0) failures++;
             }
-            var summary = $"הפעולה הסתיימה עבור {selected.Length} פריטים. הצלחות: {selected.Length - failures}; כישלונות: {failures}.";
+            var summary = LocalizationService.Instance.TranslateFormat($"הפעולה הסתיימה עבור {selected.Length} פריטים. הצלחות: {selected.Length - failures}; כישלונות: {failures}.");
             return (failures == 0 ? 0 : 1, summary, string.Join(Environment.NewLine + Environment.NewLine, outputs));
         }, label, string.Join(", ", selected));
     }
@@ -601,7 +601,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     {
         var package = SelectedPlugin(sender);
         if (string.IsNullOrWhiteSpace(package)) return;
-        if (MessageBox.Show(this, $"האם לבצע {label} עבור {package}? השרת מפעיל גיבוי אוטומטי לפני שינוי.", "אישור פעולה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(this, LocalizationService.Instance.TranslateFormat($"האם לבצע {label} עבור {package}? השרת מפעיל גיבוי אוטומטי לפני שינוי."), T("אישור פעולה"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         // Pass the selected package explicitly so successful enable/disable actions
         // update the per-server confirmed-state cache even when TargetBox is empty.
         await RunAsync(() => action(package, CancellationToken.None), label, package);
@@ -647,7 +647,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             entry.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss"),
             entry.Action,
             string.IsNullOrWhiteSpace(entry.Target) ? "—" : entry.Target,
-            entry.Succeeded ? "הצליח" : "נכשל",
+            entry.Succeeded ? T("הצליח") : T("נכשל"),
             entry.Succeeded ? "#18794E" : "#B42318",
             entry.Summary)).ToArray();
         HistoryEmptyState.Visibility = entries.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
@@ -676,8 +676,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
 
         var dialog = new SaveFileDialog
         {
-            Title = "ייצוא היסטוריית פעולות",
-            Filter = "קובץ CSV (*.csv)|*.csv",
+            Title = T("ייצוא היסטוריית פעולות"),
+            Filter = T("קובץ CSV (*.csv)|*.csv"),
             FileName = "nodebb-action-history.csv",
             AddExtension = true,
             DefaultExt = ".csv"
@@ -701,7 +701,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
     private void ClearHistory_Click(object sender, RoutedEventArgs e)
     {
         if (MessageBox.Show(this, T("למחוק את היסטוריית הפעולות המקומית של השרת הזה? הפעולה אינה משנה דבר בשרת עצמו."),
-            "מחיקת היסטוריה", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            T("מחיקת היסטוריה"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         new ServerActionHistoryService().ClearForServer(_session.Profile.Host, _session.Profile.Port);
         RefreshActionHistory();
     }
