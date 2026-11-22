@@ -109,6 +109,23 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void BackupAndUpgradeSafetyPromptsTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Contains("Windows vault", service.Translate("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק."));
+        Assert.Contains("will not be restored", service.Translate("השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?"));
+        Assert.Contains("entire NodeBB installation directory", service.Translate("שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?"));
+        Assert.Contains("Existing backup files will not be deleted", service.Translate("להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו."));
+        var error = "network error";
+        Assert.Equal("Scheduled backup failed to run: network error", service.TranslateFormat($"הפעלת הגיבוי המתוזמן נכשלה: {error}"));
+        var file = "C:/backup.nbbbackup";
+        var kind = "מוצפן";
+        var removed = 2;
+        Assert.Contains("Old backups removed: 2", service.TranslateFormat($"הגיבוי נשמר במחשב:\n{file}\n\nסוג: {kind}\nגיבויים ישנים שהוסרו: {removed}"));
+    }
+
+    [Fact]
     public void SftpMonitoringComparisonAndManagementMessagesTranslateToEnglish()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

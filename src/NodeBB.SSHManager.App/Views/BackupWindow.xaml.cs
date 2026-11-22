@@ -9,6 +9,7 @@ namespace NodeBB.SSHManager.Views;
 public partial class BackupWindow : Window
 {
     private static string T(string text) => LocalizationService.Instance.Translate(text);
+    private static string F(FormattableString text) => LocalizationService.Instance.TranslateFormat(text);
 
     private readonly RemoteBackupService _service;
     private readonly NodeBbInstallation _installation;
@@ -99,7 +100,7 @@ public partial class BackupWindow : Window
                 : 0;
             StatusText.Text = encrypted ? T("הגיבוי הוצפן ונשמר בהצלחה.") : T("הגיבוי נשמר בהצלחה.");
             if (removed > 0) StatusText.Text += $" הוסרו {removed} גיבויים ישנים לפי מדיניות השמירה.";
-            MessageBox.Show(this, $"הגיבוי נשמר במחשב:\n{dialog.FileName}\n\nסוג: {(encrypted ? LocalizationService.Instance.Translate("מוצפן") : LocalizationService.Instance.Translate("ללא הצפנה"))}\nגיבויים ישנים שהוסרו: {removed}",
+            MessageBox.Show(this, string.Format(LocalizationService.Instance["Backup_SaveSummary"], dialog.FileName, encrypted ? T("מוצפן") : T("ללא הצפנה"), removed),
                 T("הגיבוי הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -155,7 +156,7 @@ public partial class BackupWindow : Window
         if (_credentialVault.Get(_session.Profile.Id) is null)
         {
             MessageBox.Show(this,
-                "כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.",
+                T("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק."),
                 T("נדרשים פרטי התחברות שמורים"), MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -193,13 +194,13 @@ public partial class BackupWindow : Window
             RefreshScheduledBackups();
             StatusText.Text = T("תזמון הגיבוי נוצר בהצלחה במתזמן המשימות של Windows.");
             MessageBox.Show(this,
-                "התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון.",
+                T("התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון."),
                 T("התזמון נשמר"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ScheduleCreateFailed", ex, _session.Profile.Name);
-            MessageBox.Show(this, ex.Message, "יצירת תזמון נכשלה", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, ex.Message, T("יצירת תזמון נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -229,7 +230,7 @@ public partial class BackupWindow : Window
         {
             DiagnosticLogService.Instance.Error("ScheduledBackup", "ManualScheduledRunFailed", ex, _session.Profile.Name);
             RefreshScheduledBackups();
-            StatusText.Text = "הפעלת הגיבוי המתוזמן נכשלה: " + ex.Message;
+            StatusText.Text = F($"הפעלת הגיבוי המתוזמן נכשלה: {ex.Message}");
             MessageBox.Show(this, ex.Message, T("הפעלת גיבוי נכשלה"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -245,7 +246,7 @@ public partial class BackupWindow : Window
             MessageBox.Show(this, T("בחר תזמון להסרה."), T("לא נבחר תזמון"), MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
-        if (MessageBox.Show(this, "להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו.",
+        if (MessageBox.Show(this, T("להסיר את התזמון ואת סיסמת ההצפנה השמורה שלו? קובצי הגיבוי שכבר נוצרו לא יימחקו."),
             T("אישור הסרת תזמון"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
         try
@@ -266,7 +267,7 @@ public partial class BackupWindow : Window
         var dialog = new OpenFileDialog
         {
             Title = T("בחירת גיבוי הגדרות והעלאות"),
-            Filter = "גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*",
+            Filter = T("גיבוי NodeBB מוצפן או TAR.GZ|*.nbbbackup;*.tar.gz|כל הקבצים|*.*"),
             CheckFileExists = true,
             Multiselect = false
         };
@@ -282,7 +283,7 @@ public partial class BackupWindow : Window
         }
 
         if (MessageBox.Show(this,
-            "השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?",
+            T("השחזור יחליף את config.json ואת תיקיית public/uploads אם היא כלולה בגיבוי. מסד הנתונים עצמו לא ישוחזר, וקובצי package/lock לא ישתנו. הגדרות חיבור מסד הנתונים יוחלפו רק אם סוג המסד והשרת/מסד היעד תואמים להתקנה הנוכחית. לפני השינוי תישמר עותק חירום של הקבצים הקיימים, והתוכנה תנסה להחזירם במקרה כשל. להמשיך?"),
             T("אישור שחזור קבצים"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
 
@@ -304,13 +305,13 @@ public partial class BackupWindow : Window
             await new RemoteBackupRestoreService(_session).RestoreAsync(_installation, archivePath);
             StatusText.Text = T("שחזור ההגדרות וההעלאות הושלם בהצלחה.");
             MessageBox.Show(this,
-                "config.json ותיקיית ההעלאות (אם נכללה בגיבוי) שוחזרו בהצלחה. מסד הנתונים וקובצי package/lock לא שונו.",
+                T("config.json ותיקיית ההעלאות (אם נכללה בגיבוי) שוחזרו בהצלחה. מסד הנתונים וקובצי package/lock לא שונו."),
                 T("השחזור הושלם"), MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("BackupUI", "EssentialRestoreFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שחזור הקבצים נכשל: " + ex.Message;
+            StatusText.Text = F($"שחזור הקבצים נכשל: {ex.Message}");
             MessageBox.Show(this, ex.Message, T("שגיאה בשחזור קבצים"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
@@ -345,7 +346,7 @@ public partial class BackupWindow : Window
         }
 
         if (MessageBox.Show(this,
-            "שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?",
+            T("שחזור מלא יחליף את כל תיקיית התקנת NodeBB, כולל קוד, תוספים, ערכות נושא, קבצים והגדרות. NodeBB ייעצר וינסה לעלות מחדש לאחר ההחלפה. מסד הנתונים עצמו אינו כלול ואינו משתנה; התוכנה תוודא שסוג המסד וכתובת/שם מסד היעד תואמים להתקנה הנוכחית. עותק מלא של ההתקנה הקיימת יישמר עד שהגרסה המשוחזרת תעלה בהצלחה. אם לא ניתן יהיה לשחזר בעלות והרשאות בבטחה, הפעולה תיעצר ללא שינוי. להמשיך?"),
             T("אישור שחזור התקנה מלאה"), MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) != MessageBoxResult.Yes)
             return;
 
@@ -365,15 +366,15 @@ public partial class BackupWindow : Window
 
             StatusText.Text = T("מאמת את כל קובצי ההתקנה, עוצר את NodeBB ומכין החלפה בטוחה...");
             await new RemoteBackupRestoreService(_session).RestoreFullInstallationAsync(_installation, archivePath);
-            StatusText.Text = "התקנת NodeBB המלאה שוחזרה והופעלה בהצלחה.";
+            StatusText.Text = T("התקנת NodeBB המלאה שוחזרה והופעלה בהצלחה.");
             MessageBox.Show(this,
-                "כל קובצי התקנת NodeBB שוחזרו והשרת הופעל מחדש. מסד הנתונים לא שוחזר ולא שונה.",
+                T("כל קובצי התקנת NodeBB שוחזרו והשרת הופעל מחדש. מסד הנתונים לא שוחזר ולא שונה."),
                 "שחזור התקנה מלאה הושלם", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("BackupUI", "FullRestoreFailed", ex, _session.Profile.Name);
-            StatusText.Text = "שחזור ההתקנה המלאה נכשל: " + ex.Message;
+            StatusText.Text = F($"שחזור ההתקנה המלאה נכשל: {ex.Message}");
             MessageBox.Show(this, ex.Message, T("שגיאה בשחזור התקנה מלאה"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally

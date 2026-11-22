@@ -118,7 +118,7 @@ public partial class NodeBbUpgradeWindow : Window
         try
         {
             await _service.VerifyTargetTagAsync(_installation, tag);
-            var progress = new Progress<string>(message => StatusText.Text = message);
+            var progress = new Progress<string>(message => StatusText.Text = T(message));
             var backupSet = await new NodeBbUpgradeBackupService(_session).CreateAsync(
                 _installation, _preflight.DatabaseType, BackupFolderBox.Text, password, progress);
             BackupPasswordBox.Clear();
@@ -128,8 +128,8 @@ public partial class NodeBbUpgradeWindow : Window
             var result = await _service.UpgradeAsync(_installation, tag, true, true);
             var artifactSummary = string.Join("\n", backupSet.Artifacts.Select(a =>
                 $"{a.Description}: {a.FilePath} ({a.SizeBytes:N0} bytes)"));
-            var message = result.Message + T("\n\nתיקיית הגיבויים: ") + backupSet.DirectoryPath + "\n" + artifactSummary;
-            StatusText.Text = result.Message;
+            var message = T(result.Message) + T("\n\nתיקיית הגיבויים: ") + backupSet.DirectoryPath + "\n" + artifactSummary;
+            StatusText.Text = T(result.Message);
             MessageBox.Show(this, message + (result.Output.Length > 0 ? "\n\n" + result.Output : ""),
                 result.Success && result.Restarted ? T("השדרוג הושלם") : T("תוצאת השדרוג"),
                 MessageBoxButton.OK, result.Success && result.Restarted ? MessageBoxImage.Information : MessageBoxImage.Warning);
