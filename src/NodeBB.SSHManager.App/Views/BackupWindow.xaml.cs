@@ -386,5 +386,37 @@ public partial class BackupWindow : Window
         }
     }
 
+
+    private async void InspectRecovery_Click(object sender, RoutedEventArgs e)
+    {
+        IsEnabled = false;
+        RecoveryStatusText.Visibility = Visibility.Visible;
+        RecoveryStatusText.Text = T("בודק אם נותרו קובצי שחזור מהפעלה קודמת...");
+        try
+        {
+            var report = await new RemoteBackupRestoreService(_session)
+                .InspectFullInstallationRecoveryAsync(_installation);
+            if (report == "NO_RECOVERY_ARTIFACTS")
+            {
+                RecoveryStatusText.Text = T("לא נמצאו תיקיות שחזור או קובצי עבודה שנותרו מהפעלה קודמת.");
+            }
+            else
+            {
+                RecoveryStatusText.Text = T("נמצאו פריטי שחזור. לא בוצע בהם שום שינוי:")
+                    + Environment.NewLine + report
+                    + Environment.NewLine + T("אין למחוק פריטים אלה ואין להתחיל שחזור נוסף לפני בדיקה ידנית של מצב ההתקנה.");
+            }
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("BackupUI", "RecoveryInspectionFailed", ex, _session.Profile.Name);
+            RecoveryStatusText.Text = T("בדיקת השחזור נכשלה: ") + ex.Message;
+        }
+        finally
+        {
+            IsEnabled = true;
+        }
+    }
+
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 }

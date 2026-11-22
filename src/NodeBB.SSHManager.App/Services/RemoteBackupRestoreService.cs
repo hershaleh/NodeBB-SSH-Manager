@@ -539,6 +539,61 @@ public sealed class RemoteBackupRestoreService
         }
     }
 
+
+    /// <summary>
+    /// Read-only inspection of interrupted full-installation restore artifacts.
+    /// This method never changes or removes remote files.
+    /// </summary>
+    public async Task<string> InspectFullInstallationRecoveryAsync(
+        NodeBbInstallation installation, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(installation);
+        RemotePathSafety.ValidateNodeBbInstallationPath(installation.Path);
+        var result = await _session.ExecuteAsync(BuildFullInstallationRecoveryInspectionScript(installation.Path), cancellationToken);
+        if (result.ExitCode != 0)
+            throw new InvalidOperationException(string.IsNullOrWhiteSpace(result.Error)
+                ? $"בדיקת מצבי שחזור קודמים נכשלה (קוד {result.ExitCode})."
+                : SanitizeError(result.Error));
+        return string.IsNullOrWhiteSpace(result.Output)
+            ? "NO_RECOVERY_ARTIFACTS"
+            : result.Output.Trim();
+    }
+
+    internal static string BuildFullInstallationRecoveryInspectionScript(string installationPath)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        return """
+set -eu
+INSTALL=__INSTALL__
+PARENT="$(dirname "$INSTALL")"
+[ -d "$PARENT" ] && [ ! -L "$PARENT" ] || { echo 'תיקיית האב של ההתקנה אינה זמינה או בטוחה.' >&2; exit 47; }
+if [ -d "$INSTALL" ] && [ ! -L "$INSTALL" ]; then
+  printf 'INSTALLATION|present|%s\\n' "$INSTALL"
+elif [ -e "$INSTALL" ] || [ -L "$INSTALL" ]; then
+  printf 'INSTALLATION|unexpected-type|%s\\n' "$INSTALL"
+else
+  printf 'INSTALLATION|missing|%s\\n' "$INSTALL"
+fi
+FOUND=0
+report_artifact() {
+  path="$1"
+  kind="$2"
+  if [ -L "$path" ]; then state=symlink
+  elif [ -d "$path" ]; then state=directory
+  elif [ -e "$path" ]; then state=file
+  else return 0
+  fi
+  FOUND=1
+  printf 'RECOVERY_ARTIFACT|%s|%s|%s\\n' "$kind" "$state" "$path"
+}
+for path in "$PARENT"/.nodebb-stage-nodebb-full-restore-*; do report_artifact "$path" stage; done
+for path in "$PARENT"/.nodebb-rollback-nodebb-full-restore-*; do report_artifact "$path" rollback; done
+for path in "$PARENT"/.nodebb-failed-nodebb-full-restore-*; do report_artifact "$path" failed; done
+for path in /tmp/nodebb-full-restore-*; do report_artifact "$path" work; done
+if [ "$FOUND" -eq 0 ]; then printf 'NO_RECOVERY_ARTIFACTS\\n'; fi
+""".Replace("__INSTALL__", ShellQuote(installationPath), StringComparison.Ordinal);
+    }
+
     internal static string BuildFullInstallationPreflightScript(
         string installationPath, string workDirectory, string expectedSha256, long expandedBytes)
     {

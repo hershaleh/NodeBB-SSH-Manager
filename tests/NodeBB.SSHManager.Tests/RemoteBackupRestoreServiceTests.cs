@@ -17,6 +17,31 @@ public sealed class RemoteBackupRestoreServiceTests
     private const string FullWork = "/tmp/nodebb-full-restore-0123456789abcdef0123456789abcdef";
     private const string ValidHash = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
+
+    [Fact]
+    public void BuildFullInstallationRecoveryInspectionScript_IsReadOnlyAndFindsEveryRecoveryArtifactType()
+    {
+        var script = RemoteBackupRestoreService.BuildFullInstallationRecoveryInspectionScript("/srv/nodebb");
+        Assert.Contains(".nodebb-stage-nodebb-full-restore-*", script);
+        Assert.Contains(".nodebb-rollback-nodebb-full-restore-*", script);
+        Assert.Contains(".nodebb-failed-nodebb-full-restore-*", script);
+        Assert.Contains("/tmp/nodebb-full-restore-*", script);
+        Assert.Contains("RECOVERY_ARTIFACT", script);
+        Assert.Contains("INSTALLATION|missing", script);
+        Assert.DoesNotContain("rm -rf", script);
+        Assert.DoesNotContain("mv --", script);
+        Assert.DoesNotContain("mkdir", script);
+        Assert.DoesNotContain("touch", script);
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    public void BuildFullInstallationRecoveryInspectionScript_RejectsUnsafePaths(string path) =>
+        Assert.Throws<ArgumentException>(() =>
+            RemoteBackupRestoreService.BuildFullInstallationRecoveryInspectionScript(path));
+
     [Fact]
     public void BuildFullInstallationPreflightScriptChecksDiskPermissionsArchiveAndExistingRecoveryPaths()
     {

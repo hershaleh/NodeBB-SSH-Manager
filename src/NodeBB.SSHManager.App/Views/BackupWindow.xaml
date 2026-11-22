@@ -181,6 +181,11 @@
                         <Button x:Name="RestoreFullButton" Content="{loc:Tr View_b30a36e8}" Click="RestoreFull_Click"
                                 HorizontalAlignment="Stretch" Padding="17,11" Margin="0,9,0,0"
                                 Background="#8B3E58" Foreground="White" BorderThickness="0" FontWeight="SemiBold"/>
+                        <Button x:Name="InspectRecoveryButton" Content="{loc:Tr Runtime_recovery01}" Click="InspectRecovery_Click"
+                                HorizontalAlignment="Stretch" Padding="14,9" Margin="0,9,0,0"
+                                Background="#EAF0FA" Foreground="#34445D" BorderThickness="0"/>
+                        <TextBlock x:Name="RecoveryStatusText" TextWrapping="Wrap" FontSize="11"
+                                   Foreground="#52647C" Margin="0,7,0,0" Visibility="Collapsed"/>
                         <TextBlock Text="{loc:Tr View_3421c754}"
                                    Foreground="#9A6B25" FontSize="11" TextWrapping="Wrap" Margin="0,7,0,0"/>
 

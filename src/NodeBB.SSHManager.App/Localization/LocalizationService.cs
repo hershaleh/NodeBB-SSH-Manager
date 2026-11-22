@@ -714,6 +714,13 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Runtime_bk56"] = ("מכין, מאמת ומעלה את ארכיון ההתקנה...", "Preparing, validating, and uploading the installation archive..."),
             ["Runtime_bk57"] = ("מאמת את כל קובצי ההתקנה, עוצר את NodeBB ומכין החלפה בטוחה...", "Validating all installation files, stopping NodeBB, and preparing a safe replacement..."),
             ["Runtime_bk58"] = ("שגיאה בשחזור התקנה מלאה", "Full installation restore error"),
+
+            ["Runtime_recovery01"] = ("בדיקת מצבי שחזור קודמים", "Inspect previous recovery state"),
+            ["Runtime_recovery02"] = ("בודק אם נותרו קובצי שחזור מהפעלה קודמת...", "Checking for recovery artifacts from a previous run..."),
+            ["Runtime_recovery03"] = ("לא נמצאו תיקיות שחזור או קובצי עבודה שנותרו מהפעלה קודמת.", "No leftover recovery directories or work files were found."),
+            ["Runtime_recovery04"] = ("נמצאו פריטי שחזור. לא בוצע בהם שום שינוי:", "Recovery artifacts were found. No changes were made:"),
+            ["Runtime_recovery05"] = ("אין למחוק פריטים אלה ואין להתחיל שחזור נוסף לפני בדיקה ידנית של מצב ההתקנה.", "Do not delete these items or start another restore before manually checking the installation state."),
+            ["Runtime_recovery06"] = ("בדיקת השחזור נכשלה: ", "Recovery inspection failed: "),
         };
 
     public static LocalizationService Instance => LazyInstance.Value;
