@@ -1,4 +1,6 @@
+using System.IO;
 using System.Text;
+using System.Text.Json;
 using NodeBB.SSHManager.Services;
 using Xunit;
 
@@ -125,7 +127,9 @@ public sealed class NodeBbRemoteServiceTests
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
 
         Assert.Throws<InvalidDataException>(() =>
-            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream));
+        {
+            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream);
+        });
     }
 
     [Fact]
@@ -133,8 +137,10 @@ public sealed class NodeBbRemoteServiceTests
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not-json"));
 
-        Assert.Throws<System.Text.Json.JsonException>(() =>
-            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream));
+        Assert.Throws<JsonException>(() =>
+        {
+            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream);
+        });
     }
 
     [Theory]
@@ -147,7 +153,9 @@ public sealed class NodeBbRemoteServiceTests
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{\"name\":\"nodebb\"}"));
 
         Assert.Throws<ArgumentException>(() =>
-            NodeBbRemoteService.ParseInstallationManifest(path, stream));
+        {
+            NodeBbRemoteService.ParseInstallationManifest(path, stream);
+        });
     }
 
     [Theory]
