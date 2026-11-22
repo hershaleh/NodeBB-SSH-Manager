@@ -222,7 +222,7 @@ public partial class MainWindow : Window
         {
             ServersList.SelectedItem = profile;
             if (menu.Items.OfType<System.Windows.Controls.MenuItem>().FirstOrDefault(item => item.Name == "FavoriteMenuItem") is { } favoriteItem)
-                favoriteItem.Header = profile.IsFavorite ? "הסר מהמועדפים" : "הוסף למועדפים";
+                favoriteItem.Header = profile.IsFavorite ? T("הסר מהמועדפים") : T("הוסף למועדפים");
         }
     }
 
@@ -230,32 +230,32 @@ public partial class MainWindow : Window
     {
         if (_profiles.Count == 0) return;
         var button = sender as System.Windows.Controls.Button;
-        if (button is not null) { button.IsEnabled = false; button.Content = "בודק שרתים…"; }
+        if (button is not null) { button.IsEnabled = false; button.Content = T("בודק שרתים…"); }
         try
         {
             using var throttle = new SemaphoreSlim(4, 4);
             var checks = _profiles.ToArray().Select(async profile =>
             {
                 if (_sessionManager.TryGet(profile.Id, out _))
-                    return (Profile: profile, Label: "חיבור SSH פעיל");
+                    return (Profile: profile, Label: T("חיבור SSH פעיל"));
                 var secret = _credentialVault.Get(profile.Id);
                 if (secret is null)
-                    return (Profile: profile, Label: "נדרשים פרטי התחברות שמורים");
+                    return (Profile: profile, Label: T("נדרשים פרטי התחברות שמורים"));
                 await throttle.WaitAsync();
                 try
                 {
                     var result = await _sshService.TestConnectionAsync(profile, secret);
                     var label = result.Status switch
                     {
-                        SshTestStatus.Success => "נגיש · SSH תקין",
-                        SshTestStatus.HostKeyVerificationRequired => "נדרשת בדיקת טביעת אצבע",
-                        _ => "לא נגיש · " + result.Message
+                        SshTestStatus.Success => T("נגיש · SSH תקין"),
+                        SshTestStatus.HostKeyVerificationRequired => T("נדרשת בדיקת טביעת אצבע"),
+                        _ => string.Format(T("לא נגיש · {0}"), result.Message)
                     };
                     return (Profile: profile, Label: label);
                 }
                 catch (Exception ex)
                 {
-                    return (Profile: profile, Label: "בדיקה נכשלה · " + SshConnectionService.GetFriendlyErrorMessage(ex));
+                    return (Profile: profile, Label: string.Format(T("בדיקה נכשלה · {0}"), SshConnectionService.GetFriendlyErrorMessage(ex)));
                 }
                 finally { throttle.Release(); }
             }).ToArray();
@@ -263,18 +263,18 @@ public partial class MainWindow : Window
             var results = await Task.WhenAll(checks);
             foreach (var result in results) result.Profile.ConnectionCheckLabel = result.Label;
             ServersList.Items.Refresh();
-            var reachable = results.Count(x => x.Label == "נגיש · SSH תקין" || x.Label == "חיבור SSH פעיל");
-            var needsCredentials = results.Count(x => x.Label == "נדרשים פרטי התחברות שמורים");
+            var reachable = results.Count(x => x.Label == T("נגיש · SSH תקין") || x.Label == T("חיבור SSH פעיל"));
+            var needsCredentials = results.Count(x => x.Label == T("נדרשים פרטי התחברות שמורים"));
             var failed = results.Length - reachable - needsCredentials;
             MessageBox.Show(this,
-                $"הבדיקה הסתיימה.\nנגישים: {reachable}\nלא נגישים או דורשים אימות: {failed}\nללא פרטי התחברות שמורים: {needsCredentials}\n\nלא אושרה אוטומטית אף טביעת אצבע SSH חדשה.",
-                "בדיקת שרתים מרוכזת", MessageBoxButton.OK, MessageBoxImage.Information);
+                string.Format(T("הבדיקה הסתיימה.\nנגישים: {0}\nלא נגישים או דורשים אימות: {1}\nללא פרטי התחברות שמורים: {2}\n\nלא אושרה אוטומטית אף טביעת אצבע SSH חדשה."), reachable, failed, needsCredentials),
+                T("בדיקת שרתים מרוכזת"), MessageBoxButton.OK, MessageBoxImage.Information);
             DiagnosticLogService.Instance.Info("SSH", "BulkConnectionCheckCompleted",
                 $"Bulk check completed: {reachable} reachable, {failed} failed or awaiting host verification, {needsCredentials} requiring credentials.");
         }
         finally
         {
-            if (button is not null) { button.IsEnabled = true; button.Content = "בדוק את כל השרתים"; }
+            if (button is not null) { button.IsEnabled = true; button.Content = T("בדוק את כל השרתים"); }
         }
     }
 
@@ -858,6 +858,8 @@ public partial class MainWindow : Window
         UpdateVisibleServerCount();
         UpdateServerActions();
     }
+
+    private static string T(string text) => LocalizationService.Instance.Translate(text);
 
     private void SetBusy(bool isBusy)
     {

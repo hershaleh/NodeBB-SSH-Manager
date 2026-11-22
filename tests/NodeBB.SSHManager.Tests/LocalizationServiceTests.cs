@@ -312,6 +312,26 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void DashboardBulkSshCheckStatusesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Checking servers…", service.Translate("בודק שרתים…"));
+        Assert.Equal("SSH connection active", service.Translate("חיבור SSH פעיל"));
+        Assert.Equal("Saved credentials required", service.Translate("נדרשים פרטי התחברות שמורים"));
+        Assert.Equal("Reachable · SSH OK", service.Translate("נגיש · SSH תקין"));
+        Assert.Equal("Host fingerprint verification required", service.Translate("נדרשת בדיקת טביעת אצבע"));
+        Assert.Equal("Unreachable · timeout", string.Format(service.Translate("לא נגיש · {0}"), "timeout"));
+        Assert.Equal("Check failed · timeout", string.Format(service.Translate("בדיקה נכשלה · {0}"), "timeout"));
+        Assert.Equal("Check completed.\nReachable: 2\nUnreachable or awaiting verification: 1\nWithout saved credentials: 3\n\nNo new SSH host fingerprint was automatically trusted.",
+            string.Format(service.Translate("הבדיקה הסתיימה.\nנגישים: {0}\nלא נגישים או דורשים אימות: {1}\nללא פרטי התחברות שמורים: {2}\n\nלא אושרה אוטומטית אף טביעת אצבע SSH חדשה."), 2, 1, 3));
+        Assert.Equal("Bulk server check", service.Translate("בדיקת שרתים מרוכזת"));
+        Assert.Equal("Check all servers", service.Translate("בדוק את כל השרתים"));
+        Assert.Equal("Remove from favorites", service.Translate("הסר מהמועדפים"));
+        Assert.Equal("Add to favorites", service.Translate("הוסף למועדפים"));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
