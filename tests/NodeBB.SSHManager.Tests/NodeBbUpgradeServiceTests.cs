@@ -7,6 +7,15 @@ namespace NodeBB.SSHManager.Tests;
 public sealed class NodeBbUpgradeServiceTests
 {
     [Theory]
+    [InlineData(0, true, true)]
+    [InlineData(0, false, false)]
+    [InlineData(1, true, false)]
+    [InlineData(1, false, false)]
+    public void UpgradeRequiresBothSuccessfulStopCommandAndConfirmedPortRelease(
+        int commandExitCode, bool stopConfirmed, bool expected) =>
+        Assert.Equal(expected, NodeBbUpgradeService.CanProceedAfterStop(commandExitCode, stopConfirmed));
+
+    [Theory]
     [InlineData("v4.19.1", true)]
     [InlineData("v4.20.0-rc.1", true)]
     [InlineData("4.19.1", false)]

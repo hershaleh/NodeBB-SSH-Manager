@@ -25,6 +25,9 @@ public sealed class NodeBbUpgradeService
 
     public NodeBbUpgradeService(SshServerSession session) => _session = session;
 
+    internal static bool CanProceedAfterStop(int commandExitCode, bool stopConfirmed) =>
+        commandExitCode == 0 && stopConfirmed;
+
     public static bool IsValidTargetTag(string? tag) => !string.IsNullOrWhiteSpace(tag)
         && VersionTag.IsMatch(tag) && !tag.Contains("..", StringComparison.Ordinal);
 
@@ -77,8 +80,11 @@ public sealed class NodeBbUpgradeService
         var runtimeService = new NodeBbRuntimeService(_session);
         var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
         var stopped = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);
-        if (stopped.ExitCode != 0)
-            throw new InvalidOperationException(Sanitize(stopped.Error, "לא ניתן לעצור את NodeBB. השדרוג בוטל לפני שינוי הקבצים."));
+        var stopConfirmed = stopped.ExitCode == 0 &&
+            await runtimeService.VerifyHttpStoppedAsync(installation, cancellationToken);
+        if (!CanProceedAfterStop(stopped.ExitCode, stopConfirmed))
+            throw new InvalidOperationException(Sanitize(stopped.Error,
+                "לא ניתן לאמת ש-NodeBB נעצר ופורט השירות הפסיק להאזין. השדרוג בוטל לפני שינוי הקבצים."));
         DiagnosticLogService.Instance.Info("NodeBBUpgrade", "UpgradeStopped",
             $"NodeBB stopped before upgrading to {targetTag}.", _session.Profile.Name);
 
