@@ -538,7 +538,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
             ? T("הפעולה תסיר את כל החבילות שנבחרו. השרת מבצע גיבוי אוטומטי לפני כל שינוי. לא ניתן לבטל הסרה שכבר הושלמה.")
             : T("הפעולה תתבצע על כל החבילות שנבחרו, אחת אחרי השנייה. השרת מבצע גיבוי אוטומטי לפני כל שינוי.");
         if (MessageBox.Show(this,
-            LocalizationService.Instance.TranslateFormat($"{label} עבור {selected.Length} פריטים?\n\n{string.Join(Environment.NewLine, selected)}\n\n{warning}"),
+            string.Format(LocalizationService.Instance["Restricted_BulkConfirm"],
+                T(label), selected.Length, string.Join(Environment.NewLine, selected), warning),
             T("אישור פעולה מרובה"), MessageBoxButton.YesNo,
             destructive ? MessageBoxImage.Warning : MessageBoxImage.Question) != MessageBoxResult.Yes)
             return;
