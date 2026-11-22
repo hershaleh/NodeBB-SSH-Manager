@@ -153,7 +153,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
         IsEnabled = false;
         SummaryTitle.Text = T(label) + " — " + T("בביצוע");
         SummaryText.Text = T("הבקשה נשלחה לשרת. ממתין לתשובה...");
-        if (keepPluginView) PluginActionStatus.Text = LocalizationService.Instance.TranslateFormat($"{T(label)} מתבצע…");
+        if (keepPluginView) PluginActionStatus.Text = string.Format(LocalizationService.Instance["Restricted_ActionInProgress"], T(label));
         try
         {
             var result = await operation();
@@ -201,10 +201,10 @@ public partial class RestrictedNodeBbManagerWindow : Window
             if (keepPluginView)
             {
                 PluginActionStatus.Text = result.ExitCode == 0
-                    ? "✓ " + LocalizationService.Instance.TranslateFormat($"{T(label)} הושלם.")
+                    ? "✓ " + string.Format(LocalizationService.Instance["Restricted_ActionCompleted"], T(label))
                     : partialSuccess
-                        ? LocalizationService.Instance.TranslateFormat($"⚠ {T(label)} הושלם חלקית: {successfulPackages.Length} הצלחות, {affectedPackages.Length - successfulPackages.Length} כישלונות.")
-                        : "⚠ " + LocalizationService.Instance.TranslateFormat($"{T(label)} לא הושלם. {TranslateError(raw)}");
+                        ? string.Format(LocalizationService.Instance["Restricted_ActionPartial"], T(label), successfulPackages.Length, affectedPackages.Length - successfulPackages.Length)
+                        : "⚠ " + string.Format(LocalizationService.Instance["Restricted_ActionFailed"], T(label), TranslateError(raw));
                 ManagerTabs.SelectedIndex = 1;
             }
             // Refresh cards after successful mutations, while preserving the original action output.
@@ -240,7 +240,7 @@ public partial class RestrictedNodeBbManagerWindow : Window
             SaveHistory(label, historyTarget ?? ResolveHistoryTarget(label), false, SummaryText.Text);
             if (keepPluginView)
             {
-                PluginActionStatus.Text = "⚠ " + LocalizationService.Instance.TranslateFormat($"{T(label)} לא הושלם. {TranslateError(ex.Message)}");
+                PluginActionStatus.Text = "⚠ " + string.Format(LocalizationService.Instance["Restricted_ActionFailed"], T(label), TranslateError(ex.Message));
                 ManagerTabs.SelectedIndex = 1;
             }
             DiagnosticLogService.Instance.Error("RestrictedCLI", "UiActionFailed", ex);
