@@ -28,19 +28,19 @@ public partial class ServerDiagnosticsWindow : Window
     private async Task DetectAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = LocalizationService.Instance.Translate("סורק את השרת...");
+        StatusText.Text = T("סורק את השרת...");
         try
         {
             var data = await _service.DetectAsync();
             _items.Clear();
-            _items.Add(new("שם שרת", data.HostName));
-            _items.Add(new("מערכת הפעלה", data.OperatingSystem));
+            _items.Add(new(T("שם שרת"), data.HostName));
+            _items.Add(new(T("מערכת הפעלה"), data.OperatingSystem));
             _items.Add(new("Kernel", data.Kernel));
-            _items.Add(new("ארכיטקטורה", data.Architecture));
-            _items.Add(new("מנהל שירותים", data.InitSystem));
-            _items.Add(new("מנהל חבילות", data.PackageManager));
-            _items.Add(new("משתמש SSH", data.RemoteUser));
-            _items.Add(new("הרשאות root", data.IsRoot ? "כן" : "לא"));
+            _items.Add(new(T("ארכיטקטורה"), data.Architecture));
+            _items.Add(new(T("מנהל שירותים"), data.InitSystem));
+            _items.Add(new(T("מנהל חבילות"), data.PackageManager));
+            _items.Add(new(T("משתמש SSH"), data.RemoteUser));
+            _items.Add(new(T("הרשאות root"), T(data.IsRoot ? "כן" : "לא")));
             _items.Add(new("Node.js", data.NodeVersion));
             _items.Add(new("npm", data.NpmVersion));
             _items.Add(new("Git", data.GitVersion));
@@ -49,15 +49,16 @@ public partial class ServerDiagnosticsWindow : Window
             _items.Add(new("Docker", data.DockerVersion));
             _items.Add(new("Podman", data.PodmanVersion));
             _items.Add(new("PM2", data.Pm2Version));
-            _items.Add(new("פקודת NodeBB גלובלית", data.NodeBbCliAvailable ? "זמינה" : "לא נמצאה"));
-            DetectedAtText.Text = $"עודכן: {data.DetectedAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
-            StatusText.Text = LocalizationService.Instance.Translate("הסריקה הושלמה.");
+            _items.Add(new(T("פקודת NodeBB גלובלית"), T(data.NodeBbCliAvailable ? "זמינה" : "לא נמצאה")));
+            DetectedAtText.Text = string.Format(T("עודכן: {0}"), data.DetectedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"));
+            StatusText.Text = T("הסריקה הושלמה.");
         }
         catch (Exception ex)
         {
             DiagnosticLogService.Instance.Error("InventoryUI", "InventoryDisplayFailed", ex, _session.Profile.Name);
-            StatusText.Text = LocalizationService.Instance.Translate("הסריקה נכשלה: ") + ex.Message;
+            StatusText.Text = string.Format(T("הסריקה נכשלה: {0}"), ex.Message);
         }
         finally { RefreshButton.IsEnabled = true; }
     }
+    private static string T(string text) => LocalizationService.Instance.Translate(text);
 }

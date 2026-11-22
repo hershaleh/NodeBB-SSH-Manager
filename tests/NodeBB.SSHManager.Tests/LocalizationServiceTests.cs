@@ -287,6 +287,31 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void ServerDiagnosticsLabelsAndStatusesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Scanning server...", service.Translate("סורק את השרת..."));
+        Assert.Equal("Server name", service.Translate("שם שרת"));
+        Assert.Equal("Operating system", service.Translate("מערכת הפעלה"));
+        Assert.Equal("Architecture", service.Translate("ארכיטקטורה"));
+        Assert.Equal("Service manager", service.Translate("מנהל שירותים"));
+        Assert.Equal("Package manager", service.Translate("מנהל חבילות"));
+        Assert.Equal("SSH user", service.Translate("משתמש SSH"));
+        Assert.Equal("Root permissions", service.Translate("הרשאות root"));
+        Assert.Equal("Yes", service.Translate("כן"));
+        Assert.Equal("No", service.Translate("לא"));
+        Assert.Equal("Global NodeBB command", service.Translate("פקודת NodeBB גלובלית"));
+        Assert.Equal("Available", service.Translate("זמינה"));
+        Assert.Equal("Not found", service.Translate("לא נמצאה"));
+        Assert.Equal("Updated: 2026-11-22 20:00:00",
+            string.Format(service.Translate("עודכן: {0}"), "2026-11-22 20:00:00"));
+        Assert.Equal("Scan completed.", service.Translate("הסריקה הושלמה."));
+        Assert.Equal("Scan failed: network timeout",
+            string.Format(service.Translate("הסריקה נכשלה: {0}"), "network timeout"));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
