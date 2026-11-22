@@ -9,6 +9,7 @@ namespace NodeBB.SSHManager.Views;
 public partial class NodeBbManagerWindow : Window
 {
     private readonly NodeBbRemoteService _service;
+    private readonly NodeBbInstallationStore _installationStore;
     private readonly SshServerSession _session;
     private readonly ObservableCollection<NodeBbInstallation> _installations = [];
     private bool _isBusy;
@@ -18,6 +19,7 @@ public partial class NodeBbManagerWindow : Window
         InitializeComponent();
         _session = session;
         _service = new NodeBbRemoteService(session);
+        _installationStore = new NodeBbInstallationStore(session.Profile.Id);
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         InstallationsList.ItemsSource = _installations;
         InstallationPicker.ItemsSource = _installations;
@@ -69,12 +71,14 @@ public partial class NodeBbManagerWindow : Window
                 string.Equals(item.Path, installation.Path, StringComparison.Ordinal));
             if (existing is not null)
             {
+                _installationStore.Add(existing.Path);
                 InstallationsList.SelectedItem = existing;
                 InstallationPicker.SelectedItem = existing;
                 StatusText.Text = T("הנתיב כבר מופיע ברשימה; ההתקנה נבחרה.");
                 return;
             }
 
+            _installationStore.Add(installation.Path);
             _installations.Add(installation);
             InstallationsList.SelectedItem = installation;
             InstallationPicker.SelectedItem = installation;
@@ -96,9 +100,31 @@ public partial class NodeBbManagerWindow : Window
         try
         {
             SetBusy(true, T("סורק נתיבים נפוצים..."));
-            var found = await _service.DiscoverAsync();
+            var found = (await _service.DiscoverAsync()).ToList();
+            try
+            {
+                foreach (var savedPath in _installationStore.Load())
+                {
+                    if (found.Any(item => string.Equals(item.Path, savedPath, StringComparison.Ordinal)))
+                        continue;
+                    try
+                    {
+                        found.Add(await _service.InspectInstallationAsync(savedPath));
+                    }
+                    catch (Exception ex)
+                    {
+                        DiagnosticLogService.Instance.Warning("NodeBBManagerUI", "SavedInstallationUnavailable",
+                            $"Saved NodeBB installation path {savedPath} could not be validated; it remains saved for a later attempt.", ex, _session.Profile.Name);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                DiagnosticLogService.Instance.Warning("NodeBBManagerUI", "SavedInstallationLoadFailed",
+                    "Could not load saved manual NodeBB installation paths; automatic discovery results will still be shown.", ex, _session.Profile.Name);
+            }
             _installations.Clear();
-            foreach (var item in found) _installations.Add(item);
+            foreach (var item in found.OrderBy(item => item.Path, StringComparer.Ordinal)) _installations.Add(item);
             if (found.Count > 0) { InstallationsList.SelectedIndex = 0; InstallationPicker.SelectedIndex = 0; }
             StatusText.Text = found.Count == 0
                 ? T("לא נמצאה התקנת NodeBB בנתיבים שנבדקו. אפשר לסרוק שוב או לבדוק ידנית דרך מסוף SSH.")
