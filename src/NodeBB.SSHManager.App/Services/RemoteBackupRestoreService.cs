@@ -578,7 +578,7 @@ public sealed class RemoteBackupRestoreService
         if (installationLine is null)
             return "RECOVERY_INSPECTION_INVALID_OUTPUT" + Environment.NewLine + string.Join(Environment.NewLine, lines);
 
-        return string.Join(Environment.NewLine, lines.Where(line => line != "NO_RECOVERY_ARTIFACTS"));
+        return string.Join("\n", lines.Where(line => line != "NO_RECOVERY_ARTIFACTS"));
     }
 
     internal static string BuildFullInstallationRecoveryInspectionScript(string installationPath)
