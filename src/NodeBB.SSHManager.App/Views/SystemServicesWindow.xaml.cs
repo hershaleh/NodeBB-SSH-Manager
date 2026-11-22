@@ -56,9 +56,13 @@ public partial class SystemServicesWindow : Window
         try
         {
             var result = await _service.ExecuteAsync(_manager, selected.Name, action);
-            StatusText.Text = result.ExitCode == 0 ? string.Format(LocalizationService.Instance["Service_Success"], selected.Name) :
-                string.Format(LocalizationService.Instance["Service_Failed"], result.ExitCode, result.Error);
             await RefreshAsync();
+            // RefreshAsync updates the status line with the inventory result. Restore the
+            // action outcome afterwards so a successful/failed command is not hidden.
+            StatusText.Text = result.ExitCode == 0
+                ? string.Format(LocalizationService.Instance["Service_Success"], selected.Name)
+                : string.Format(LocalizationService.Instance["Service_Failed"], result.ExitCode,
+                    string.IsNullOrWhiteSpace(result.Error) ? result.Output : result.Error);
         }
         catch (Exception ex)
         {
