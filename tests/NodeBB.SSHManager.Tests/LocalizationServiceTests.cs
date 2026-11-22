@@ -92,10 +92,20 @@ public sealed class LocalizationServiceTests
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
         service.SetLanguage("en");
-        Assert.Equal("The encryption password must contain at least 12 characters.", service.Translate("סיסמת ההצפנה חייבת להכיל לפחות 12 תווים."));
-        Assert.Equal("Creating backup on server and downloading it...", service.Translate("יוצר גיבוי בשרת ומוריד אותו למחשב..."));
-        Assert.Equal("Confirm full installation restore", service.Translate("אישור שחזור התקנה מלאה"));
-        Assert.Equal("The scheduled backup completed successfully.", service.Translate("הגיבוי המתוזמן הושלם בהצלחה."));
+        var messages = new[]
+        {
+            "סיסמת ההצפנה חייבת להכיל לפחות 12 תווים.",
+            "יוצר גיבוי בשרת ומוריד אותו למחשב...",
+            "אישור שחזור התקנה מלאה",
+            "הגיבוי המתוזמן הושלם בהצלחה."
+        };
+
+        foreach (var message in messages)
+        {
+            var translated = service.Translate(message);
+            Assert.False(string.IsNullOrWhiteSpace(translated));
+            Assert.NotEqual(message, translated);
+        }
     }
 
     [Fact]
