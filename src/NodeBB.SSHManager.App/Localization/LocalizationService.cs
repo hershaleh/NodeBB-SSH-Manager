@@ -14,6 +14,15 @@ public sealed class LocalizationService : INotifyPropertyChanged
     private static readonly IReadOnlyDictionary<string, (string He, string En)> Texts =
         new Dictionary<string, (string He, string En)>(StringComparer.Ordinal)
         {
+            ["NodeBB_ManualPathHint"] = ("נתיב Linux מוחלט לתיקיית NodeBB (שבה נמצא package.json)", "Absolute Linux path to the NodeBB folder (containing package.json)"),
+            ["NodeBB_ManualAddButton"] = ("הוסף נתיב", "Add path"),
+            ["NodeBB_ManualPathRequired"] = ("הזן נתיב התקנה מלא.", "Enter a full installation path."),
+            ["NodeBB_ManualInspecting"] = ("בודק את נתיב ההתקנה...", "Validating installation path..."),
+            ["NodeBB_ManualAlreadyAdded"] = ("הנתיב כבר מופיע ברשימה; ההתקנה נבחרה.", "This path is already listed; the installation was selected."),
+            ["NodeBB_ManualAdded"] = ("התקנת NodeBB נוספה ונבחרה: {0} ({1})", "NodeBB installation added and selected: {0} ({1})"),
+            ["NodeBB_ManualAddFailed"] = ("הוספת ההתקנה נכשלה: {0}", "Could not add installation: {0}"),
+            ["NodeBB_ManualPackageMissing"] = ("בנתיב שצוין לא נמצא package.json.", "No package.json was found at the specified path."),
+            ["NodeBB_ManualPackageInvalid"] = ("ה-package.json בנתיב שצוין אינו שייך להתקנת NodeBB.", "The package.json at the specified path does not belong to a NodeBB installation."),
             ["History_Count"] = ("מוצגות {0} מתוך {1} פעולות אחרונות · עד 2,000 רשומות", "Showing {0} of {1} recent actions · up to 2,000 records"),
             ["History_Empty"] = ("לא נשמרו עדיין פעולות בשרתים.", "No server actions have been recorded yet."),
             ["History_NoMatches"] = ("לא נמצאו פעולות התואמות לחיפוש ולמסנן.", "No actions match the search and filter."),

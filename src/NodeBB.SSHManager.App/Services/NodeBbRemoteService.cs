@@ -181,6 +181,62 @@ public sealed class NodeBbRemoteService
         return "/" + string.Join("/", parts);
     }
 
+    public async Task<NodeBbInstallation> InspectInstallationAsync(
+        string installationPath, CancellationToken cancellationToken = default)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        var normalizedPath = NormalizeRemotePath(installationPath.Trim());
+        DiagnosticLogService.Instance.Info("NodeBB", "ManualInspectionStarted",
+            $"Validating manually supplied NodeBB installation path {normalizedPath}.", _session.Profile.Name);
+
+        using var client = _session.CreateSftpClient();
+        await Task.Run(client.Connect, cancellationToken);
+        try
+        {
+            return await Task.Run(() =>
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var manifestPath = normalizedPath.TrimEnd('/') + "/package.json";
+                if (!client.Exists(manifestPath))
+                    throw new InvalidDataException("בנתיב שצוין לא נמצא package.json.");
+
+                var attributes = client.GetAttributes(manifestPath);
+                if (attributes.Size < 2 || attributes.Size > MaxPackageJsonBytes)
+                    throw new InvalidDataException("גודל package.json אינו תקין או חורג מהמותר.");
+
+                using var stream = client.OpenRead(manifestPath);
+                var installation = ParseInstallationManifest(normalizedPath, stream);
+                DiagnosticLogService.Instance.Info("NodeBB", "ManualInspectionCompleted",
+                    $"Validated NodeBB installation {normalizedPath} ({installation.Version}).", _session.Profile.Name);
+                return installation;
+            }, cancellationToken);
+        }
+        finally
+        {
+            if (client.IsConnected) client.Disconnect();
+        }
+    }
+
+    internal static NodeBbInstallation ParseInstallationManifest(string installationPath, Stream manifestStream)
+    {
+        RemotePathSafety.ValidateNodeBbInstallationPath(installationPath);
+        ArgumentNullException.ThrowIfNull(manifestStream);
+        using var document = JsonDocument.Parse(manifestStream, new JsonDocumentOptions { MaxDepth = 32 });
+        var manifest = document.RootElement;
+        if (manifest.ValueKind != JsonValueKind.Object
+            || !manifest.TryGetProperty("name", out var nameElement)
+            || nameElement.ValueKind != JsonValueKind.String
+            || !string.Equals(nameElement.GetString(), "nodebb", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("ה-package.json בנתיב שצוין אינו שייך להתקנת NodeBB.");
+
+        var version = manifest.TryGetProperty("version", out var versionElement)
+            && versionElement.ValueKind == JsonValueKind.String
+            && !string.IsNullOrWhiteSpace(versionElement.GetString())
+                ? versionElement.GetString()!
+                : "לא ידועה";
+        return new NodeBbInstallation(NormalizeRemotePath(installationPath), version);
+    }
+
     public async Task<(int ExitCode, string Output, string Error)> RunLifecycleAsync(
         NodeBbInstallation installation, string action, CancellationToken cancellationToken = default)
     {

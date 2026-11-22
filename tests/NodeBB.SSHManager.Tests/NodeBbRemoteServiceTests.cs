@@ -1,3 +1,4 @@
+using System.Text;
 using NodeBB.SSHManager.Services;
 using Xunit;
 
@@ -90,6 +91,63 @@ public sealed class NodeBbRemoteServiceTests
 
         Assert.False(called);
         Assert.Equal(Success, result);
+    }
+
+    [Fact]
+    public void ManualInstallationParserAcceptsNodeBbManifest()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(
+            "{\"name\":\"nodebb\",\"version\":\"4.16.7\"}"));
+
+        var installation = NodeBbRemoteService.ParseInstallationManifest("/srv/forums/nodebb/", stream);
+
+        Assert.Equal("/srv/forums/nodebb", installation.Path);
+        Assert.Equal("4.16.7", installation.Version);
+    }
+
+    [Fact]
+    public void ManualInstallationParserAcceptsNodeBbNameCaseInsensitively()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(
+            "{\"name\":\"NodeBB\"}"));
+
+        var installation = NodeBbRemoteService.ParseInstallationManifest("/opt/nodebb", stream);
+
+        Assert.Equal("לא ידועה", installation.Version);
+    }
+
+    [Theory]
+    [InlineData("{\"name\":\"other-app\",\"version\":\"1.0\"}")]
+    [InlineData("{\"version\":\"1.0\"}")]
+    [InlineData("[]")]
+    public void ManualInstallationParserRejectsNonNodeBbManifest(string json)
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(json));
+
+        Assert.Throws<InvalidDataException>(() =>
+            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream));
+    }
+
+    [Fact]
+    public void ManualInstallationParserRejectsMalformedJson()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{not-json"));
+
+        Assert.Throws<System.Text.Json.JsonException>(() =>
+            NodeBbRemoteService.ParseInstallationManifest("/srv/nodebb", stream));
+    }
+
+    [Theory]
+    [InlineData("relative/nodebb")]
+    [InlineData("/")]
+    [InlineData("/srv/nodebb/../other")]
+    [InlineData("/srv/nodebb\\other")]
+    public void ManualInstallationParserRejectsUnsafePaths(string path)
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("{\"name\":\"nodebb\"}"));
+
+        Assert.Throws<ArgumentException>(() =>
+            NodeBbRemoteService.ParseInstallationManifest(path, stream));
     }
 
     [Theory]

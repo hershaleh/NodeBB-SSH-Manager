@@ -50,14 +50,20 @@
 
   <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F1" BorderThickness="1" CornerRadius="17" Padding="17" Margin="0,0,0,17">
    <Grid>
-    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel VerticalAlignment="Center">
      <TextBlock Text="{loc:Tr View_7e8268ff}" Foreground="#8794A8" FontSize="10" FontWeight="SemiBold"/>
      <TextBlock x:Name="SelectedInstallationText" Text="{loc:Tr View_7e531ae3}" Foreground="#202E45" FontSize="14" FontWeight="SemiBold" Margin="0,5,0,0"/>
     </StackPanel>
-    <ComboBox x:Name="InstallationPicker" Grid.Column="1" Width="260" Height="39" Margin="12,0"
+    <ComboBox x:Name="InstallationPicker" Grid.Column="1" Width="220" Height="39" Margin="10,0"
       Padding="8" VerticalContentAlignment="Center" SelectionChanged="InstallationPicker_SelectionChanged" DisplayMemberPath="Path"/>
-    <Button Grid.Column="2" x:Name="DiscoverButton" Content="{loc:Tr View_75657594}" Click="Discover_Click" Padding="15,10"
+    <TextBox x:Name="ManualPathTextBox" Grid.Column="2" Width="190" Height="39" Margin="0,0,8,0"
+      Padding="8" VerticalContentAlignment="Center" FlowDirection="LeftToRight"
+      ToolTip="{loc:Tr NodeBB_ManualPathHint}"/>
+    <Button Grid.Column="3" x:Name="AddInstallationButton" Content="{loc:Tr NodeBB_ManualAddButton}"
+      Click="AddInstallation_Click" Padding="13,10" Margin="0,0,8,0"
+      Background="#EAF7F0" Foreground="#176B49" BorderBrush="#CBE9D9" VerticalAlignment="Center"/>
+    <Button Grid.Column="4" x:Name="DiscoverButton" Content="{loc:Tr View_75657594}" Click="Discover_Click" Padding="13,10"
             Background="#EEF2FF" Foreground="#344CC2" BorderBrush="#D9E1FF" VerticalAlignment="Center"/>
    </Grid>
   </Border>

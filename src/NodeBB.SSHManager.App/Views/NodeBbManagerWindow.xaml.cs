@@ -45,10 +45,51 @@ public partial class NodeBbManagerWindow : Window
         if (LogsButton is not null) LogsButton.IsEnabled = enabled;
         if (SecurityButton is not null) SecurityButton.IsEnabled = enabled;
         if (DiscoverButton is not null) DiscoverButton.IsEnabled = !_isBusy;
+        if (AddInstallationButton is not null) AddInstallationButton.IsEnabled = !_isBusy;
     }
 
     private async void Discover_Click(object sender, RoutedEventArgs e) =>
         await DiscoverInstallationsAsync();
+
+    private async void AddInstallation_Click(object sender, RoutedEventArgs e)
+    {
+        var path = ManualPathTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            StatusText.Text = T("הזן נתיב התקנה מלא.");
+            ManualPathTextBox.Focus();
+            return;
+        }
+
+        try
+        {
+            SetBusy(true, T("בודק את נתיב ההתקנה..."));
+            var installation = await _service.InspectInstallationAsync(path);
+            var existing = _installations.FirstOrDefault(item =>
+                string.Equals(item.Path, installation.Path, StringComparison.Ordinal));
+            if (existing is not null)
+            {
+                InstallationsList.SelectedItem = existing;
+                InstallationPicker.SelectedItem = existing;
+                StatusText.Text = T("הנתיב כבר מופיע ברשימה; ההתקנה נבחרה.");
+                return;
+            }
+
+            _installations.Add(installation);
+            InstallationsList.SelectedItem = installation;
+            InstallationPicker.SelectedItem = installation;
+            ManualPathTextBox.Clear();
+            StatusText.Text = string.Format(T("התקנת NodeBB נוספה ונבחרה: {0} ({1})"), installation.Path, installation.Version);
+            DiagnosticLogService.Instance.Info("NodeBBManagerUI", "ManualInstallationAdded",
+                $"Manually added NodeBB installation {installation.Path} ({installation.Version}).", _session.Profile.Name);
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("NodeBBManagerUI", "ManualInstallationFailed", ex, _session.Profile.Name);
+            StatusText.Text = string.Format(T("הוספת ההתקנה נכשלה: {0}"), ex.Message);
+        }
+        finally { SetBusy(false, StatusText.Text); }
+    }
 
     private async Task DiscoverInstallationsAsync()
     {
