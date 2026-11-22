@@ -219,6 +219,21 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void RestrictedManagerStatusAndErrorMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("2 active · 1 disabled · 3 unknown", service.TranslateFormat($"{2} פעילים · {1} מושבתים · {3} לא מזוהים"));
+        Assert.Equal("The server account is not authorized to perform this action.", service.Translate("לחשבון השרת אין הרשאה לבצע את הפעולה המבוקשת."));
+        Assert.Equal("The requested item was not found on the server.", service.Translate("הפריט המבוקש לא נמצא בשרת."));
+        Assert.Equal("The server did not respond in time. Check the connection and try again.", service.Translate("השרת לא השיב בזמן. בדוק את החיבור ונסה שוב."));
+        Assert.Equal("The server connection closed during the operation. Reconnect and try again.", service.Translate("החיבור לשרת נסגר במהלך הפעולה. יש להתחבר מחדש ולנסות שוב."));
+        Assert.Equal("The server confirmed that the plugin is disabled. It can be enabled again at any time.",
+            service.Translate("השרת אישר את השבתת התוסף. ניתן להפעיל אותו מחדש בכל עת."));
+        Assert.Equal("Inactive · status unknown", service.Translate("לא פעיל · מצב לא ידוע"));
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

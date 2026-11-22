@@ -411,8 +411,8 @@ public partial class RestrictedNodeBbManagerWindow : Window
         var disabledCount = _allPlugins.Count(plugin => plugin.IsDisabled);
         var unknownCount = _allPlugins.Count(plugin => !plugin.IsActive && !plugin.IsDisabled);
         PluginCountText.Text = _allPlugins.Count == 0
-            ? "לא זוהו תוספים ברשימת השרת"
-            : $"{active.Count} פעילים · {disabledCount} מושבתים · {unknownCount} לא מזוהים";
+            ? T("לא זוהו תוספים ברשימת השרת")
+            : LocalizationService.Instance.TranslateFormat($"{active.Count} פעילים · {disabledCount} מושבתים · {unknownCount} לא מזוהים");
     }
 
     private void PluginSearchBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => ApplyPluginFilter();
@@ -732,12 +732,12 @@ public sealed class PluginCard(string name, string kindLabel, bool isActive, boo
     public bool IsActive { get; } = isActive;
     public bool IsDisabled { get; } = isDisabled && !isActive;
     public bool IsSelected { get; set; }
-    public string StatusLabel => IsActive ? "פעיל" : IsDisabled ? "מושבת" : "לא פעיל · מצב לא ידוע";
+    public string StatusLabel => IsActive ? LocalizationService.Instance.Translate("פעיל") : IsDisabled ? LocalizationService.Instance.Translate("מושבת") : LocalizationService.Instance.Translate("לא פעיל · מצב לא ידוע");
     public string StatusDescription => IsActive
-        ? "השרת מדווח שהתוסף פעיל."
+        ? LocalizationService.Instance.Translate("השרת מדווח שהתוסף פעיל.")
         : IsDisabled
-            ? "השרת אישר את השבתת התוסף. ניתן להפעיל אותו מחדש בכל עת."
-            : "התוסף אינו מופיע ברשימת הפעילים. ייתכן שהושבת מחוץ לתוכנה או הוסר.";
+            ? LocalizationService.Instance.Translate("השרת אישר את השבתת התוסף. ניתן להפעיל אותו מחדש בכל עת.")
+            : LocalizationService.Instance.Translate("התוסף אינו מופיע ברשימת הפעילים. ייתכן שהושבת מחוץ לתוכנה או הוסר.");
     public Brush StatusBackground => IsActive
         ? new SolidColorBrush(Color.FromRgb(232, 247, 239))
         : IsDisabled
