@@ -169,6 +169,19 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void HistoryAndSshPromptMessagesTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Showing 3 of 10 recent actions · up to 2,000 records",
+            service.TranslateFormat($"מוצגות {3} מתוך {10} פעולות אחרונות · עד 2,000 רשומות"));
+        Assert.Equal("No server actions have been recorded yet.", service["History_Empty"]);
+        Assert.Equal("Enter the SSH user password.", service["SshPrompt_Password"]);
+        Assert.Contains("private key", service["SshPrompt_Passphrase"]);
+        Assert.Equal("Checking security settings...", service["SecurityAudit_Checking"]);
+    }
+
+    [Fact]
     public void RejectsUnsupportedLanguage()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

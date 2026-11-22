@@ -12,10 +12,10 @@ public partial class SecretPromptWindow : Window
     public SecretPromptWindow(ServerProfile profile, string? savedSecret = null)
     {
         InitializeComponent();
-        PromptTitle.Text = $"התחברות אל {profile.Name}";
+        PromptTitle.Text = LocalizationService.Instance.TranslateFormat($"התחברות אל {profile.Name}");
         PromptDescription.Text = profile.AuthenticationType == SshAuthenticationType.Password
-            ? "הזן את סיסמת משתמש ה-SSH."
-            : "אם המפתח הפרטי מוגן ב-Passphrase, הזן אותו כאן. השדה יכול להישאר ריק עבור מפתח שאינו מוצפן.";
+            ? LocalizationService.Instance["SshPrompt_Password"]
+            : LocalizationService.Instance["SshPrompt_Passphrase"];
         SecretBox.Password = savedSecret ?? "";
         RememberCheckBox.IsChecked = !string.IsNullOrEmpty(savedSecret);
         Loaded += (_, _) => SecretBox.Focus();

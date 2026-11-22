@@ -28,7 +28,7 @@ public partial class SecurityAuditWindow : Window
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = LocalizationService.Instance.Translate("בודק הגדרות אבטחה...");
+        StatusText.Text = LocalizationService.Instance["SecurityAudit_Checking"];
         try
         {
             var findings = await _service.RunAsync(_installation);

@@ -14,6 +14,19 @@ public sealed class LocalizationService : INotifyPropertyChanged
     private static readonly IReadOnlyDictionary<string, (string He, string En)> Texts =
         new Dictionary<string, (string He, string En)>(StringComparer.Ordinal)
         {
+            ["History_Count"] = ("מוצגות {0} מתוך {1} פעולות אחרונות · עד 2,000 רשומות", "Showing {0} of {1} recent actions · up to 2,000 records"),
+            ["History_Empty"] = ("לא נשמרו עדיין פעולות בשרתים.", "No server actions have been recorded yet."),
+            ["History_NoMatches"] = ("לא נמצאו פעולות התואמות לחיפוש ולמסנן.", "No actions match the search and filter."),
+            ["History_NoExportResults"] = ("אין תוצאות לייצוא.", "There are no results to export."),
+            ["History_ExportTitle"] = ("ייצוא היסטוריה", "Export history"),
+            ["History_CsvFilter"] = ("קובץ CSV (*.csv)|*.csv", "CSV file (*.csv)|*.csv"),
+            ["History_ExportFailed"] = ("ייצוא ההיסטוריה נכשל. בדוק הרשאות כתיבה ליעד.", "Could not export history. Check write permissions for the destination."),
+            ["History_Error"] = ("שגיאה", "Error"),
+            ["History_Succeeded"] = ("הצליח", "Succeeded"),
+            ["History_Failed"] = ("נכשל", "Failed"),
+            ["SshPrompt_Password"] = ("הזן את סיסמת משתמש ה-SSH.", "Enter the SSH user password."),
+            ["SshPrompt_Passphrase"] = ("אם המפתח הפרטי מוגן ב-Passphrase, הזן אותו כאן. השדה יכול להישאר ריק עבור מפתח שאינו מוצפן.", "If the private key is protected by a passphrase, enter it here. Leave the field empty for an unencrypted key."),
+            ["SecurityAudit_Checking"] = ("בודק הגדרות אבטחה...", "Checking security settings..."),
             ["Backup_ScheduledCredentialHelp"] = ("כדי שגיבוי יפעל ללא חלון התחברות, יש להתחבר מחדש לשרת ולבחור באפשרות שמירת פרטי ההתחברות בכספת Windows. גם מפתח SSH ללא סיסמה ניתן לשמור כפרט התחברות ריק.", "To run backups without a sign-in prompt, reconnect to the server and choose to save the credentials in the Windows vault. An SSH key without a passphrase can also be saved as an empty credential."),
             ["Backup_ScheduleCreatedHelp"] = ("התזמון נוצר. Windows יפעיל גיבוי מוצפן בשעה שנבחרה, גם כשהתוכנה סגורה, כל עוד המשתמש מחובר למחשב. פרטי SSH וסיסמת ההצפנה אינם נכתבים בשורת הפקודה או בקובץ התזמון.", "The schedule was created. Windows will run an encrypted backup at the selected time, even while the app is closed, as long as the user is signed in. SSH credentials and the encryption password are not written to the command line or the task file."),
             ["Backup_ScheduleCreateFailed"] = ("יצירת תזמון נכשלה", "Schedule creation failed"),
