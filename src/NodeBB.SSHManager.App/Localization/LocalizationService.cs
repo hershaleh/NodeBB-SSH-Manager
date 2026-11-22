@@ -14,6 +14,14 @@ public sealed class LocalizationService : INotifyPropertyChanged
     private static readonly IReadOnlyDictionary<string, (string He, string En)> Texts =
         new Dictionary<string, (string He, string En)>(StringComparer.Ordinal)
         {
+            ["Audit_Plugin_Loading"] = ("טוען חבילות מותקנות...", "Loading installed packages..."),
+            ["Audit_Plugin_InvalidName"] = ("יש להזין שם חבילה תקין: nodebb-plugin-... או nodebb-theme-...", "Enter a valid package name: nodebb-plugin-... or nodebb-theme-..."),
+            ["Audit_Plugin_ThemeActivation"] = ("הפעלה והשבתה של ערכת עיצוב נעשות דרך ממשק הניהול של NodeBB.", "Themes must be activated or deactivated through the NodeBB administration interface."),
+            ["Audit_Plugin_ActionRunning"] = ("מבצע פעולה...", "Performing action..."),
+            ["Audit_Plugin_ActionSuccess"] = ("הפעולה הסתיימה בהצלחה.", "The operation completed successfully."),
+            ["Audit_Service_Scanning"] = ("סורק שירותי מערכת...", "Scanning system services..."),
+            ["Audit_Service_Select"] = ("בחר שירות תחילה.", "Select a service first."),
+            ["Audit_Service_ConfirmTitle"] = ("אישור שינוי שירות", "Confirm service change"),
             ["Dashboard_מרכז_שליטה_מאובטח"] = ("מרכז שליטה מאובטח", "Secure control center"),
             ["Dashboard_הוספת_שרת_חדש"] = ("＋  הוספת שרת חדש", "＋  Add new server"),
             ["Dashboard_סביבת_עבודה"] = ("סביבת עבודה", "Workspace"),

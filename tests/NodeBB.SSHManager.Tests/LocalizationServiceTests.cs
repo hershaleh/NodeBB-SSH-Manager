@@ -109,6 +109,18 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void PluginAndServiceWindowCaptionsTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Loading installed packages...", service["Audit_Plugin_Loading"]);
+        Assert.Equal("Enter a valid package name: nodebb-plugin-... or nodebb-theme-...", service["Audit_Plugin_InvalidName"]);
+        Assert.Equal("Scanning system services...", service["Audit_Service_Scanning"]);
+        Assert.Equal("Select a service first.", service["Audit_Service_Select"]);
+        Assert.Equal("Confirm service change", service["Audit_Service_ConfirmTitle"]);
+    }
+
+    [Fact]
     public void SharedWindowCaptionsTranslateInBothLanguages()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));

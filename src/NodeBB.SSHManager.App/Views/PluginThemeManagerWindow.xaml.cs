@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Controls;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
@@ -34,7 +35,7 @@ public partial class PluginThemeManagerWindow : Window
     private async Task RefreshAsync()
     {
         RefreshButton.IsEnabled = false;
-        StatusText.Text = "טוען חבילות מותקנות...";
+        StatusText.Text = LocalizationService.Instance["Audit_Plugin_Loading"];
         try
         {
             var items = await _service.ListInstalledAsync(_installation);
@@ -61,14 +62,14 @@ public partial class PluginThemeManagerWindow : Window
         var packageName = PackageNameBox.Text.Trim();
         if (!PluginThemeRemoteService.IsValidPackageName(packageName))
         {
-            StatusText.Text = "יש להזין שם חבילה תקין: nodebb-plugin-... או nodebb-theme-...";
+            StatusText.Text = LocalizationService.Instance["Audit_Plugin_InvalidName"];
             return;
         }
 
         var isTheme = packageName.StartsWith("nodebb-theme-", StringComparison.Ordinal);
         if (isTheme && (action is PackageAction.Activate or PackageAction.Deactivate))
         {
-            StatusText.Text = "הפעלה והשבתה של ערכת עיצוב נעשות דרך ממשק הניהול של NodeBB.";
+            StatusText.Text = LocalizationService.Instance["Audit_Plugin_ThemeActivation"];
             return;
         }
 
@@ -90,14 +91,14 @@ public partial class PluginThemeManagerWindow : Window
         if (MessageBox.Show(this, $"האם {description}?{warning}", "אישור שינוי חבילה",
                 MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
-        SetBusy(true, "מבצע פעולה...");
+        SetBusy(true, LocalizationService.Instance["Audit_Plugin_ActionRunning"]);
         try
         {
             var result = await _service.ExecuteAsync(_installation, packageName, action);
             var details = string.Join(Environment.NewLine + Environment.NewLine,
                 new[] { result.Output.Trim(), result.Error.Trim() }.Where(value => !string.IsNullOrWhiteSpace(value)));
             StatusText.Text = result.ExitCode == 0
-                ? "הפעולה הסתיימה בהצלחה."
+                ? LocalizationService.Instance["Audit_Plugin_ActionSuccess"]
                 : $"הפעולה נכשלה (קוד {result.ExitCode}).";
             MessageBox.Show(this, $"{StatusText.Text}\n\n{details}", "תוצאת פעולה",
                 MessageBoxButton.OK, result.ExitCode == 0 ? MessageBoxImage.Information : MessageBoxImage.Error);

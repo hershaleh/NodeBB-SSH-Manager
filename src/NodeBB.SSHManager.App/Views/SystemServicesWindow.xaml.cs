@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Windows;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
@@ -26,7 +27,7 @@ public partial class SystemServicesWindow : Window
     private async Task RefreshAsync()
     {
         IsEnabled = false;
-        StatusText.Text = "סורק שירותי מערכת...";
+        StatusText.Text = LocalizationService.Instance["Audit_Service_Scanning"];
         try
         {
             var result = await _service.ListAsync();
@@ -46,11 +47,11 @@ public partial class SystemServicesWindow : Window
 
     private async void Action_Click(object sender, RoutedEventArgs e)
     {
-        if (ServicesList.SelectedItem is not RemoteServiceEntry selected) { StatusText.Text = "בחר שירות תחילה."; return; }
+        if (ServicesList.SelectedItem is not RemoteServiceEntry selected) { StatusText.Text = LocalizationService.Instance["Audit_Service_Select"]; return; }
         var action = (sender as FrameworkElement)?.Tag?.ToString() ?? "";
         var verb = action switch { "start" => "להפעיל", "stop" => "לעצור", "restart" => "לאתחל", _ => "לבצע פעולה על" };
         if (MessageBox.Show(this, $"האם {verb} את השירות '{selected.Name}' בשרת {_session.Profile.Name}?",
-                "אישור שינוי שירות", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+                LocalizationService.Instance["Audit_Service_ConfirmTitle"], MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         IsEnabled = false;
         try
         {
