@@ -20,10 +20,15 @@ public sealed class RemoteServiceManagerServiceTests
     [InlineData("name;reboot", false)]
     [InlineData("name/other", false)]
     [InlineData("name\nother", false)]
-    [InlineData("name" + new string('a', 128), false)]
     public void IsSafeServiceName_RejectsOptionInjectionAndInvalidNames(string? name, bool expected)
     {
         Assert.Equal(expected, RemoteServiceManagerService.IsSafeServiceName(name));
+    }
+
+    [Fact]
+    public void IsSafeServiceName_RejectsNamesLongerThan128Characters()
+    {
+        Assert.False(RemoteServiceManagerService.IsSafeServiceName("name" + new string('a', 128)));
     }
 
     [Theory]
