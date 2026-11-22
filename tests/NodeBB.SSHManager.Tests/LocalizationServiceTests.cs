@@ -234,6 +234,25 @@ public sealed class LocalizationServiceTests
     }
 
     [Fact]
+    public void RestrictedManagerActionLabelsTranslateToEnglish()
+    {
+        var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
+        service.SetLanguage("en");
+        Assert.Equal("Plugin list", service.Translate("רשימת תוספים"));
+        Assert.Equal("Check forum status", service.Translate("בדיקת מצב הפורום"));
+        Assert.Equal("Build", service.Translate("בנייה"));
+        Assert.Equal("ZIP files", service.Translate("קובצי ZIP"));
+        Assert.Equal("Show help", service.Translate("הצגת עזרה"));
+        Assert.Equal("Upload ZIP", service.Translate("העלאת ZIP"));
+        Assert.Equal("Install", service.Translate("התקנה"));
+        Assert.Equal("Update", service.Translate("עדכון"));
+        Assert.Equal("Enable", service.Translate("הפעלה"));
+        Assert.Equal("Disable", service.Translate("השבתה"));
+        Assert.Equal("Remove", service.Translate("הסרה"));
+        Assert.Equal("Delete ZIP", service.Translate("מחיקת ZIP"));
+    }
+
+    [Fact]
     public void RestrictedBulkAndHistoryDialogsTranslateToEnglish()
     {
         var service = new LocalizationService(Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"), "language.json"));
