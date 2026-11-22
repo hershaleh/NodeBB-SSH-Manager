@@ -13,19 +13,19 @@ A Windows desktop application for managing multiple NodeBB servers over SSH, wit
 - SSH password and private-key authentication; optional credential remembering uses Windows DPAPI per-user encryption.
 - SSH host-key SHA-256 pinning with explicit first-use approval and rejection of changed fingerprints.
 - Interactive SSH terminal and SFTP browser with direct absolute-path navigation, directory creation, file/directory rename, upload, download and confirmation before deletion.
-- NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, Supervisor, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers.
+- NodeBB discovery and lifecycle control through detected systemd, OpenRC, SysV, Supervisor, PM2, Docker, Podman or NodeBB CLI; container discovery includes stopped containers. Installations can also be added by an explicit Linux path, validated over SFTP and remembered per server profile.
 - File backups (full installation or configuration + uploads), with authenticated AES-256 encryption; downloaded TAR.GZ archives are fully read and integrity-checked locally before being saved.
 - Unattended scheduled file backups through Windows Task Scheduler (daily or weekly), with encrypted local storage of schedule settings and backup passwords using Windows DPAPI.
 - Optional encrypted scheduled database dumps for MongoDB, PostgreSQL or Redis, saved separately from NodeBB file archives; retention is isolated by server profile and backup type.
 - Scheduled backup controls in the backup window: run immediately, remove a schedule, view next run and last result, and prevent overlapping backup runs for the same server profile.
-- Safe restore of configuration/uploads archives only, with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation archive restore is intentionally not offered; package/lock files are not restored.
+- Configuration/uploads restore with TAR path/type validation, database endpoint matching, staged replacement and rollback attempt. Full-installation restore is also implemented: it validates the archive and SHA-256 transfer, checks disk space and ownership constraints, stops NodeBB, stages and swaps the installation, verifies HTTP health, and attempts automatic rollback if the restored installation does not start. The previous installation is preserved for manual inspection; database contents are not included in a full file restore.
 - MongoDB database backup scoped to the NodeBB database.
 - Redis RDB backup with an explicit full-server scope warning; it includes all logical DBs on the Redis instance. Scheduled Redis backups retain the same whole-server scope.
 - PostgreSQL custom-format database backup available from the database management window, using a protected temporary pgpass file; credentials are not passed as command-line arguments.
 - MongoDB restore with archive validation, dry-run, pre-restore dump, database scoping and rollback attempt.
 - PostgreSQL custom-dump restore with archive TOC validation, database-name matching, pre-restore dump, transactional object replacement and rollback attempt.
 - Read-only database configuration inspector with masked credentials.
-- NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring with optional 30-second, 1-minute or 5-minute automatic refresh.
+- NodeBB log viewer, read-only security audit, plugin/theme manager and server monitoring with optional 30-second, 1-minute or 5-minute automatic refresh. Start/restart operations are checked against the NodeBB HTTP API, and stop operations verify that the configured port is no longer listening.
 - System service inventory and controlled start/stop/restart with confirmation and privilege checks.
 - Structured local diagnostic logging and ZIP report export.
 - GitHub Actions build, automated tests, self-contained Windows x64 publish output, a portable ZIP package and a per-user Windows installer (no administrator rights required).
@@ -41,7 +41,7 @@ The upgrade workflow supports Git-based installations with a clean working tree 
 - Redis: redis-cli --rdb snapshots the entire Redis server, including all logical databases and any other applications sharing that instance. The application warns about this; Redis restore is not offered.
 - PostgreSQL: custom-format pg_dump of the database configured by NodeBB. Credentials are read from config.json remotely into a mode-600 pgpass file and are not placed in process arguments.
 - PostgreSQL restore replaces objects represented in the selected archive using pg_restore --clean in a single transaction; objects not represented in the archive may remain. It creates a pre-restore dump and attempts rollback if restoration fails.
-- Redis restore and automated cross-database restore workflows are not implemented yet.
+- Redis restore and automated cross-database restore workflows are not implemented yet. Full-installation file restore does not restore database contents.
 - Backup files can contain sensitive configuration and must be encrypted before being shared or stored in an untrusted location.
 
 ## Security principles
@@ -86,4 +86,4 @@ The Windows installer is built from the same self-contained x64 publish output a
 
 The application intentionally does not elevate privileges, bypass network filtering, or silently change server permissions. Some operations require a suitable remote utility and sufficient SSH account permissions; the application reports remote command errors rather than assuming success.
 
-Known limitations: Redis restore remains a manual operation; automated database restore is limited to the supported MongoDB/PostgreSQL workflows; a full English/Hebrew language switch is not implemented. Scheduled backups use the current Windows user's Task Scheduler context and run only while that user is logged on; they do not run as a background Windows service when the user is signed out. Remote behavior still needs hands-on validation against the actual target server before production use. The first practical milestone is to validate connection, NodeBB lifecycle, SFTP, backups and diagnostics against the user's server; additional features should follow only if that test identifies a real need.
+Known limitations: Redis restore remains a manual operation; automated database restore is limited to the supported MongoDB/PostgreSQL workflows. The interface includes a Hebrew/English language selector with RTL/LTR layout switching. Scheduled backups use the current Windows user's Task Scheduler context and run only while that user is logged on; they do not run as a background Windows service when the user is signed out. Remote behavior still needs hands-on validation against the actual target server before production use. The first practical milestone is to validate connection, NodeBB lifecycle, SFTP, backups and diagnostics against the user's server; additional features should follow only if that test identifies a real need.

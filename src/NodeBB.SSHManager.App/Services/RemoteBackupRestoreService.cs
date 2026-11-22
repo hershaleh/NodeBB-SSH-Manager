@@ -11,8 +11,9 @@ public sealed record EssentialBackupArchiveInfo(string DatabaseType, bool Contai
 public sealed record FullInstallationArchiveInfo(int EntryCount, long ExpandedBytes);
 
 /// <summary>
-/// Restores only the safe configuration/uploads backup format. Full-installation archives are
-/// deliberately rejected. The database engine and endpoint must match the live installation.
+/// Validates and restores NodeBB configuration/uploads archives and full-installation archives.
+/// Database contents are not included in file restores; the configured database endpoint must
+/// match the live installation before configuration or full-installation replacement.
 /// </summary>
 public sealed class RemoteBackupRestoreService
 {
