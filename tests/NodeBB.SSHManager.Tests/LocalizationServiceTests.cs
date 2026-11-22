@@ -209,6 +209,9 @@ public sealed class LocalizationServiceTests
         Assert.Equal("Delete ZIP", service["Restricted_DeleteZipTitle"]);
         Assert.Equal("No actions match the filter", service["Restricted_HistoryNoMatches"]);
         Assert.Equal("The plugin list was refreshed.", service["Restricted_PluginListUpdated"]);
+        Assert.Equal("Server connection ready", service["Restricted_ConnectedTitle"]);
+        Assert.Equal("Create a full forum backup and plugin list before continuing?", service["Restricted_BackupConfirm"]);
+        Assert.Equal("How many lines should be displayed? (1–500)", service["Restricted_LogLineCount"]);
         Assert.Equal("The status check completed. The response does not clearly establish whether the service is active; see the original terminal output.",
             service["Restricted_EmptyStatus"]);
         Assert.Equal("The operation succeeded for 3 of 5 packages. 2 actions failed; review the full output before retrying.",
