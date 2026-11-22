@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Windows.Media;
 using Microsoft.Win32;
 using NodeBB.SSHManager.Services;
+using NodeBB.SSHManager.Localization;
 
 namespace NodeBB.SSHManager.Views;
 
