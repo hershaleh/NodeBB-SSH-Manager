@@ -15,13 +15,15 @@ public sealed class RedisDatabaseRestoreServiceTests
     public void BuildRestoreScript_MarksRecoveryBeforeStopAndNeverOverwritesRdbUntilServiceIsInactive()
     {
         var script = RedisDatabaseRestoreService.BuildRestoreScript("/srv/nodebb", Work, Hash);
-        var markChanges = script.IndexOf("CHANGES_STARTED=1", StringComparison.Ordinal);
-        var requestStop = script.IndexOf("systemctl stop \"$SERVICE_UNIT\"", StringComparison.Ordinal);
-        var verifyInactive = script.IndexOf("systemctl is-active --quiet \"$SERVICE_UNIT\"", StringComparison.Ordinal);
-        var restoreCopy = script.IndexOf("cp -p -- \"$WORK/original.rdb\"", StringComparison.Ordinal);
+        var cleanupStart = script.IndexOf("cleanup()", StringComparison.Ordinal);
+        var markChanges = script.IndexOf("CHANGES_STARTED=1", cleanupStart, StringComparison.Ordinal);
+        var requestStop = script.IndexOf("systemctl stop \"$SERVICE_UNIT\"", markChanges, StringComparison.Ordinal);
+        var cleanupStop = script.IndexOf("systemctl stop \"$SERVICE_UNIT\"", cleanupStart, StringComparison.Ordinal);
+        var verifyInactive = script.IndexOf("systemctl is-active --quiet \"$SERVICE_UNIT\"", cleanupStart, StringComparison.Ordinal);
+        var restoreCopy = script.IndexOf("cp -p -- \"$WORK/original.rdb\"", cleanupStart, StringComparison.Ordinal);
 
-        Assert.True(markChanges >= 0 && requestStop > markChanges);
-        Assert.True(verifyInactive >= 0 && restoreCopy > verifyInactive);
+        Assert.True(cleanupStart >= 0 && markChanges > cleanupStart && requestStop > markChanges);
+        Assert.True(cleanupStop > cleanupStart && verifyInactive > cleanupStop && restoreCopy > verifyInactive);
         Assert.Contains("Never replace an RDB file while Redis may still be writing to or loading it.", script);
         Assert.Contains("SERVICE_STOPPED", script);
         Assert.Contains("ROLLBACK_OK", script);
