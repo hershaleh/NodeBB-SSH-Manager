@@ -28,18 +28,18 @@ public sealed class RemoteCapabilityService
 
     internal static string BuildDetectionScript() => """
 set +e
-emit() { printf '%s=%s\\n' "$1" "$2"; }
+emit() { printf '%s=%s\n' "$1" "$2"; }
 version_of() {
   if command -v "$1" >/dev/null 2>&1; then
     shift
-    "$@" 2>/dev/null | head -n 1 | tr -d '\\r'
+    "$@" 2>/dev/null | head -n 1 | tr -d '\r'
   else
     printf 'לא מותקן'
   fi
 }
 OS_NAME="לא ידועה"
 if [ -r /etc/os-release ]; then
-  OS_NAME="$(sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | head -n 1 | sed 's/^"//; s/"$//' | tr '\\r\\n' '  ')"
+  OS_NAME="$(sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | head -n 1 | sed 's/^"//; s/"$//' | tr '\r\n' '  ')"
   [ -n "$OS_NAME" ] || OS_NAME="Linux"
 fi
 KERNEL="$(uname -r 2>/dev/null)"
