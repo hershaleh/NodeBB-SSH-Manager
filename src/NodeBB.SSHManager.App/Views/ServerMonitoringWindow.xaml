@@ -49,7 +49,7 @@
             <StackPanel>
                 <TextBlock Text="{loc:Tr View_69bc7b33}" FontSize="16" FontWeight="Bold" Foreground="#23324A" Margin="2,0,0,11"/>
                 <Grid Margin="0,0,0,14">
-                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/><ColumnDefinition Width="10"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                     <Border Style="{StaticResource MetricCard}">
                         <StackPanel>
                             <TextBlock Text="{loc:Tr View_7db6e6c6}" Foreground="#718096" FontSize="10"/>
@@ -73,6 +73,13 @@
                             <TextBlock x:Name="SwapText" FontSize="13" FontWeight="SemiBold" Foreground="#17865D" Margin="0,4,0,0" Text="—" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
+                    <Border Grid.Column="6" Style="{StaticResource MetricCard}">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Tr Monitor_CpuUsageLabel}" Foreground="#718096" FontSize="10"/>
+                            <TextBlock x:Name="CpuText" FontSize="21" FontWeight="Bold" Foreground="#5268E8" Margin="0,9,0,0" Text="—" TextWrapping="Wrap"/>
+                            <TextBlock Text="{loc:Tr Monitor_CpuUsageHint}" Foreground="#9AA6B8" FontSize="10" Margin="0,6,0,0" TextWrapping="Wrap"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
                 <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
                     <StackPanel>
@@ -80,6 +87,13 @@
                         <TextBlock x:Name="DiskText" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#43516A" FontSize="12" LineHeight="19"/>
                         <TextBlock Text="{loc:Tr Monitor_InodesLabel}" Foreground="#718096" FontSize="10" Margin="0,12,0,0"/>
                         <TextBlock x:Name="DiskInodesText" TextWrapping="Wrap" Margin="0,5,0,0" Foreground="#43516A" FontSize="12" LineHeight="19"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Monitor_NetworkLabel}" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
+                        <TextBlock Text="{loc:Tr Monitor_NetworkHint}" Foreground="#9AA6B8" FontSize="10" Margin="0,4,0,0"/>
+                        <TextBlock x:Name="NetworkText" Text="—" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#43516A" FontSize="13" FontFamily="Cascadia Mono, Consolas"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="17" Padding="18" Margin="0,0,0,13">

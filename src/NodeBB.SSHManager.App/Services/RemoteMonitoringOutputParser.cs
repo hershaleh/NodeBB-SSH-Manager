@@ -23,7 +23,8 @@ public static class RemoteMonitoringOutputParser
         return new RemoteServerMetrics(
             Get("UPTIME"), Get("LOAD"), Get("MEMORY"), memoryPercent,
             Get("DISK"), Get("PROCESSES"), cpuCount, collectedAt ?? DateTimeOffset.UtcNow,
-            Get("SWAP"), ParsePercent(Get("SWAP_PERCENT")), Get("DISK_INODES"), Get("MEMORY_PROCESSES"));
+            Get("SWAP"), ParsePercent(Get("SWAP_PERCENT")), Get("DISK_INODES"), Get("MEMORY_PROCESSES"),
+            ParsePercent(Get("CPU_USAGE_PERCENT")), Get("NETWORK"));
     }
 
     private static int? ParsePercent(string value) =>

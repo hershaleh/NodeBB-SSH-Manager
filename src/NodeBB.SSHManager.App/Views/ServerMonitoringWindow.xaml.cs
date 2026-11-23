@@ -61,6 +61,8 @@ public partial class ServerMonitoringWindow : Window
             var metrics = await _service.CollectAsync();
             UptimeText.Text = metrics.Uptime;
             LoadText.Text = string.Format(LocalizationService.Instance["Monitor_Load"], metrics.LoadAverage, metrics.CpuCount);
+            CpuText.Text = metrics.CpuUsagePercent is int cpuPercent ? $"{cpuPercent}%" : LocalizationService.Instance["Monitor_Unavailable"];
+            NetworkText.Text = metrics.NetworkThroughput;
             MemoryText.Text = metrics.MemoryUsagePercent is int memoryPercent
                 ? $"{metrics.Memory} ({memoryPercent}%)"
                 : metrics.Memory;

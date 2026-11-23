@@ -21,6 +21,8 @@ public sealed class RemoteMonitoringOutputParserTests
         Assert.Null(metrics.SwapUsagePercent);
         Assert.Equal("לא זמין", metrics.DiskInodes);
         Assert.Equal("לא זמין", metrics.TopMemoryProcesses);
+        Assert.Null(metrics.CpuUsagePercent);
+        Assert.Equal("לא זמין", metrics.NetworkThroughput);
     }
 
     [Theory]
@@ -85,6 +87,27 @@ public sealed class RemoteMonitoringOutputParserTests
         var metrics = RemoteMonitoringOutputParser.Parse("PROCESSES|101 node 80 12\nMEMORY_PROCESSES|202 mongo 2 45");
         Assert.Equal("101 node 80 12", metrics.TopProcesses);
         Assert.Equal("202 mongo 2 45", metrics.TopMemoryProcesses);
+    }
+
+    [Fact]
+    public void ParsesCpuUtilizationAndNetworkThroughput()
+    {
+        var metrics = RemoteMonitoringOutputParser.Parse(
+            "CPU_USAGE_PERCENT|73\nNETWORK|RX 2.5 MiB/s; TX 1.2 MiB/s");
+        Assert.Equal(73, metrics.CpuUsagePercent);
+        Assert.Equal("RX 2.5 MiB/s; TX 1.2 MiB/s", metrics.NetworkThroughput);
+    }
+
+    [Theory]
+    [InlineData("-1", null)]
+    [InlineData("101", null)]
+    [InlineData("bad", null)]
+    [InlineData("0", 0)]
+    [InlineData("100", 100)]
+    public void AcceptsOnlyValidCpuUtilizationPercent(string value, int? expected)
+    {
+        var metrics = RemoteMonitoringOutputParser.Parse($"CPU_USAGE_PERCENT|{value}");
+        Assert.Equal(expected, metrics.CpuUsagePercent);
     }
 
     [Fact]

@@ -12,7 +12,9 @@ public sealed record RemoteServerMetrics(
     string Swap,
     int? SwapUsagePercent,
     string DiskInodes,
-    string TopMemoryProcesses);
+    string TopMemoryProcesses,
+    int? CpuUsagePercent,
+    string NetworkThroughput);
 
 public sealed class RemoteMonitoringService
 {
@@ -30,6 +32,15 @@ printf 'LOAD|'
 cat /proc/loadavg 2>/dev/null || echo 'לא זמין'
 printf 'CPU_COUNT|'
 getconf _NPROCESSORS_ONLN 2>/dev/null || nproc 2>/dev/null || echo 1
+CPU_BEFORE=$(awk '/^cpu / {print $2+$3+$4+$5+$6+$7+$8, $5+$6}' /proc/stat 2>/dev/null)
+NET_BEFORE=$(awk 'NR>2 {name=$1; sub(/:$/, "", name); if(name!="lo"){rx+=$2; tx+=$10}} END {printf "%.0f %.0f", rx, tx}' /proc/net/dev 2>/dev/null)
+sleep 1
+CPU_AFTER=$(awk '/^cpu / {print $2+$3+$4+$5+$6+$7+$8, $5+$6}' /proc/stat 2>/dev/null)
+NET_AFTER=$(awk 'NR>2 {name=$1; sub(/:$/, "", name); if(name!="lo"){rx+=$2; tx+=$10}} END {printf "%.0f %.0f", rx, tx}' /proc/net/dev 2>/dev/null)
+printf 'CPU_USAGE_PERCENT|'
+awk -v before="$CPU_BEFORE" -v after="$CPU_AFTER" 'BEGIN {split(before,b); split(after,a); total=a[1]-b[1]; idle=a[2]-b[2]; if(total>0 && idle>=0 && idle<=total) printf "%.0f\n", 100*(total-idle)/total; else print "לא זמין"}'
+printf 'NETWORK|'
+awk -v before="$NET_BEFORE" -v after="$NET_AFTER" 'function human(v) {if(v>=1073741824) return sprintf("%.1f GiB",v/1073741824); if(v>=1048576) return sprintf("%.1f MiB",v/1048576); if(v>=1024) return sprintf("%.1f KiB",v/1024); return sprintf("%.0f B",v)} BEGIN {split(before,b); split(after,a); rx=a[1]-b[1]; tx=a[2]-b[2]; if(rx<0) rx=0; if(tx<0) tx=0; if(after=="" || before=="") print "לא זמין"; else printf "RX %s/s; TX %s/s\n",human(rx),human(tx)}'
 printf 'MEMORY|'
 if command -v free >/dev/null 2>&1; then free -h | awk 'NR==2 {print $3 " / " $2 " בשימוש; זמין " $7}'; else echo 'לא זמין'; fi
 printf 'MEMORY_PERCENT|'
