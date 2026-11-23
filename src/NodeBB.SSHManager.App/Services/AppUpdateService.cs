@@ -84,7 +84,7 @@ public sealed class AppUpdateService
 
         var current = NormalizeVersion(currentVersion);
         latest = NormalizeVersion(latest);
-        var releaseUrl = GetTrustedGitHubUri(root, "html_url");
+        var releaseUrl = GetTrustedReleaseUri(root, normalizedTag);
         var prerelease = root.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True;
         if (prerelease || latest <= current)
         {
@@ -106,8 +106,8 @@ public sealed class AppUpdateService
         if (installer.ValueKind != JsonValueKind.Object || checksums.ValueKind != JsonValueKind.Object)
             throw new InvalidDataException("הגרסה החדשה חסרה מתקין או קובץ SHA256SUMS.txt; העדכון נעצר.");
 
-        var installerUri = GetTrustedAssetUri(installer);
-        var checksumsUri = GetTrustedAssetUri(checksums);
+        var installerUri = GetTrustedAssetUri(installer, normalizedTag, InstallerFileName);
+        var checksumsUri = GetTrustedAssetUri(checksums, normalizedTag, ChecksumsFileName);
         var info = new AppUpdateInfo(latest, tag, releaseUrl, installerUri, checksumsUri);
         return new AppUpdateCheckResult(current, latest, true, info,
             $"נמצאה גרסה חדשה {latest}; הגרסה המותקנת היא {current}.");
@@ -206,20 +206,26 @@ public sealed class AppUpdateService
         return match ?? throw new InvalidDataException("לא נמצא SHA-256 למתקין בקובץ SHA256SUMS.txt.");
     }
 
-    private static Uri GetTrustedGitHubUri(JsonElement root, string propertyName)
+    private static Uri GetTrustedReleaseUri(JsonElement root, string tag)
     {
-        if (!root.TryGetProperty(propertyName, out var element) || element.ValueKind != JsonValueKind.String ||
-            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri))
-            throw new InvalidDataException("כתובת דף הגרסה אינה כתובת GitHub HTTPS מאושרת.");
+        if (!root.TryGetProperty("html_url", out var element) || element.ValueKind != JsonValueKind.String ||
+            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri) ||
+            !string.Equals(uri.AbsolutePath, $"/hershaleh/NodeBB-SSH-Manager/releases/tag/{Uri.EscapeDataString(tag)}", StringComparison.Ordinal) ||
+            !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            throw new InvalidDataException("כתובת דף הגרסה אינה תואמת למאגר ולתגית הגרסה הרשמיים.");
         return uri;
     }
 
-    private static Uri GetTrustedAssetUri(JsonElement asset)
+    private static Uri GetTrustedAssetUri(JsonElement asset, string tag, string expectedFileName)
     {
         if (!asset.TryGetProperty("browser_download_url", out var element) ||
             element.ValueKind != JsonValueKind.String ||
-            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri))
-            throw new InvalidDataException("כתובת קובץ העדכון אינה כתובת GitHub HTTPS מאושרת.");
+            !Uri.TryCreate(element.GetString(), UriKind.Absolute, out var uri) || !IsTrustedGitHubUri(uri) ||
+            !string.Equals(uri.AbsolutePath,
+                $"/hershaleh/NodeBB-SSH-Manager/releases/download/{Uri.EscapeDataString(tag)}/{expectedFileName}",
+                StringComparison.Ordinal) ||
+            !string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
+            throw new InvalidDataException("כתובת קובץ העדכון אינה תואמת למאגר, לתגית ולשם הקובץ הרשמיים.");
         return uri;
     }
 

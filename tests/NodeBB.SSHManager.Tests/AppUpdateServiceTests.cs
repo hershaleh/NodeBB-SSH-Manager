@@ -61,6 +61,45 @@ public sealed class AppUpdateServiceTests
     }
 
     [Fact]
+    public void ParseReleaseMetadata_RejectsAssetsFromAnotherRepositoryOnGitHub()
+    {
+        var json = ReleaseJson.Replace(
+            "/hershaleh/NodeBB-SSH-Manager/releases/download/",
+            "/attacker/other-project/releases/download/", StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
+    }
+
+    [Fact]
+    public void ParseReleaseMetadata_RejectsAssetsFromAnotherReleaseTag()
+    {
+        var json = ReleaseJson.Replace("/releases/download/v0.2.0/", "/releases/download/v9.9.9/",
+            StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
+    }
+
+    [Fact]
+    public void ParseReleaseMetadata_RejectsReleasePageFromAnotherRepository()
+    {
+        var json = ReleaseJson.Replace(
+            "https://github.com/hershaleh/NodeBB-SSH-Manager/releases/tag/v0.2.0",
+            "https://github.com/attacker/other-project/releases/tag/v0.2.0", StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
+    }
+
+    [Fact]
+    public void ParseReleaseMetadata_RejectsUnexpectedAssetFilePath()
+    {
+        var json = ReleaseJson.Replace(
+            "/releases/download/v0.2.0/NodeBB-SSH-Manager-Setup-win-x64.exe",
+            "/releases/download/v0.2.0/other-installer.exe", StringComparison.Ordinal);
+        Assert.Throws<InvalidDataException>(() =>
+            AppUpdateService.ParseReleaseMetadata(json, new Version(0, 1, 0)));
+    }
+
+    [Fact]
     public void ParseReleaseMetadata_RejectsUpdateWithoutChecksumManifest()
     {
         var json = ReleaseJson.Replace("SHA256SUMS.txt", "checksums.txt", StringComparison.Ordinal);
