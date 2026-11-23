@@ -95,6 +95,13 @@
                         <TextBlock x:Name="ProcessesText" TextWrapping="Wrap" Foreground="#C7F7D4" FontFamily="Cascadia Mono, Consolas" FontSize="12" LineHeight="19"/>
                     </StackPanel>
                 </Border>
+                <Border Background="#101827" CornerRadius="17" Padding="18" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Monitor_MemoryProcessesTitle}" Foreground="#E5ECF8" FontWeight="Bold" FontSize="15"/>
+                        <TextBlock Text="{loc:Tr Monitor_MemoryProcessesHint}" Foreground="#8395B2" FontSize="10" Margin="0,4,0,10"/>
+                        <TextBlock x:Name="MemoryProcessesText" TextWrapping="Wrap" Foreground="#C7F7D4" FontFamily="Cascadia Mono, Consolas" FontSize="12" LineHeight="19"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
         <TextBlock Grid.Row="3" x:Name="CollectedAtText" Foreground="#7C899D" FontSize="10" Margin="3,12,3,0"/>

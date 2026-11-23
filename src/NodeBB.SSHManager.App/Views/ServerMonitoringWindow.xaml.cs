@@ -70,6 +70,7 @@ public partial class ServerMonitoringWindow : Window
             DiskText.Text = metrics.Disk;
             DiskInodesText.Text = metrics.DiskInodes;
             ProcessesText.Text = metrics.TopProcesses;
+            MemoryProcessesText.Text = metrics.TopMemoryProcesses;
 
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
                 metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes);

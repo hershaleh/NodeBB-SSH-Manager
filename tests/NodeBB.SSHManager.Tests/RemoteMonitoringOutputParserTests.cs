@@ -20,6 +20,7 @@ public sealed class RemoteMonitoringOutputParserTests
         Assert.Equal("לא זמין", metrics.Swap);
         Assert.Null(metrics.SwapUsagePercent);
         Assert.Equal("לא זמין", metrics.DiskInodes);
+        Assert.Equal("לא זמין", metrics.TopMemoryProcesses);
     }
 
     [Theory]
@@ -76,6 +77,14 @@ public sealed class RemoteMonitoringOutputParserTests
         var metrics = RemoteMonitoringOutputParser.Parse("DISK|/: 90G/100G (90%)\nDISK_INODES|/: (12%); /data: (95%);");
         Assert.Equal("/: 90G/100G (90%)", metrics.Disk);
         Assert.Equal("/: (12%); /data: (95%);", metrics.DiskInodes);
+    }
+
+    [Fact]
+    public void ParsesTopMemoryProcessesIndependentlyFromCpuProcesses()
+    {
+        var metrics = RemoteMonitoringOutputParser.Parse("PROCESSES|101 node 80 12\nMEMORY_PROCESSES|202 mongo 2 45");
+        Assert.Equal("101 node 80 12", metrics.TopProcesses);
+        Assert.Equal("202 mongo 2 45", metrics.TopMemoryProcesses);
     }
 
     [Fact]
