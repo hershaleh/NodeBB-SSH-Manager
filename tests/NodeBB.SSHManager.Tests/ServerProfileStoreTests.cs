@@ -202,7 +202,7 @@ public sealed class ServerProfileStoreTests : IDisposable
 
         var exception = Assert.Throws<InvalidDataException>(() => store.Load());
 
-        Assert.Contains("גדול מהמותר", exception.Message);
+        Assert.Contains("גדול מהמותר", exception.InnerException?.Message);
         Assert.Equal(oversized.Length, new FileInfo(FilePath).Length);
         var backup = Assert.Single(Directory.GetFiles(_directory, "servers.json.corrupt-*.bak"));
         Assert.Equal(new FileInfo(FilePath).Length, new FileInfo(backup).Length);
