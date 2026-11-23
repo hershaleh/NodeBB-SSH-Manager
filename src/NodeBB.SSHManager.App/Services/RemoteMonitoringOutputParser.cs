@@ -30,5 +30,4 @@ public static class RemoteMonitoringOutputParser
         int.TryParse(value, System.Globalization.NumberStyles.Integer,
             System.Globalization.CultureInfo.InvariantCulture, out var parsed) && parsed is >= 0 and <= 100
             ? parsed : null;
-    }
 }
