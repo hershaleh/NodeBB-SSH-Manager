@@ -26,22 +26,21 @@ public sealed class RemoteCapabilityService
 
     public RemoteCapabilityService(SshServerSession session) => _session = session;
 
-    public async Task<RemoteServerInventory> DetectAsync(CancellationToken cancellationToken = default)
-    {
-        const string script = """
+    internal static string BuildDetectionScript() => """
 set +e
-emit() { printf '%s=%s\n' "$1" "$2"; }
+emit() { printf '%s=%s\\n' "$1" "$2"; }
 version_of() {
   if command -v "$1" >/dev/null 2>&1; then
-    "$1" $2 2>/dev/null | head -n 1 | tr -d '\r'
+    shift
+    "$@" 2>/dev/null | head -n 1 | tr -d '\\r'
   else
     printf 'לא מותקן'
   fi
 }
 OS_NAME="לא ידועה"
 if [ -r /etc/os-release ]; then
-  . /etc/os-release
-  OS_NAME="${PRETTY_NAME:-${NAME:-Linux}}"
+  OS_NAME="$(sed -n 's/^PRETTY_NAME=//p' /etc/os-release 2>/dev/null | head -n 1 | sed 's/^"//; s/"$//' | tr '\\r\\n' '  ')"
+  [ -n "$OS_NAME" ] || OS_NAME="Linux"
 fi
 KERNEL="$(uname -r 2>/dev/null)"
 ARCH="$(uname -m 2>/dev/null)"
@@ -57,7 +56,7 @@ case "$PID1" in
   openrc) INIT=OpenRC ;;
   runit) INIT=runit ;;
   s6-svscan) INIT=s6 ;;
-  *) 
+  *)
     if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then INIT=systemd
     elif command -v rc-service >/dev/null 2>&1; then INIT=OpenRC
     elif command -v service >/dev/null 2>&1; then INIT=SysV/service
@@ -69,8 +68,8 @@ PKG=לא-זוהה
 for p in apt-get dnf yum zypper pacman apk emerge; do
   if command -v "$p" >/dev/null 2>&1; then PKG="$p"; break; fi
 done
-NODE="$(version_of node --version)"
-NPM="$(version_of npm --version)"
+NODE="$(version_of node node --version)"
+NPM="$(version_of npm npm --version)"
 GIT="$(git --version 2>/dev/null | head -n 1 | sed 's/^git version //')"
 [ -n "$GIT" ] || GIT=לא-מותקן
 MONGO="$(mongod --version 2>/dev/null | head -n 1)"
@@ -103,6 +102,10 @@ emit podman "$PODMAN"
 emit pm2 "$PM2"
 emit nodebb_cli "$NODEBB"
 """;
+
+    public async Task<RemoteServerInventory> DetectAsync(CancellationToken cancellationToken = default)
+    {
+        var script = BuildDetectionScript();
 
         DiagnosticLogService.Instance.Info("Inventory", "DetectionStarted", "Remote server capability detection started.", _session.Profile.Name);
         var result = await _session.ExecuteAsync(script, cancellationToken);
