@@ -194,6 +194,21 @@ public sealed class ServerProfileStoreTests : IDisposable
     }
 
     [Fact]
+    public void Load_WhenFileExceedsMaximumSize_PreservesOriginalFileAndRejectsIt()
+    {
+        var oversized = new string('x', 2 * 1024 * 1024 + 1);
+        File.WriteAllText(FilePath, oversized);
+        var store = new ServerProfileStore(FilePath);
+
+        var exception = Assert.Throws<InvalidDataException>(() => store.Load());
+
+        Assert.Contains("גדול מהמותר", exception.Message);
+        Assert.Equal(oversized.Length, new FileInfo(FilePath).Length);
+        var backup = Assert.Single(Directory.GetFiles(_directory, "servers.json.corrupt-*.bak"));
+        Assert.Equal(new FileInfo(FilePath).Length, new FileInfo(backup).Length);
+    }
+
+    [Fact]
     public void Load_WhenProfileDataIsInvalid_PreservesOriginalFile()
     {
         var invalid = CreateProfile();

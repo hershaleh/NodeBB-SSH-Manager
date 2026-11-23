@@ -21,7 +21,10 @@ public sealed class ServerProfileTransferService
             Name = p.Name, Group = p.Group, Host = p.Host, Port = p.Port, Username = p.Username,
             AuthenticationType = p.AuthenticationType, PrivateKeyPath = p.PrivateKeyPath
         }).ToList();
-        return JsonSerializer.Serialize(portable, Options);
+        var json = JsonSerializer.Serialize(portable, Options);
+        if (System.Text.Encoding.UTF8.GetByteCount(json) > MaximumJsonBytes)
+            throw new InvalidDataException("קובץ הפרופילים שנוצר גדול מהמותר (2MB).");
+        return json;
     }
 
     public IReadOnlyList<ServerProfile> Import(string json)

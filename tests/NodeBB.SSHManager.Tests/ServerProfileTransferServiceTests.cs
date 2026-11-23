@@ -29,6 +29,26 @@ public sealed class ServerProfileTransferServiceTests
     }
 
     [Fact]
+    public void Export_ProducesJsonThatCanBeImportedWithinTheConfiguredLimit()
+    {
+        var profiles = Enumerable.Range(0, 500).Select(i =>
+        {
+            var profile = CreateProfile();
+            profile.Id = Guid.NewGuid();
+            profile.Name = $"Server {i}";
+            profile.Host = $"server{i}.example.org";
+            profile.PrivateKeyPath = new string('k', 2048);
+            return profile;
+        }).ToArray();
+
+        var json = _service.Export(profiles);
+        var imported = _service.Import(json);
+
+        Assert.Equal(500, imported.Count);
+        Assert.True(System.Text.Encoding.UTF8.GetByteCount(json) <= 2 * 1024 * 1024);
+    }
+
+    [Fact]
     public void Import_RejectsInvalidPort()
     {
         var profile = CreateProfile();

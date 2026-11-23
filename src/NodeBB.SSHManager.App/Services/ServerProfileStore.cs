@@ -6,6 +6,7 @@ namespace NodeBB.SSHManager.Services;
 public sealed class ServerProfileStore
 {
     private const int MaximumProfiles = 500;
+    private const long MaximumJsonBytes = 2L * 1024 * 1024;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         WriteIndented = true
@@ -31,6 +32,8 @@ public sealed class ServerProfileStore
 
         try
         {
+            if (new FileInfo(_filePath).Length > MaximumJsonBytes)
+                throw new InvalidDataException("קובץ הגדרות השרתים גדול מהמותר (2MB).");
             var json = File.ReadAllText(_filePath);
             var profiles = JsonSerializer.Deserialize<List<ServerProfile>>(json, JsonOptions) ?? [];
             ValidateProfiles(profiles);
@@ -71,6 +74,9 @@ public sealed class ServerProfileStore
                 JsonSerializer.Serialize(stream, snapshot, JsonOptions);
                 stream.Flush(flushToDisk: true);
             }
+
+            if (new FileInfo(temporaryPath).Length > MaximumJsonBytes)
+                throw new InvalidDataException("קובץ הגדרות השרתים שנוצר גדול מהמותר (2MB).");
 
             if (File.Exists(_filePath))
                 File.Replace(temporaryPath, _filePath, null, ignoreMetadataErrors: true);
