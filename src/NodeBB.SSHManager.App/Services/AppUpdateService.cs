@@ -84,7 +84,8 @@ public sealed class AppUpdateService
 
         var current = NormalizeVersion(currentVersion);
         latest = NormalizeVersion(latest);
-        var releaseUrl = GetTrustedReleaseUri(root, normalizedTag);
+        var releaseTag = tag.Trim();
+        var releaseUrl = GetTrustedReleaseUri(root, releaseTag);
         var prerelease = root.TryGetProperty("prerelease", out var pre) && pre.ValueKind == JsonValueKind.True;
         if (prerelease || latest <= current)
         {
@@ -106,8 +107,8 @@ public sealed class AppUpdateService
         if (installer.ValueKind != JsonValueKind.Object || checksums.ValueKind != JsonValueKind.Object)
             throw new InvalidDataException("הגרסה החדשה חסרה מתקין או קובץ SHA256SUMS.txt; העדכון נעצר.");
 
-        var installerUri = GetTrustedAssetUri(installer, normalizedTag, InstallerFileName);
-        var checksumsUri = GetTrustedAssetUri(checksums, normalizedTag, ChecksumsFileName);
+        var installerUri = GetTrustedAssetUri(installer, releaseTag, InstallerFileName);
+        var checksumsUri = GetTrustedAssetUri(checksums, releaseTag, ChecksumsFileName);
         var info = new AppUpdateInfo(latest, tag, releaseUrl, installerUri, checksumsUri);
         return new AppUpdateCheckResult(current, latest, true, info,
             $"נמצאה גרסה חדשה {latest}; הגרסה המותקנת היא {current}.");
