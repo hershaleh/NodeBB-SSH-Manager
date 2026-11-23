@@ -75,6 +75,40 @@ public sealed class DiagnosticLogServiceTests
     }
 
     [Fact]
+    public void SanitizeExportLog_RemovesServerProfileLabelsAndKeepsValidJson()
+    {
+        var entry = new DiagnosticLogEntry(
+            DateTimeOffset.Parse("2026-11-23T12:00:00Z"),
+            "INFO", "SSH", "Connected", "Private Forum Label",
+            "SSH connection established.", null);
+        var input = System.Text.Json.JsonSerializer.Serialize(entry);
+
+        var output = DiagnosticLogService.SanitizeExportLog(input);
+        var sanitized = System.Text.Json.JsonSerializer.Deserialize<DiagnosticLogEntry>(output);
+
+        Assert.NotNull(sanitized);
+        Assert.Null(sanitized.Server);
+        Assert.Equal("SSH connection established.", sanitized.Message);
+        Assert.DoesNotContain("Private Forum Label", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SanitizeExportLog_RedactsSecretsAndHandlesMalformedLines()
+    {
+        var entry = new DiagnosticLogEntry(
+            DateTimeOffset.UtcNow, "ERROR", "SSH", "Failed", "Forum",
+            "password=very-secret", "token=another-secret");
+        var input = System.Text.Json.JsonSerializer.Serialize(entry) + "\nnot-json password=third-secret";
+
+        var output = DiagnosticLogService.SanitizeExportLog(input);
+
+        Assert.DoesNotContain("very-secret", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("another-secret", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("third-secret", output, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Server\":\"Forum\"", output, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Redact_PreservesOrdinaryText()
     {
         const string input = "SSH connection failed with timeout after 15 seconds.";

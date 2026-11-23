@@ -100,7 +100,8 @@ public sealed class DiagnosticLogService
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 var content = await File.ReadAllTextAsync(file, cancellationToken);
-                await File.WriteAllTextAsync(Path.Combine(tempPath, Path.GetFileName(file)), Redact(content), new UTF8Encoding(false), cancellationToken);
+                await File.WriteAllTextAsync(Path.Combine(tempPath, Path.GetFileName(file)),
+                    SanitizeExportLog(content), new UTF8Encoding(false), cancellationToken);
             }
 
             var assembly = Assembly.GetExecutingAssembly();
@@ -113,19 +114,66 @@ public sealed class DiagnosticLogService
                 architecture = System.Runtime.InteropServices.RuntimeInformation.OSArchitecture.ToString(),
                 framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
                 logFilesIncluded = logFiles.Length,
-                privacy = "Server profiles, credentials, private keys, environment variables and remote file contents are not included."
+                privacy = "Credentials, private-key contents, environment variables and remote file contents are not included. Server profile labels are omitted from exported log entries."
             };
             await File.WriteAllTextAsync(Path.Combine(tempPath, "diagnostic-manifest.json"),
                 JsonSerializer.Serialize(manifest, new JsonSerializerOptions { WriteIndented = true }), new UTF8Encoding(false), cancellationToken);
 
-            if (File.Exists(destinationPath)) File.Delete(destinationPath);
-            ZipFile.CreateFromDirectory(tempPath, destinationPath, CompressionLevel.Optimal, false);
+            var fullDestinationPath = Path.GetFullPath(destinationPath);
+            var destinationDirectory = Path.GetDirectoryName(fullDestinationPath)
+                ?? throw new InvalidOperationException("נתיב דוח האבחון אינו תקין.");
+            Directory.CreateDirectory(destinationDirectory);
+            var temporaryArchivePath = Path.Combine(destinationDirectory,
+                $".{Path.GetFileName(fullDestinationPath)}.{Guid.NewGuid():N}.tmp");
+            try
+            {
+                ZipFile.CreateFromDirectory(tempPath, temporaryArchivePath, CompressionLevel.Optimal, false);
+                if (File.Exists(fullDestinationPath))
+                    File.Replace(temporaryArchivePath, fullDestinationPath, null, ignoreMetadataErrors: true);
+                else
+                    File.Move(temporaryArchivePath, fullDestinationPath);
+            }
+            finally
+            {
+                try { if (File.Exists(temporaryArchivePath)) File.Delete(temporaryArchivePath); } catch { }
+            }
             Info("Diagnostics", "ReportExported", $"Diagnostic report exported ({logFiles.Length} log files).");
         }
         finally
         {
             try { Directory.Delete(tempPath, true); } catch { }
         }
+    }
+
+    internal static string SanitizeExportLog(string content)
+    {
+        if (string.IsNullOrEmpty(content)) return string.Empty;
+        var output = new StringBuilder();
+        foreach (var line in content.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            try
+            {
+                var entry = JsonSerializer.Deserialize<DiagnosticLogEntry>(line, JsonOptions);
+                if (entry is null)
+                {
+                    output.AppendLine(Redact(line));
+                    continue;
+                }
+
+                var sanitized = entry with
+                {
+                    Server = null,
+                    Message = Redact(entry.Message),
+                    Exception = entry.Exception is null ? null : Redact(entry.Exception)
+                };
+                output.AppendLine(JsonSerializer.Serialize(sanitized, JsonOptions));
+            }
+            catch (JsonException)
+            {
+                output.AppendLine(Redact(line));
+            }
+        }
+        return output.ToString();
     }
 
     private static string Clean(string value) => Redact(value.Replace("\r", " ").Replace("\n", " "));
