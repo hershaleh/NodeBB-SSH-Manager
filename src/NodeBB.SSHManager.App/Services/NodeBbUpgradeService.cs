@@ -28,6 +28,8 @@ public sealed class NodeBbUpgradeService
     internal static bool CanProceedAfterStop(int commandExitCode, bool stopConfirmed) =>
         commandExitCode == 0 && stopConfirmed;
 
+    internal static bool ShouldAttemptRestartAfterUnconfirmedStop(bool portStopped) => portStopped;
+
     public static bool IsValidTargetTag(string? tag) => !string.IsNullOrWhiteSpace(tag)
         && VersionTag.IsMatch(tag) && !tag.Contains("..", StringComparison.Ordinal);
 
@@ -80,11 +82,30 @@ public sealed class NodeBbUpgradeService
         var runtimeService = new NodeBbRuntimeService(_session);
         var runtime = await runtimeService.DetectAsync(installation, cancellationToken);
         var stopped = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "stop", cancellationToken);
-        var stopConfirmed = stopped.ExitCode == 0 &&
-            await runtimeService.VerifyHttpStoppedAsync(installation, cancellationToken);
+        // Verify with a non-cancelable token after issuing a stop: even a canceled UI
+        // operation must not leave the original installation stopped unnecessarily.
+        var stopConfirmed = await runtimeService.VerifyHttpStoppedAsync(installation, CancellationToken.None);
         if (!CanProceedAfterStop(stopped.ExitCode, stopConfirmed))
+        {
+            if (ShouldAttemptRestartAfterUnconfirmedStop(stopConfirmed))
+            {
+                try
+                {
+                    var restart = await runtimeService.ExecuteLifecycleAsync(installation, runtime, "start", CancellationToken.None);
+                    if (restart.ExitCode == 0)
+                        await runtimeService.VerifyHttpHealthAsync(installation, CancellationToken.None);
+                }
+                catch (Exception restartError)
+                {
+                    DiagnosticLogService.Instance.Error("NodeBBUpgrade", "RestartAfterStopFailure",
+                        restartError, _session.Profile.Name);
+                }
+            }
             throw new InvalidOperationException(Sanitize(stopped.Error,
-                "לא ניתן לאמת ש-NodeBB נעצר ופורט השירות הפסיק להאזין. השדרוג בוטל לפני שינוי הקבצים."));
+                stopConfirmed
+                    ? "פקודת העצירה החזירה שגיאה אף שפורט NodeBB כבר הפסיק להאזין. השדרוג בוטל והמערכת ניסתה להפעיל מחדש את ההתקנה המקורית."
+                    : "לא ניתן לאמת ש-NodeBB נעצר ופורט השירות הפסיק להאזין. השדרוג בוטל לפני שינוי הקבצים."));
+        }
         DiagnosticLogService.Instance.Info("NodeBBUpgrade", "UpgradeStopped",
             $"NodeBB stopped before upgrading to {targetTag}.", _session.Profile.Name);
 

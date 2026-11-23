@@ -12,6 +12,22 @@ public sealed class RedisDatabaseRestoreServiceTests
     private const string Hash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
     [Fact]
+    public void BuildRestoreScript_MarksRecoveryBeforeStopAndNeverOverwritesRdbUntilServiceIsInactive()
+    {
+        var script = RedisDatabaseRestoreService.BuildRestoreScript("/srv/nodebb", Work, Hash);
+        var markChanges = script.IndexOf("CHANGES_STARTED=1", StringComparison.Ordinal);
+        var requestStop = script.IndexOf("systemctl stop \"$SERVICE_UNIT\"", StringComparison.Ordinal);
+        var verifyInactive = script.IndexOf("systemctl is-active --quiet \"$SERVICE_UNIT\"", StringComparison.Ordinal);
+        var restoreCopy = script.IndexOf("cp -p -- \"$WORK/original.rdb\"", StringComparison.Ordinal);
+
+        Assert.True(markChanges >= 0 && requestStop > markChanges);
+        Assert.True(verifyInactive >= 0 && restoreCopy > verifyInactive);
+        Assert.Contains("Never replace an RDB file while Redis may still be writing to or loading it.", script);
+        Assert.Contains("SERVICE_STOPPED", script);
+        Assert.Contains("ROLLBACK_OK", script);
+    }
+
+    [Fact]
     public void BuildRestoreScript_UsesFullServerScopeAndProtectedRecovery()
     {
         var script = RedisDatabaseRestoreService.BuildRestoreScript("/srv/nodebb", Work, Hash);

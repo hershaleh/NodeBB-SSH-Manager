@@ -16,6 +16,12 @@ public sealed class NodeBbUpgradeServiceTests
         Assert.Equal(expected, NodeBbUpgradeService.CanProceedAfterStop(commandExitCode, stopConfirmed));
 
     [Theory]
+    [InlineData(true, true)]
+    [InlineData(false, false)]
+    public void StopFailureRecoveryOnlyRestartsWhenPortIsConfirmedStopped(bool portStopped, bool expected) =>
+        Assert.Equal(expected, NodeBbUpgradeService.ShouldAttemptRestartAfterUnconfirmedStop(portStopped));
+
+    [Theory]
     [InlineData("v4.19.1", true)]
     [InlineData("v4.20.0-rc.1", true)]
     [InlineData("4.19.1", false)]

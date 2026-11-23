@@ -99,23 +99,36 @@ cleanup() {
   trap - EXIT
   if [ "$CHANGES_STARTED" = "1" ]; then
     set +e
-    systemctl stop "$SERVICE_UNIT" >/dev/null 2>&1
     ROLLBACK_OK=1
-    if [ "$HAD_RDB" = "1" ]; then
-      if [ -s "$WORK/original.rdb" ]; then
-        RESTORE_STAGE="$RDB_PATH.nodebb-rollback-$(basename "$WORK")"
-        cp -p -- "$WORK/original.rdb" "$RESTORE_STAGE" && mv -f -- "$RESTORE_STAGE" "$RDB_PATH" || ROLLBACK_OK=0
-      else ROLLBACK_OK=0; fi
-    else
-      rm -f -- "$RDB_PATH" || ROLLBACK_OK=0
-    fi
-    systemctl start "$SERVICE_UNIT" >/dev/null 2>&1 || ROLLBACK_OK=0
-    ROLLBACK_READY=0
-    for attempt in $(seq 1 30); do
-      if redis_ping; then ROLLBACK_READY=1; break; fi
+    SERVICE_STOPPED=0
+    systemctl stop "$SERVICE_UNIT" >/dev/null 2>&1
+    for attempt in $(seq 1 15); do
+      if ! systemctl is-active --quiet "$SERVICE_UNIT"; then SERVICE_STOPPED=1; break; fi
       sleep 1
     done
-    [ "$ROLLBACK_READY" = "1" ] || ROLLBACK_OK=0
+    [ "$SERVICE_STOPPED" = "1" ] || ROLLBACK_OK=0
+    # Never replace an RDB file while Redis may still be writing to or loading it.
+    if [ "$ROLLBACK_OK" = "1" ]; then
+      if [ "$HAD_RDB" = "1" ]; then
+        if [ -s "$WORK/original.rdb" ]; then
+          RESTORE_STAGE="$RDB_PATH.nodebb-rollback-$(basename "$WORK")"
+          cp -p -- "$WORK/original.rdb" "$RESTORE_STAGE" && mv -f -- "$RESTORE_STAGE" "$RDB_PATH" || ROLLBACK_OK=0
+        else ROLLBACK_OK=0; fi
+      else
+        rm -f -- "$RDB_PATH" || ROLLBACK_OK=0
+      fi
+    fi
+    if [ "$ROLLBACK_OK" = "1" ]; then
+      systemctl start "$SERVICE_UNIT" >/dev/null 2>&1 || ROLLBACK_OK=0
+    fi
+    ROLLBACK_READY=0
+    if [ "$ROLLBACK_OK" = "1" ]; then
+      for attempt in $(seq 1 30); do
+        if redis_ping; then ROLLBACK_READY=1; break; fi
+        sleep 1
+      done
+      [ "$ROLLBACK_READY" = "1" ] || ROLLBACK_OK=0
+    fi
     if [ "$ROLLBACK_OK" = "1" ]; then
       CHANGES_STARTED=0
       RESULT=41
@@ -123,7 +136,7 @@ cleanup() {
     else
       KEEP_WORK=1
       RESULT=42
-      echo "CRITICAL: Redis rollback failed. Preserve recovery directory: $WORK" >&2
+      echo "CRITICAL: Redis rollback failed or the service could not be stopped safely. Preserve recovery directory: $WORK" >&2
       echo "Redis RDB target: $RDB_PATH" >&2
     fi
   fi
@@ -222,8 +235,10 @@ if [ -e "$RDB_PATH" ]; then
   HAD_RDB=1
 fi
 
-systemctl stop "$SERVICE_UNIT" || { echo 'לא ניתן לעצור את שירות Redis; לא הוחלף קובץ.' >&2; exit 33; }
+# Mark the operation before requesting stop: systemctl may return an error after
+# partially stopping the unit. The EXIT trap must then restore a known state.
 CHANGES_STARTED=1
+systemctl stop "$SERVICE_UNIT" || { echo 'לא ניתן לאמת עצירה תקינה של שירות Redis; מנגנון ההתאוששות ינסה להחזיר את המצב הקודם.' >&2; exit 33; }
 for attempt in $(seq 1 15); do
   if ! kill -0 "$MAIN_PID" 2>/dev/null; then break; fi
   sleep 1
