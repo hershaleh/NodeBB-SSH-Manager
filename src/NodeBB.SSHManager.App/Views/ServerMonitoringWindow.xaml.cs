@@ -75,7 +75,7 @@ public partial class ServerMonitoringWindow : Window
             MemoryProcessesText.Text = metrics.TopMemoryProcesses;
 
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
-                metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes);
+                metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes, metrics.CpuUsagePercent);
             HealthAlertsText.Text = alerts.Count == 0
                 ? LocalizationService.Instance["Monitor_Healthy"]
                 : string.Join(Environment.NewLine, alerts.Select(alert => "• " + LocalizationService.Instance.Translate(alert)));

@@ -19,6 +19,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Monitor_NetworkLabel"] = ("תעבורת רשת", "Network traffic"),
             ["Monitor_NetworkHint"] = ("קצב קבלה ושליחה בכל ממשקי הרשת, ללא loopback", "Receive and transmit rate across network interfaces, excluding loopback"),
             ["Monitor_Unavailable"] = ("לא זמין", "Unavailable"),
+            ["Monitor_CpuHighAlert"] = ("ניצול המעבד הגיע ל-{0}%.", "CPU utilization reached {0}%."),
             ["NodeBB_ManualPathHint"] = ("נתיב Linux מוחלט לתיקיית NodeBB (שבה נמצא package.json)", "Absolute Linux path to the NodeBB folder (containing package.json)"),
             ["NodeBB_ManualAddButton"] = ("הוסף נתיב", "Add path"),
             ["NodeBB_ManualPathRequired"] = ("הזן נתיב התקנה מלא.", "Enter a full installation path."),

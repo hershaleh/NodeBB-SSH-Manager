@@ -19,6 +19,19 @@ public sealed class ServerHealthAssessmentTests
         Assert.Contains(alerts, alert => alert.Contains("עומס המערכת"));
     }
 
+    [Theory]
+    [InlineData(89, false)]
+    [InlineData(90, true)]
+    [InlineData(100, true)]
+    [InlineData(-1, false)]
+    [InlineData(101, false)]
+    public void CpuUsageAlertUsesNinetyPercentThreshold(int? cpuPercent, bool expected)
+    {
+        var alerts = ServerHealthAssessment.Evaluate("0.1 0.1 0.1 1/100 1234", "", null, 4,
+            cpuUsagePercent: cpuPercent);
+        Assert.Equal(expected, alerts.Any(alert => alert.Contains("ניצול המעבד")));
+    }
+
     [Fact]
     public void FlagsMemoryAtNinetyPercent()
     {

@@ -9,7 +9,7 @@ public static class ServerHealthAssessment
     private static readonly Regex LoadPattern = new(@"^\s*(\d+(?:\.\d+)?)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     public static IReadOnlyList<string> Evaluate(string loadAverage, string disk, int? memoryUsagePercent, int cpuCount,
-        int? swapUsagePercent = null, string diskInodes = "")
+        int? swapUsagePercent = null, string diskInodes = "", int? cpuUsagePercent = null)
     {
         var alerts = new List<string>();
         var diskPercentages = DiskUsagePattern.Matches(disk ?? string.Empty)
@@ -17,6 +17,9 @@ public static class ServerHealthAssessment
             .Where(value => value is >= 0 and <= 100);
         if (diskPercentages.Any(value => value >= 90))
             alerts.Add("אחת ממחיצות הדיסק בשימוש של 90% ומעלה.");
+
+        if (cpuUsagePercent is >= 90 and <= 100)
+            alerts.Add($"ניצול המעבד הגיע ל-{cpuUsagePercent}%.");
 
         if (memoryUsagePercent is >= 90 and <= 100)
             alerts.Add("השימוש בזיכרון הגיע ל-90% ומעלה.");
