@@ -19,7 +19,7 @@ public static class ServerHealthAssessment
             alerts.Add("אחת ממחיצות הדיסק בשימוש של 90% ומעלה.");
 
         if (cpuUsagePercent is >= 90 and <= 100)
-            alerts.Add($"ניצול המעבד הגיע ל-{cpuUsagePercent}%.");
+            alerts.Add("ניצול המעבד גבוה (90% ומעלה).");
 
         if (memoryUsagePercent is >= 90 and <= 100)
             alerts.Add("השימוש בזיכרון הגיע ל-90% ומעלה.");

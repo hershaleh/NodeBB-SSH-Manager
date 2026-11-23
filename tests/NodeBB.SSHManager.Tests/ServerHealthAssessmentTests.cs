@@ -33,6 +33,13 @@ public sealed class ServerHealthAssessmentTests
     }
 
     [Fact]
+    public void CpuAlertUsesStableLocalizableText()
+    {
+        var alerts = ServerHealthAssessment.Evaluate("", "", null, 1, cpuUsagePercent: 95);
+        Assert.Contains("ניצול המעבד גבוה (90% ומעלה).", alerts);
+    }
+
+    [Fact]
     public void FlagsMemoryAtNinetyPercent()
     {
         var alerts = ServerHealthAssessment.Evaluate("0.1 0.1 0.1 1/100 1234", "", 90, 4);

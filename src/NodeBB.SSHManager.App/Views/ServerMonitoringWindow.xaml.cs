@@ -11,6 +11,7 @@ public partial class ServerMonitoringWindow : Window
     private readonly SshServerSession _session;
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private bool _refreshing;
+    private readonly ServerMonitoringHistory _history = new(60);
 
     public ServerMonitoringWindow(SshServerSession session)
     {
@@ -21,6 +22,7 @@ public partial class ServerMonitoringWindow : Window
         _refreshTimer.Tick += async (_, _) => await RefreshAsync();
         Loaded += async (_, _) => await RefreshAsync();
         Closed += (_, _) => _refreshTimer.Stop();
+        TrendCanvas.SizeChanged += (_, _) => RenderTrendChart();
         AutoRefreshIntervalComboBox.SelectedIndex = 1;
     }
 
@@ -74,6 +76,9 @@ public partial class ServerMonitoringWindow : Window
             ProcessesText.Text = metrics.TopProcesses;
             MemoryProcessesText.Text = metrics.TopMemoryProcesses;
 
+            _history.Add(metrics.CollectedAt, metrics.CpuUsagePercent, metrics.MemoryUsagePercent);
+            RenderTrendChart();
+
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
                 metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes, metrics.CpuUsagePercent);
             HealthAlertsText.Text = alerts.Count == 0
@@ -90,4 +95,48 @@ public partial class ServerMonitoringWindow : Window
         }
         finally { RefreshButton.IsEnabled = true; _refreshing = false; }
     }
+    private void RenderTrendChart()
+    {
+        if (TrendCanvas is null) return;
+        TrendCanvas.Children.Clear();
+        var samples = _history.Samples;
+        var width = Math.Max(TrendCanvas.ActualWidth, 300);
+        const double height = 112;
+        if (samples.Count == 0)
+        {
+            TrendCanvas.Children.Add(new System.Windows.Controls.TextBlock
+            {
+                Text = LocalizationService.Instance["Monitor_TrendEmpty"],
+                Foreground = System.Windows.Media.Brushes.Gray,
+                Margin = new Thickness(8, 12, 8, 0),
+                FlowDirection = LocalizationService.Instance.FlowDirection
+            });
+            return;
+        }
+
+        void AddSeries(Func<ServerMonitoringSample, int?> selector, System.Windows.Media.Brush brush)
+        {
+            var points = new System.Windows.Media.PointCollection();
+            for (var index = 0; index < samples.Count; index++)
+            {
+                var value = selector(samples[index]);
+                if (value is null) continue;
+                var x = samples.Count == 1 ? width / 2 : 8 + (width - 16) * index / (samples.Count - 1);
+                var y = 6 + (100 - Math.Clamp(value.Value, 0, 100)) * (height - 12) / 100;
+                points.Add(new System.Windows.Point(x, y));
+            }
+            if (points.Count > 0)
+                TrendCanvas.Children.Add(new System.Windows.Shapes.Polyline
+                {
+                    Points = points,
+                    Stroke = brush,
+                    StrokeThickness = 2.5,
+                    StrokeLineJoin = System.Windows.Media.PenLineJoin.Round
+                });
+        }
+
+        AddSeries(sample => sample.CpuPercent, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(82, 104, 232)));
+        AddSeries(sample => sample.MemoryPercent, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(23, 134, 93)));
+    }
+
 }

@@ -96,6 +96,19 @@
                         <TextBlock x:Name="NetworkText" Text="—" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#43516A" FontSize="13" FontFamily="Cascadia Mono, Consolas"/>
                     </StackPanel>
                 </Border>
+
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Monitor_TrendTitle}" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,8,0,5">
+                            <TextBlock Text="●" Foreground="#5268E8" Margin="0,0,5,0"/>
+                            <TextBlock Text="{loc:Tr Monitor_TrendCpu}" Foreground="#5268E8" FontSize="10" Margin="0,0,14,0"/>
+                            <TextBlock Text="●" Foreground="#17865D" Margin="0,0,5,0"/>
+                            <TextBlock Text="{loc:Tr Monitor_TrendMemory}" Foreground="#17865D" FontSize="10"/>
+                        </StackPanel>
+                        <Canvas x:Name="TrendCanvas" Height="112" ClipToBounds="True"/>
+                    </StackPanel>
+                </Border>
                 <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="17" Padding="18" Margin="0,0,0,13">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_5b0734a8}" FontWeight="Bold" FontSize="15" Foreground="#85540D"/>
