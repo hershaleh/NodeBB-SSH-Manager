@@ -15,15 +15,20 @@ public static class RemoteMonitoringOutputParser
             ? value.Trim()
             : "לא זמין";
 
-        int? memoryPercent = int.TryParse(Get("MEMORY_PERCENT"), System.Globalization.NumberStyles.Integer,
-            System.Globalization.CultureInfo.InvariantCulture, out var memoryValue) && memoryValue is >= 0 and <= 100
-            ? memoryValue : null;
+        var memoryPercent = ParsePercent(Get("MEMORY_PERCENT"));
         var cpuCount = int.TryParse(Get("CPU_COUNT"), System.Globalization.NumberStyles.Integer,
             System.Globalization.CultureInfo.InvariantCulture, out var cpuValue) && cpuValue is > 0 and <= 4096
             ? cpuValue : 1;
 
         return new RemoteServerMetrics(
             Get("UPTIME"), Get("LOAD"), Get("MEMORY"), memoryPercent,
-            Get("DISK"), Get("PROCESSES"), cpuCount, collectedAt ?? DateTimeOffset.UtcNow);
+            Get("DISK"), Get("PROCESSES"), cpuCount, collectedAt ?? DateTimeOffset.UtcNow,
+            Get("SWAP"), ParsePercent(Get("SWAP_PERCENT")), Get("DISK_INODES"));
+    }
+
+    private static int? ParsePercent(string value) =>
+        int.TryParse(value, System.Globalization.NumberStyles.Integer,
+            System.Globalization.CultureInfo.InvariantCulture, out var parsed) && parsed is >= 0 and <= 100
+            ? parsed : null;
     }
 }

@@ -17,6 +17,9 @@ public sealed class RemoteMonitoringOutputParserTests
         Assert.Equal(25, metrics.MemoryUsagePercent);
         Assert.Equal("1.20 0.80 0.60 1/200 123", metrics.LoadAverage);
         Assert.Equal(collected, metrics.CollectedAt);
+        Assert.Equal("לא זמין", metrics.Swap);
+        Assert.Null(metrics.SwapUsagePercent);
+        Assert.Equal("לא זמין", metrics.DiskInodes);
     }
 
     [Theory]
@@ -51,6 +54,28 @@ public sealed class RemoteMonitoringOutputParserTests
         Assert.Equal("לא זמין", metrics.Memory);
         Assert.Null(metrics.MemoryUsagePercent);
         Assert.Equal(1, metrics.CpuCount);
+    }
+
+    [Theory]
+    [InlineData("0", 0)]
+    [InlineData("90", 90)]
+    [InlineData("100", 100)]
+    [InlineData("-1", null)]
+    [InlineData("101", null)]
+    [InlineData("bad", null)]
+    public void ParsesOnlyValidSwapPercent(string value, int? expected)
+    {
+        var metrics = RemoteMonitoringOutputParser.Parse($"SWAP|1G / 2G בשימוש\nSWAP_PERCENT|{value}");
+        Assert.Equal(expected, metrics.SwapUsagePercent);
+        Assert.Equal("1G / 2G בשימוש", metrics.Swap);
+    }
+
+    [Fact]
+    public void ParsesDiskInodeUsageWithoutChangingDiskUsage()
+    {
+        var metrics = RemoteMonitoringOutputParser.Parse("DISK|/: 90G/100G (90%)\nDISK_INODES|/: (12%); /data: (95%);");
+        Assert.Equal("/: 90G/100G (90%)", metrics.Disk);
+        Assert.Equal("/: (12%); /data: (95%);", metrics.DiskInodes);
     }
 
     [Fact]

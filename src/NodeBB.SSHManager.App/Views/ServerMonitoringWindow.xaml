@@ -69,6 +69,8 @@
                             <TextBlock Text="{loc:Tr View_498ca8ef}" Foreground="#718096" FontSize="10"/>
                             <TextBlock x:Name="MemoryText" FontSize="21" FontWeight="Bold" Foreground="#17865D" Margin="0,9,0,0" Text="—" TextWrapping="Wrap"/>
                             <TextBlock Text="{loc:Tr View_4ecafa8}" Foreground="#9AA6B8" FontSize="10" Margin="0,6,0,0"/>
+                            <TextBlock Text="{loc:Tr Monitor_SwapLabel}" Foreground="#718096" FontSize="10" Margin="0,12,0,0"/>
+                            <TextBlock x:Name="SwapText" FontSize="13" FontWeight="SemiBold" Foreground="#17865D" Margin="0,4,0,0" Text="—" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -76,6 +78,8 @@
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_c9377bce}" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
                         <TextBlock x:Name="DiskText" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#43516A" FontSize="12" LineHeight="19"/>
+                        <TextBlock Text="{loc:Tr Monitor_InodesLabel}" Foreground="#718096" FontSize="10" Margin="0,12,0,0"/>
+                        <TextBlock x:Name="DiskInodesText" TextWrapping="Wrap" Margin="0,5,0,0" Foreground="#43516A" FontSize="12" LineHeight="19"/>
                     </StackPanel>
                 </Border>
                 <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="17" Padding="18" Margin="0,0,0,13">

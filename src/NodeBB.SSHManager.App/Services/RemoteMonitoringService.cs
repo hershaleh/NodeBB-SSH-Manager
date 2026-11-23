@@ -8,7 +8,10 @@ public sealed record RemoteServerMetrics(
     string Disk,
     string TopProcesses,
     int CpuCount,
-    DateTimeOffset CollectedAt);
+    DateTimeOffset CollectedAt,
+    string Swap,
+    int? SwapUsagePercent,
+    string DiskInodes);
 
 public sealed class RemoteMonitoringService
 {
@@ -30,8 +33,14 @@ printf 'MEMORY|'
 if command -v free >/dev/null 2>&1; then free -h | awk 'NR==2 {print $3 " / " $2 " בשימוש; זמין " $7}'; else echo 'לא זמין'; fi
 printf 'MEMORY_PERCENT|'
 if command -v free >/dev/null 2>&1; then free -b | awk 'NR==2 && $2>0 {printf "%.0f\n", 100*$3/$2}'; else echo 'לא זמין'; fi
+printf 'SWAP|'
+if command -v free >/dev/null 2>&1; then free -h | awk '$1=="Swap:" {print $3 " / " $2 " בשימוש"}'; else echo 'לא זמין'; fi
+printf 'SWAP_PERCENT|'
+if command -v free >/dev/null 2>&1; then free -b | awk '$1=="Swap:" && $2>0 {printf "%.0f\\n", 100*$3/$2}'; else echo 'לא זמין'; fi
 printf 'DISK|'
 if command -v df >/dev/null 2>&1; then df -hP 2>/dev/null | awk 'NR>1 && $6 !~ /tmpfs|devtmpfs/ {printf "%s: %s/%s (%s); ", $6, $3, $2, $5}' ; else echo 'לא זמין'; fi
+printf '\nDISK_INODES|'
+if command -v df >/dev/null 2>&1; then df -iP 2>/dev/null | awk 'NR>1 && $6 !~ /tmpfs|devtmpfs/ {printf "%s: (%s); ", $6, $5}'; else echo 'לא זמין'; fi
 printf '\nPROCESSES|'
 if command -v ps >/dev/null 2>&1; then ps -eo pid,comm,%cpu,%mem --sort=-%cpu 2>/dev/null | head -n 8 | tr '\n' ';'; else echo 'לא זמין'; fi
 printf '\n'

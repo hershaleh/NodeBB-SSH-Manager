@@ -34,6 +34,32 @@ public sealed class ServerHealthAssessmentTests
     }
 
     [Fact]
+    public void FlagsHighSwapUsage()
+    {
+        var alerts = ServerHealthAssessment.Evaluate("0.1 0.1 0.1 1/100 1234", "", 20, 4, 90);
+        Assert.Contains(alerts, alert => alert.Contains("Swap"));
+    }
+
+    [Fact]
+    public void FlagsHighInodeUsageOnAnyFilesystem()
+    {
+        var alerts = ServerHealthAssessment.Evaluate("0.1 0.1 0.1 1/100 1234", "", 20, 4, null,
+            "/: (10%); /data: (95%);");
+        Assert.Contains(alerts, alert => alert.Contains("inode"));
+    }
+
+    [Theory]
+    [InlineData("/: (89%);", false)]
+    [InlineData("/: (90%);", true)]
+    [InlineData("/: (100%);", true)]
+    [InlineData("/: (101%);", false)]
+    public void InodeAlertUsesNinetyPercentThreshold(string inodes, bool expected)
+    {
+        var alerts = ServerHealthAssessment.Evaluate("", "", null, 1, null, inodes);
+        Assert.Equal(expected, alerts.Any(alert => alert.Contains("inode")));
+    }
+
+    [Fact]
     public void IgnoresUnavailableOrMalformedMetrics()
     {
         var alerts = ServerHealthAssessment.Evaluate("לא זמין", "לא זמין", null, 0);

@@ -8,7 +8,8 @@ public static class ServerHealthAssessment
     private static readonly Regex DiskUsagePattern = new(@"\((\d{1,3})%\)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private static readonly Regex LoadPattern = new(@"^\s*(\d+(?:\.\d+)?)", RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
-    public static IReadOnlyList<string> Evaluate(string loadAverage, string disk, int? memoryUsagePercent, int cpuCount)
+    public static IReadOnlyList<string> Evaluate(string loadAverage, string disk, int? memoryUsagePercent, int cpuCount,
+        int? swapUsagePercent = null, string diskInodes = "")
     {
         var alerts = new List<string>();
         var diskPercentages = DiskUsagePattern.Matches(disk ?? string.Empty)
@@ -19,6 +20,15 @@ public static class ServerHealthAssessment
 
         if (memoryUsagePercent is >= 90 and <= 100)
             alerts.Add("השימוש בזיכרון הגיע ל-90% ומעלה.");
+
+        if (swapUsagePercent is >= 90 and <= 100)
+            alerts.Add("השימוש בזיכרון ההחלפה (Swap) הגיע ל-90% ומעלה.");
+
+        var inodePercentages = DiskUsagePattern.Matches(diskInodes ?? string.Empty)
+            .Select(match => int.TryParse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var value) ? value : -1)
+            .Where(value => value is >= 0 and <= 100);
+        if (inodePercentages.Any(value => value >= 90))
+            alerts.Add("השימוש במספר קובצי inode באחת המחיצות הגיע ל-90% ומעלה.");
 
         var loadMatch = LoadPattern.Match(loadAverage ?? string.Empty);
         if (loadMatch.Success &&

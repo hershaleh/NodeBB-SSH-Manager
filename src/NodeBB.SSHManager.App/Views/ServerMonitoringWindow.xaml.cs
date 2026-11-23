@@ -64,13 +64,18 @@ public partial class ServerMonitoringWindow : Window
             MemoryText.Text = metrics.MemoryUsagePercent is int memoryPercent
                 ? $"{metrics.Memory} ({memoryPercent}%)"
                 : metrics.Memory;
+            SwapText.Text = metrics.SwapUsagePercent is int swapPercent
+                ? $"{metrics.Swap} ({swapPercent}%)"
+                : metrics.Swap;
             DiskText.Text = metrics.Disk;
+            DiskInodesText.Text = metrics.DiskInodes;
             ProcessesText.Text = metrics.TopProcesses;
 
-            var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent, metrics.CpuCount);
+            var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
+                metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes);
             HealthAlertsText.Text = alerts.Count == 0
                 ? LocalizationService.Instance["Monitor_Healthy"]
-                : string.Join(Environment.NewLine, alerts.Select(alert => "• " + alert));
+                : string.Join(Environment.NewLine, alerts.Select(alert => "• " + LocalizationService.Instance.Translate(alert)));
             HealthPanel.Background = alerts.Count == 0 ? System.Windows.Media.Brushes.Honeydew : System.Windows.Media.Brushes.MistyRose;
             CollectedAtText.Text = string.Format(LocalizationService.Instance["Monitor_CollectedAt"], metrics.CollectedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.CurrentCulture));
             StatusText.Text = LocalizationService.Instance["Monitor_Updated"];
