@@ -1,4 +1,6 @@
+using System.Net;
 using System.Net.Sockets;
+using NodeBB.SSHManager.Models;
 using NodeBB.SSHManager.Services;
 using Renci.SshNet.Common;
 using Xunit;
@@ -7,6 +9,45 @@ namespace NodeBB.SSHManager.Tests;
 
 public sealed class SshConnectionServiceTests
 {
+
+
+    [Fact]
+    public async Task ProbeTcpEndpointAsync_ReturnsSuccessForListeningEndpoint()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var endpoint = (IPEndPoint)listener.LocalEndpoint;
+        var profile = new ServerProfile { Host = IPAddress.Loopback.ToString(), Port = endpoint.Port };
+
+        var result = await new SshConnectionService().ProbeTcpEndpointAsync(profile);
+
+        Assert.True(result.Success);
+        Assert.Contains("reachable", result.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ProbeTcpEndpointAsync_ReportsRefusedEndpointWithoutTryingAuthentication()
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        var profile = new ServerProfile { Host = IPAddress.Loopback.ToString(), Port = port };
+
+        var result = await new SshConnectionService().ProbeTcpEndpointAsync(profile);
+
+        Assert.False(result.Success);
+        Assert.Contains("דחה את החיבור", result.Message);
+        Assert.Equal(SocketError.ConnectionRefused, result.ErrorCode);
+    }
+
+    [Fact]
+    public void SshConnectionTimeoutIsLongerThanTcpProbeTimeout()
+    {
+        Assert.True(SshConnectionService.SshHandshakeTimeoutSeconds > SshConnectionService.TcpProbeTimeoutSeconds);
+        Assert.Equal(45, SshConnectionService.SshHandshakeTimeoutSeconds);
+        Assert.Equal(8, SshConnectionService.TcpProbeTimeoutSeconds);
+    }
 
     [Theory]
     [InlineData("SHA256:trusted-fingerprint", "SHA256:trusted-fingerprint", true)]

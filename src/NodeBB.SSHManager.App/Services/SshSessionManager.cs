@@ -82,7 +82,7 @@ public sealed class SshServerSession : IDisposable
         var auth = SshSessionManager.CreateAuthentication(Profile, _secret);
         var info = new ConnectionInfo(Profile.Host, Profile.Port, Profile.Username, auth)
         {
-            Timeout = TimeSpan.FromSeconds(20)
+            Timeout = TimeSpan.FromSeconds(SshConnectionService.SshHandshakeTimeoutSeconds)
         };
         var client = new SftpClient(info)
         {

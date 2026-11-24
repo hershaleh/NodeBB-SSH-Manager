@@ -18,14 +18,48 @@ public sealed record SshTestResult(
     string? Fingerprint = null,
     string? RemoteSummary = null);
 
+public sealed record TcpEndpointProbeResult(bool Success, string Message, SocketError? ErrorCode = null);
+
 public sealed class SshConnectionService
 {
-    public Task<SshTestResult> TestConnectionAsync(
+    public const int TcpProbeTimeoutSeconds = 8;
+    public const int SshHandshakeTimeoutSeconds = 45;
+
+    public async Task<TcpEndpointProbeResult> ProbeTcpEndpointAsync(
+        ServerProfile profile,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        using var client = new TcpClient();
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(TimeSpan.FromSeconds(TcpProbeTimeoutSeconds));
+
+        try
+        {
+            await client.ConnectAsync(profile.Host, profile.Port, timeout.Token);
+            return new TcpEndpointProbeResult(true, "TCP endpoint is reachable.");
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return new TcpEndpointProbeResult(false,
+                $"לא התקבלה תשובה מ-{profile.Host}:{profile.Port} בתוך {TcpProbeTimeoutSeconds} שניות. בדוק כתובת, פורט, חומת אש וניתוב.");
+        }
+        catch (SocketException ex)
+        {
+            return new TcpEndpointProbeResult(false, GetFriendlyErrorMessage(ex), ex.SocketErrorCode);
+        }
+    }
+
+    public async Task<SshTestResult> TestConnectionAsync(
         ServerProfile profile,
         string secret,
         CancellationToken cancellationToken = default)
     {
-        return Task.Run(() => TestConnection(profile, secret, cancellationToken), cancellationToken);
+        var endpoint = await ProbeTcpEndpointAsync(profile, cancellationToken);
+        if (!endpoint.Success)
+            return new SshTestResult(SshTestStatus.Failed, endpoint.Message);
+
+        return await Task.Run(() => TestConnection(profile, secret, cancellationToken), cancellationToken);
     }
 
     private static SshTestResult TestConnection(
@@ -46,7 +80,7 @@ public sealed class SshConnectionService
                 profile.Username,
                 authentication)
             {
-                Timeout = TimeSpan.FromSeconds(15)
+                Timeout = TimeSpan.FromSeconds(SshHandshakeTimeoutSeconds)
             };
 
             using var client = new SshClient(connectionInfo);
@@ -107,6 +141,8 @@ public sealed class SshConnectionService
             SocketException socket when socket.SocketErrorCode is SocketError.HostNotFound or SocketError.NoData or SocketError.TryAgain => "לא ניתן למצוא את שם המתחם. בדוק את שם המארח ואת הגדרות DNS.",
             SocketException socket when socket.SocketErrorCode == SocketError.TimedOut => "החיבור לשרת חרג ממגבלת הזמן. בדוק זמינות רשת, חומת אש ויציאת SSH.",
             SocketException socket when socket.SocketErrorCode is SocketError.NetworkUnreachable or SocketError.HostUnreachable => "אין נתיב רשת אל השרת. בדוק את החיבור לרשת, ניתוב וחומת אש.",
+            SshConnectionException ssh when ssh.Message.Contains("Connection failed to establish within", StringComparison.OrdinalIgnoreCase)
+                => $"פורט TCP נגיש, אך שרת SSH לא השלים את שלב יצירת החיבור בתוך {SshHandshakeTimeoutSeconds} שניות. בדוק ששירות SSH פועל בפורט זה, את עומס השרת ואת חומת האש או הגדרות SSH.",
             TimeoutException => "הפעולה מול שרת SSH חרגה ממגבלת הזמן. בדוק זמינות שרת ורשת.",
             SshConnectionException => "חיבור SSH נותק או נכשל במהלך יצירתו. בדוק את שירות SSH, הרשת והגדרות השרת.",
             IOException => "אירעה שגיאת תקשורת או קובץ במהלך החיבור. בדוק הרשאות וגישה לרשת.",
