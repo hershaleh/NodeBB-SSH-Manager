@@ -56,6 +56,18 @@ jobs:
           $exe = (Resolve-Path "artifacts/win-x64/NodeBB.SSHManager.exe").Path
           $process = Start-Process -FilePath $exe -ArgumentList "--startup-smoke-test" -PassThru -Wait
           if ($process.ExitCode -ne 0) {
+            $logDir = Join-Path $env:LOCALAPPDATA "NodeBB SSH Manager\\Logs"
+            if (Test-Path $logDir) {
+              Get-ChildItem $logDir -Filter "application-*.jsonl" |
+                Sort-Object LastWriteTime -Descending |
+                Select-Object -First 2 |
+                ForEach-Object {
+                  Write-Host ("--- Startup diagnostic log: {0} ---" -f $_.FullName)
+                  Get-Content $_.FullName | ForEach-Object { Write-Host $_ }
+                }
+            } else {
+              Write-Host "No application diagnostic log directory was created."
+            }
             throw "Portable application startup smoke test failed with exit code $($process.ExitCode)."
           }
           Write-Host "Portable application created and displayed its main WPF window successfully."
