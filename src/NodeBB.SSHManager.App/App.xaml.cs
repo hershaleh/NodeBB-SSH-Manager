@@ -8,6 +8,8 @@ namespace NodeBB.SSHManager;
 
 public partial class App : Application
 {
+    private const string StartupSmokeTestArgument = "--startup-smoke-test";
+
     public App()
     {
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
@@ -40,12 +42,41 @@ public partial class App : Application
             return;
         }
 
-        ShutdownMode = ShutdownMode.OnMainWindowClose;
-        var window = new MainWindow();
-        MainWindow = window;
-        window.Show();
-    }
+        var startupSmokeTest = e.Args.Length == 1 &&
+            string.Equals(e.Args[0], StartupSmokeTestArgument, StringComparison.Ordinal);
 
+        try
+        {
+            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            var window = new MainWindow();
+            MainWindow = window;
+
+            if (startupSmokeTest)
+            {
+                window.Loaded += (_, _) =>
+                    Dispatcher.BeginInvoke(DispatcherPriority.ApplicationIdle, new Action(() => Shutdown(0)));
+            }
+
+            window.Show();
+            DiagnosticLogService.Instance.Info("Application", "MainWindowShown",
+                startupSmokeTest ? "Startup smoke test displayed the main window." : "Main window displayed.");
+        }
+        catch (Exception ex)
+        {
+            DiagnosticLogService.Instance.Error("Application", "StartupFailed", ex);
+            if (!startupSmokeTest)
+            {
+                var logPath = Path.Combine(DiagnosticLogService.Instance.LogDirectory,
+                    $"application-{DateTime.UtcNow:yyyyMMdd}.jsonl");
+                MessageBox.Show(
+                    $"התוכנה נכשלה בעת ההפעלה.\n\n{ex.GetType().Name}: {ex.Message}\n\nדוח האבחון נשמר כאן:\n{logPath}",
+                    "NodeBB SSH Manager — שגיאת הפעלה",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            Shutdown(1);
+        }
+    }
 
     private static void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {

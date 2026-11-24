@@ -50,6 +50,15 @@ jobs:
             throw ("DirectWriteForwarder.dll is not a valid x64 PE image. Signature={0}; Machine=0x{1:X4}" -f $signature, $machine)
           }
           Write-Host ("Verified x64 WPF native component: {0}" -f $dll.FullName)
+      - name: Smoke-test portable application startup
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path "artifacts/win-x64/NodeBB.SSHManager.exe").Path
+          $process = Start-Process -FilePath $exe -ArgumentList "--startup-smoke-test" -PassThru -Wait
+          if ($process.ExitCode -ne 0) {
+            throw "Portable application startup smoke test failed with exit code $($process.ExitCode)."
+          }
+          Write-Host "Portable application created and displayed its main WPF window successfully."
       - name: Create portable Windows package
         shell: pwsh
         run: |
@@ -68,6 +77,29 @@ jobs:
           & $compiler "/DAppVersion=$version" "installer/NodeBB-SSH-Manager.iss"
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE." }
           if (-not (Test-Path "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe")) { throw "The Windows installer was not created." }
+      - name: Smoke-test installed application startup
+        shell: pwsh
+        run: |
+          $setup = (Resolve-Path "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe").Path
+          $installDir = Join-Path $env:RUNNER_TEMP "NodeBB-SSH-Manager-SmokeTest"
+          $installer = Start-Process -FilePath $setup -ArgumentList @(
+            "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/CURRENTUSER", "/DIR=$installDir"
+          ) -PassThru -Wait
+          if ($installer.ExitCode -ne 0) {
+            throw "Silent installer test failed with exit code $($installer.ExitCode)."
+          }
+          $installedExe = Join-Path $installDir "NodeBB.SSHManager.exe"
+          if (-not (Test-Path $installedExe)) { throw "The installer did not place the application executable in the selected directory." }
+          $application = Start-Process -FilePath $installedExe -ArgumentList "--startup-smoke-test" -PassThru -Wait
+          if ($application.ExitCode -ne 0) {
+            throw "Installed application startup smoke test failed with exit code $($application.ExitCode)."
+          }
+          $uninstaller = Join-Path $installDir "unins000.exe"
+          if (Test-Path $uninstaller) {
+            $remove = Start-Process -FilePath $uninstaller -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -PassThru -Wait
+            if ($remove.ExitCode -ne 0) { throw "Smoke-test cleanup uninstall failed with exit code $($remove.ExitCode)." }
+          }
+          Write-Host "Installer installed, launched and uninstalled the application successfully."
       - name: Create release checksum manifest
         shell: pwsh
         run: |
@@ -76,21 +108,47 @@ jobs:
             "artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip"
           )
           $lines = foreach ($file in $targets) {
+            if (-not (Test-Path $file)) { throw "Release package is missing: $file" }
             $hash = (Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant()
             "$hash  $([System.IO.Path]::GetFileName($file))"
           }
           $lines | Set-Content "artifacts/SHA256SUMS.txt" -Encoding ascii
-      - name: Upload build packages
+      - name: Validate release package set
+        shell: pwsh
+        run: |
+          $required = @(
+            "artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe",
+            "artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip",
+            "artifacts/SHA256SUMS.txt"
+          )
+          foreach ($file in $required) {
+            if (-not (Test-Path $file -PathType Leaf)) { throw "Required release file is missing: $file" }
+            $item = Get-Item $file
+            if ($item.Length -le 0) { throw "Required release file is empty: $file" }
+            Write-Host "$($item.Name): $($item.Length) bytes"
+          }
+          Get-Content "artifacts/SHA256SUMS.txt"
+      - name: Upload portable package
         uses: actions/upload-artifact@v4
         with:
-          name: NodeBB-SSH-Manager-win-x64
-          path: |
-            artifacts/win-x64/
-            artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip
-            artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe
-            artifacts/SHA256SUMS.txt
+          name: NodeBB-SSH-Manager-Portable-win-x64
+          path: artifacts/NodeBB-SSH-Manager-Portable-win-x64.zip
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 30
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: NodeBB-SSH-Manager-Setup-win-x64
+          path: artifacts/NodeBB-SSH-Manager-Setup-win-x64.exe
+          if-no-files-found: error
+          retention-days: 30
+      - name: Upload checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: NodeBB-SSH-Manager-Checksums
+          path: artifacts/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
