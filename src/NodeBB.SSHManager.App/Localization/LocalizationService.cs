@@ -15,6 +15,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
         new Dictionary<string, (string He, string En)>(StringComparer.Ordinal)
         {
             ["Monitor_ThresholdTitle"] = ("ספי התרעה מותאמים לשרת", "Per-server alert thresholds"),
+            ["Dashboard_ניטור_כל_השרתים"] = ("ניטור כל השרתים", "All-server health overview"),
             ["Monitor_ThresholdHint"] = ("הערכים נשמרים בנפרד לכל פרופיל שרת. אחוזים: 50–100; עומס: 0.5–10 לכל ליבה.", "Values are saved separately for each server profile. Percentages: 50–100; load: 0.5–10 per CPU."),
             ["Monitor_MemoryThreshold"] = ("זיכרון (%)", "Memory (%)"),
             ["Monitor_DiskThreshold"] = ("דיסק (%)", "Disk (%)"),

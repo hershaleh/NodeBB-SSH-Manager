@@ -752,6 +752,18 @@ public partial class MainWindow : Window
         new ServerMonitoringWindow(session) { Owner = this }.ShowDialog();
     }
 
+    private void AllServerMonitoring_Click(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count == 0)
+        {
+            MessageBox.Show(this, T("הוסף לפחות פרופיל שרת אחד כדי להציג תמונת מצב."), T("ניטור כל השרתים"),
+                MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        new MultiServerHealthOverviewWindow(_profiles.ToArray(), _sessionManager.Sessions)
+            { Owner = this }.ShowDialog();
+    }
+
     private async void ServerDiagnostics_Click(object sender, RoutedEventArgs e)
     {
         var session = await GetSelectedSessionAsync();
