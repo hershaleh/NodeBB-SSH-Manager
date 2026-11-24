@@ -11,7 +11,8 @@ public partial class ServerMonitoringWindow : Window
     private readonly SshServerSession _session;
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private bool _refreshing;
-    private readonly ServerMonitoringHistory _history = new(60);
+    private readonly ServerMonitoringHistory _history;
+    private readonly ServerMonitoringHistoryStore _historyStore = new();
     private readonly MonitoringSettingsStore _settingsStore = new();
     private readonly MonitoringAlertHistoryStore _alertStore = new();
     private MonitoringAlertThresholds _thresholds = new();
@@ -22,6 +23,7 @@ public partial class ServerMonitoringWindow : Window
         InitializeComponent();
         _session = session;
         _service = new RemoteMonitoringService(session);
+        _history = new ServerMonitoringHistory(ServerMonitoringHistoryStore.MaximumSamples, _historyStore.Load(session.Profile.Id));
         _thresholds = _settingsStore.Load(session.Profile.Id);
         _alertHistory = new MonitoringAlertHistory(_alertStore.Load(session.Profile.Id));
         LoadThresholdFields();
@@ -32,6 +34,8 @@ public partial class ServerMonitoringWindow : Window
         Closed += (_, _) => _refreshTimer.Stop();
         TrendCanvas.SizeChanged += (_, _) => RenderTrendChart();
         AutoRefreshIntervalComboBox.SelectedIndex = 1;
+        TrendRangeComboBox.SelectedIndex = 2;
+        RenderTrendChart();
     }
 
     private async void Refresh_Click(object sender, RoutedEventArgs e) => await RefreshAsync();
@@ -84,7 +88,15 @@ public partial class ServerMonitoringWindow : Window
             ProcessesText.Text = metrics.TopProcesses;
             MemoryProcessesText.Text = metrics.TopMemoryProcesses;
 
-            _history.Add(metrics.CollectedAt, metrics.CpuUsagePercent, metrics.MemoryUsagePercent);
+            var loadValue = double.TryParse(metrics.LoadAverage.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(),
+                System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var parsedLoad) &&
+                double.IsFinite(parsedLoad) && parsedLoad >= 0 ? parsedLoad / Math.Max(1, metrics.CpuCount) : (double?)null;
+            _history.Add(metrics.CollectedAt, metrics.CpuUsagePercent, metrics.MemoryUsagePercent, loadValue);
+            try { _historyStore.Save(_session.Profile.Id, _history.Samples); }
+            catch (Exception historyException) when (historyException is IOException or UnauthorizedAccessException)
+            {
+                DiagnosticLogService.Instance.Error("MonitoringUI", "HistorySaveFailed", historyException, _session.Profile.Name);
+            }
             RenderTrendChart();
 
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
@@ -199,11 +211,55 @@ public partial class ServerMonitoringWindow : Window
         AlertHistoryCountText.Text = string.Format(LocalizationService.Instance["Monitor_AlertHistoryCount"], _alertHistory.Events.Count);
     }
 
+    private void TrendRange_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e) => RenderTrendChart();
+
+    private IReadOnlyList<ServerMonitoringSample> GetVisibleSamples()
+    {
+        var hours = 24;
+        if (TrendRangeComboBox?.SelectedItem is System.Windows.Controls.ComboBoxItem item &&
+            int.TryParse(item.Tag?.ToString(), out var selectedHours) && selectedHours is 1 or 6 or 24)
+            hours = selectedHours;
+        return _history.GetSince(DateTimeOffset.UtcNow.AddHours(-hours));
+    }
+
+    private void ExportMetrics_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var samples = GetVisibleSamples();
+            if (samples.Count == 0)
+            {
+                StatusText.Text = LocalizationService.Instance["Monitor_MetricsEmpty"];
+                return;
+            }
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = LocalizationService.Instance["Monitor_AlertCsvFilter"],
+                FileName = $"nodebb-performance-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+                AddExtension = true,
+                DefaultExt = ".csv"
+            };
+            if (dialog.ShowDialog(this) != true) return;
+            var lines = new List<string> { "Timestamp,CpuPercent,MemoryPercent,LoadPerCpu" };
+            lines.AddRange(samples.Select(sample =>
+                Csv(sample.CollectedAt.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)) + "," +
+                (sample.CpuPercent?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "") + "," +
+                (sample.MemoryPercent?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "") + "," +
+                (sample.LoadPerCpu?.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture) ?? "")));
+            File.WriteAllText(dialog.FileName, string.Join(Environment.NewLine, lines), new System.Text.UTF8Encoding(true));
+            StatusText.Text = string.Format(LocalizationService.Instance["Monitor_MetricsExported"], samples.Count);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            StatusText.Text = LocalizationService.Instance["Monitor_MetricsExportFailed"];
+        }
+    }
+
     private void RenderTrendChart()
     {
         if (TrendCanvas is null) return;
         TrendCanvas.Children.Clear();
-        var samples = _history.Samples;
+        var samples = GetVisibleSamples();
         var width = Math.Max(TrendCanvas.ActualWidth, 300);
         const double height = 112;
         if (samples.Count == 0)
@@ -241,6 +297,12 @@ public partial class ServerMonitoringWindow : Window
 
         AddSeries(sample => sample.CpuPercent, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(82, 104, 232)));
         AddSeries(sample => sample.MemoryPercent, new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(23, 134, 93)));
+        var cpuValues = samples.Where(sample => sample.CpuPercent.HasValue).Select(sample => sample.CpuPercent!.Value).ToArray();
+        var memoryValues = samples.Where(sample => sample.MemoryPercent.HasValue).Select(sample => sample.MemoryPercent!.Value).ToArray();
+        var summary = new List<string>();
+        if (cpuValues.Length > 0) summary.Add(string.Format(LocalizationService.Instance["Monitor_TrendCpuRange"], cpuValues.Min(), cpuValues.Max(), cpuValues.Average().ToString("0", System.Globalization.CultureInfo.InvariantCulture)));
+        if (memoryValues.Length > 0) summary.Add(string.Format(LocalizationService.Instance["Monitor_TrendMemoryRange"], memoryValues.Min(), memoryValues.Max(), memoryValues.Average().ToString("0", System.Globalization.CultureInfo.InvariantCulture)));
+        TrendSummaryText.Text = string.Join("   ·   ", summary);
     }
 
 }

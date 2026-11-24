@@ -99,7 +99,16 @@
 
                 <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
                     <StackPanel>
-                        <TextBlock Text="{loc:Tr Monitor_TrendTitle}" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
+                        <DockPanel LastChildFill="False">
+                            <TextBlock Text="{loc:Tr Monitor_TrendTitle}" FontSize="15" FontWeight="Bold" Foreground="#23324A" VerticalAlignment="Center"/>
+                            <Button DockPanel.Dock="Left" Content="{loc:Tr Monitor_MetricsExportButton}" Click="ExportMetrics_Click" Padding="9,5" Margin="8,0,0,0"/>
+                            <ComboBox x:Name="TrendRangeComboBox" DockPanel.Dock="Left" Width="105" Height="29" Margin="8,0,0,0"
+                                      SelectionChanged="TrendRange_SelectionChanged" VerticalContentAlignment="Center">
+                                <ComboBoxItem Content="{loc:Tr Monitor_Range1Hour}" Tag="1"/>
+                                <ComboBoxItem Content="{loc:Tr Monitor_Range6Hours}" Tag="6"/>
+                                <ComboBoxItem Content="{loc:Tr Monitor_Range24Hours}" Tag="24"/>
+                            </ComboBox>
+                        </DockPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,8,0,5">
                             <TextBlock Text="●" Foreground="#5268E8" Margin="0,0,5,0"/>
                             <TextBlock Text="{loc:Tr Monitor_TrendCpu}" Foreground="#5268E8" FontSize="10" Margin="0,0,14,0"/>
@@ -107,6 +116,7 @@
                             <TextBlock Text="{loc:Tr Monitor_TrendMemory}" Foreground="#17865D" FontSize="10"/>
                         </StackPanel>
                         <Canvas x:Name="TrendCanvas" Height="112" ClipToBounds="True"/>
+                        <TextBlock x:Name="TrendSummaryText" Foreground="#8491A5" FontSize="10" Margin="0,7,0,0"/>
                     </StackPanel>
                 </Border>
 
