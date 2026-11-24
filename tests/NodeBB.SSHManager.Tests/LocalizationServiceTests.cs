@@ -3,7 +3,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Xaml;
+using System.Windows.Markup;
 using NodeBB.SSHManager.Localization;
 using Xunit;
 
