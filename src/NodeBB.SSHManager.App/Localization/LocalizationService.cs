@@ -17,6 +17,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
             ["Monitor_ThresholdTitle"] = ("ספי התרעה מותאמים לשרת", "Per-server alert thresholds"),
             ["Dashboard_ניהול_גיבויים_מתוזמנים"] = ("ניהול גיבויים מתוזמנים", "Scheduled backup management"),
             ["Dashboard_מלאי_שרתים_ובדיקת_מוכנות"] = ("מלאי שרתים ובדיקת מוכנות", "Server inventory and readiness"),
+            ["Dashboard_מרכז_תחזוקת_NodeBB"] = ("מרכז תחזוקת NodeBB", "NodeBB maintenance center"),
             ["Dashboard_ניטור_כל_השרתים"] = ("ניטור כל השרתים", "All-server health overview"),
             ["Monitor_ThresholdHint"] = ("הערכים נשמרים בנפרד לכל פרופיל שרת. אחוזים: 50–100; עומס: 0.5–10 לכל ליבה.", "Values are saved separately for each server profile. Percentages: 50–100; load: 0.5–10 per CPU."),
             ["Monitor_MemoryThreshold"] = ("זיכרון (%)", "Memory (%)"),

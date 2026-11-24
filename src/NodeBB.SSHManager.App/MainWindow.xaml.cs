@@ -775,6 +775,17 @@ public partial class MainWindow : Window
         new FleetReadinessWindow(_profiles.ToArray(), _sessionManager.Sessions) { Owner = this }.ShowDialog();
     }
 
+    private void FleetMaintenance_Click(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count == 0)
+        {
+            MessageBox.Show(this, T("הוסף לפחות פרופיל שרת אחד כדי לבדוק התקנות NodeBB."),
+                T("מרכז תחזוקת NodeBB"), MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        new FleetMaintenanceWindow(_profiles.ToArray(), _sessionManager.Sessions) { Owner = this }.ShowDialog();
+    }
+
     private void ScheduledBackupOverview_Click(object sender, RoutedEventArgs e)
     {
         new ScheduledBackupOverviewWindow(_profiles.ToArray()) { Owner = this }.ShowDialog();
