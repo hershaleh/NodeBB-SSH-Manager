@@ -28,7 +28,7 @@ public sealed class MonitoringSettingsStore
             settings.Validate();
             return settings;
         }
-        catch (Exception ex) when (ex is JsonException or InvalidDataException or ArgumentOutOfRangeException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or ArgumentOutOfRangeException)
         {
             PreserveCorruptFile(path);
             return new MonitoringAlertThresholds();

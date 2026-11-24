@@ -109,10 +109,41 @@
                         <Canvas x:Name="TrendCanvas" Height="112" ClipToBounds="True"/>
                     </StackPanel>
                 </Border>
+
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
+                    <StackPanel>
+                        <TextBlock Text="{loc:Tr Monitor_ThresholdTitle}" FontSize="15" FontWeight="Bold" Foreground="#23324A"/>
+                        <TextBlock Text="{loc:Tr Monitor_ThresholdHint}" Foreground="#8491A5" FontSize="10" Margin="0,4,0,10" TextWrapping="Wrap"/>
+                        <UniformGrid Columns="3" Rows="2">
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_CpuUsageLabel}" FontSize="10"/><TextBox x:Name="CpuThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_MemoryThreshold}" FontSize="10"/><TextBox x:Name="MemoryThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_SwapLabel}" FontSize="10"/><TextBox x:Name="SwapThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_DiskThreshold}" FontSize="10"/><TextBox x:Name="DiskThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_InodesLabel}" FontSize="10"/><TextBox x:Name="InodeThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                            <StackPanel Margin="3"><TextBlock Text="{loc:Tr Monitor_LoadThreshold}" FontSize="10"/><TextBox x:Name="LoadThresholdTextBox" Margin="0,4,5,5"/></StackPanel>
+                        </UniformGrid>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,7,0,0">
+                            <Button Content="{loc:Tr Monitor_ThresholdResetButton}" Click="ResetThresholds_Click" Padding="12,7" Margin="0,0,7,0"/>
+                            <Button Content="{loc:Tr Monitor_ThresholdSaveButton}" Click="SaveThresholds_Click" Padding="12,7" Background="#5268E8" Foreground="White"/>
+                        </StackPanel>
+                        <TextBlock x:Name="ThresholdStatusText" Margin="0,8,0,0" Foreground="#5268E8" FontSize="10" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
                 <Border x:Name="HealthPanel" Background="#FFF8E8" BorderBrush="#F1D69B" BorderThickness="1" CornerRadius="17" Padding="18" Margin="0,0,0,13">
                     <StackPanel>
                         <TextBlock Text="{loc:Tr View_5b0734a8}" FontWeight="Bold" FontSize="15" Foreground="#85540D"/>
                         <TextBlock x:Name="HealthAlertsText" TextWrapping="Wrap" Margin="0,9,0,0" Foreground="#76531B" FontSize="12" LineHeight="19"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource MetricCard}" Margin="0,0,0,13">
+                    <StackPanel>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Right" Content="{loc:Tr Monitor_AlertExportButton}" Click="ExportAlerts_Click" Padding="10,6"/>
+                            <TextBlock Text="{loc:Tr Monitor_AlertHistoryTitle}" FontSize="15" FontWeight="Bold" Foreground="#23324A" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <TextBlock x:Name="AlertHistoryCountText" FontSize="10" Foreground="#8491A5" Margin="0,5,0,7"/>
+                        <ListBox x:Name="AlertHistoryList" MaxHeight="180" BorderThickness="0" Background="Transparent" FontSize="11"/>
                     </StackPanel>
                 </Border>
                 <Border Background="#101827" CornerRadius="17" Padding="18" Margin="0,0,0,10">

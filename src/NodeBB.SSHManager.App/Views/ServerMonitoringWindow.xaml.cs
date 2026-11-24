@@ -12,12 +12,20 @@ public partial class ServerMonitoringWindow : Window
     private readonly DispatcherTimer _refreshTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private bool _refreshing;
     private readonly ServerMonitoringHistory _history = new(60);
+    private readonly MonitoringSettingsStore _settingsStore = new();
+    private readonly MonitoringAlertHistoryStore _alertStore = new();
+    private MonitoringAlertThresholds _thresholds = new();
+    private MonitoringAlertHistory _alertHistory = new();
 
     public ServerMonitoringWindow(SshServerSession session)
     {
         InitializeComponent();
         _session = session;
         _service = new RemoteMonitoringService(session);
+        _thresholds = _settingsStore.Load(session.Profile.Id);
+        _alertHistory = new MonitoringAlertHistory(_alertStore.Load(session.Profile.Id));
+        LoadThresholdFields();
+        RenderAlertHistory();
         ServerLabel.Text = $"{session.Profile.Name} · {session.Profile.Host}";
         _refreshTimer.Tick += async (_, _) => await RefreshAsync();
         Loaded += async (_, _) => await RefreshAsync();
@@ -80,7 +88,11 @@ public partial class ServerMonitoringWindow : Window
             RenderTrendChart();
 
             var alerts = ServerHealthAssessment.Evaluate(metrics.LoadAverage, metrics.Disk, metrics.MemoryUsagePercent,
-                metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes, metrics.CpuUsagePercent);
+                metrics.CpuCount, metrics.SwapUsagePercent, metrics.DiskInodes, metrics.CpuUsagePercent, _thresholds);
+            var alertChanges = _alertHistory.Update(metrics.CollectedAt, alerts);
+            if (alertChanges.Count > 0)
+                _alertStore.Save(_session.Profile.Id, _alertHistory.Events);
+            RenderAlertHistory();
             HealthAlertsText.Text = alerts.Count == 0
                 ? LocalizationService.Instance["Monitor_Healthy"]
                 : string.Join(Environment.NewLine, alerts.Select(alert => "• " + LocalizationService.Instance.Translate(alert)));
@@ -95,6 +107,98 @@ public partial class ServerMonitoringWindow : Window
         }
         finally { RefreshButton.IsEnabled = true; _refreshing = false; }
     }
+
+    private void LoadThresholdFields()
+    {
+        CpuThresholdTextBox.Text = _thresholds.CpuPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        MemoryThresholdTextBox.Text = _thresholds.MemoryPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        SwapThresholdTextBox.Text = _thresholds.SwapPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        DiskThresholdTextBox.Text = _thresholds.DiskPercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        InodeThresholdTextBox.Text = _thresholds.InodePercent.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        LoadThresholdTextBox.Text = _thresholds.LoadPerCpu.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private void SaveThresholds_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!int.TryParse(CpuThresholdTextBox.Text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var cpu) ||
+                !int.TryParse(MemoryThresholdTextBox.Text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var memory) ||
+                !int.TryParse(SwapThresholdTextBox.Text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var swap) ||
+                !int.TryParse(DiskThresholdTextBox.Text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var disk) ||
+                !int.TryParse(InodeThresholdTextBox.Text, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var inode) ||
+                !double.TryParse(LoadThresholdTextBox.Text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out var load))
+                throw new ArgumentException(LocalizationService.Instance["Monitor_ThresholdInvalid"]);
+            var updated = new MonitoringAlertThresholds
+            {
+                CpuPercent = cpu, MemoryPercent = memory, SwapPercent = swap,
+                DiskPercent = disk, InodePercent = inode, LoadPerCpu = load
+            };
+            updated.Validate();
+            _settingsStore.Save(_session.Profile.Id, updated);
+            _thresholds = updated;
+            ThresholdStatusText.Text = LocalizationService.Instance["Monitor_ThresholdSaved"];
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or UnauthorizedAccessException)
+        {
+            ThresholdStatusText.Text = ex is ArgumentException
+                ? LocalizationService.Instance["Monitor_ThresholdInvalid"]
+                : LocalizationService.Instance["Monitor_ThresholdSaveFailed"];
+        }
+    }
+
+    private void ResetThresholds_Click(object sender, RoutedEventArgs e)
+    {
+        var defaults = new MonitoringAlertThresholds();
+        try
+        {
+            _settingsStore.Save(_session.Profile.Id, defaults);
+            _thresholds = defaults;
+            LoadThresholdFields();
+            ThresholdStatusText.Text = LocalizationService.Instance["Monitor_ThresholdReset"];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            ThresholdStatusText.Text = LocalizationService.Instance["Monitor_ThresholdSaveFailed"];
+        }
+    }
+
+    private void ExportAlerts_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = LocalizationService.Instance["Monitor_AlertCsvFilter"],
+                FileName = $"nodebb-monitor-alerts-{DateTime.Now:yyyyMMdd-HHmmss}.csv",
+                AddExtension = true,
+                DefaultExt = ".csv"
+            };
+            if (dialog.ShowDialog(this) != true) return;
+            var lines = new List<string> { "Timestamp,State,Message" };
+            lines.AddRange(_alertHistory.Events.Select(item =>
+                Csv(item.OccurredAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture)) + "," +
+                Csv(item.IsActive ? "Active" : "Resolved") + "," +
+                Csv(LocalizationService.Instance.Translate(item.Message))));
+            File.WriteAllText(dialog.FileName, string.Join(Environment.NewLine, lines), new System.Text.UTF8Encoding(true));
+            ThresholdStatusText.Text = LocalizationService.Instance["Monitor_AlertExported"];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        {
+            ThresholdStatusText.Text = LocalizationService.Instance["Monitor_AlertExportFailed"];
+        }
+    }
+
+    private static string Csv(string value) => "\"" + value.Replace("\"", "\"\"") + "\"";
+
+    private void RenderAlertHistory()
+    {
+        AlertHistoryList.ItemsSource = _alertHistory.Events.Reverse()
+            .Select(item => $"{item.OccurredAt.ToLocalTime():yyyy-MM-dd HH:mm:ss} · {(item.IsActive ? LocalizationService.Instance["Monitor_AlertRaised"] : LocalizationService.Instance["Monitor_AlertResolved"])} · {LocalizationService.Instance.Translate(item.Message)}")
+            .ToArray();
+        AlertHistoryCountText.Text = string.Format(LocalizationService.Instance["Monitor_AlertHistoryCount"], _alertHistory.Events.Count);
+    }
+
     private void RenderTrendChart()
     {
         if (TrendCanvas is null) return;

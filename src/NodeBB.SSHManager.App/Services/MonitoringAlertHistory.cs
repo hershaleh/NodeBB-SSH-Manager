@@ -72,9 +72,10 @@ public sealed class MonitoringAlertHistoryStore
                 .Where(x => x is not null && !string.IsNullOrWhiteSpace(x.Message) && x.Message.Length <= 500)
                 .TakeLast(MaximumEvents).ToArray();
         }
-        catch (Exception ex) when (ex is JsonException or IOException or InvalidDataException)
+        catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException)
         {
             try { File.Copy(path, path + ".corrupt-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + ".bak", false); } catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
             return [];
         }
     }
