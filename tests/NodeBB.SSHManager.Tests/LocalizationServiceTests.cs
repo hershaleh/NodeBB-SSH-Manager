@@ -1,6 +1,9 @@
 using System;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Xaml;
 using NodeBB.SSHManager.Localization;
 using Xunit;
 
@@ -8,6 +11,33 @@ namespace NodeBB.SSHManager.Tests;
 
 public sealed class LocalizationServiceTests
 {
+
+    [Fact]
+    public void TranslationMarkupExtensionProvidesAUsableDependencyPropertyBinding()
+    {
+        var target = new TextBlock();
+        var provider = new BindingTargetServiceProvider(target, TextBlock.TextProperty);
+
+        var value = new TrExtension("Dashboard_לוח_בקרה").ProvideValue(provider);
+
+        Assert.IsAssignableFrom<BindingExpressionBase>(value);
+    }
+
+    private sealed class BindingTargetServiceProvider : IServiceProvider, IProvideValueTarget
+    {
+        public BindingTargetServiceProvider(object targetObject, object targetProperty)
+        {
+            TargetObject = targetObject;
+            TargetProperty = targetProperty;
+        }
+
+        public object TargetObject { get; }
+        public object TargetProperty { get; }
+
+        public object? GetService(Type serviceType) =>
+            serviceType == typeof(IProvideValueTarget) ? this : null;
+    }
+
     [Fact]
     public void DefaultsToHebrewAndRightToLeft()
     {
