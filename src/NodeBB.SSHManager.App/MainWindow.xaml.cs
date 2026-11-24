@@ -764,6 +764,17 @@ public partial class MainWindow : Window
             { Owner = this }.ShowDialog();
     }
 
+    private void FleetReadiness_Click(object sender, RoutedEventArgs e)
+    {
+        if (_profiles.Count == 0)
+        {
+            MessageBox.Show(this, T("הוסף לפחות פרופיל שרת אחד כדי להציג מלאי שרתים."),
+                T("מלאי שרתים ובדיקת מוכנות"), MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        new FleetReadinessWindow(_profiles.ToArray(), _sessionManager.Sessions) { Owner = this }.ShowDialog();
+    }
+
     private async void ServerDiagnostics_Click(object sender, RoutedEventArgs e)
     {
         var session = await GetSelectedSessionAsync();
