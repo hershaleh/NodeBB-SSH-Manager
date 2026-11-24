@@ -89,6 +89,7 @@
                     <Button Content="{loc:Tr Dashboard_ניטור_שרת}" Style="{StaticResource NavButtonStyle}" Click="ServerMonitoring_Click"/>
                     <Button Content="{loc:Tr Dashboard_ניטור_כל_השרתים}" Style="{StaticResource NavButtonStyle}" Click="AllServerMonitoring_Click"/>
                     <Button Content="{loc:Tr Dashboard_מלאי_שרתים_ובדיקת_מוכנות}" Style="{StaticResource NavButtonStyle}" Click="FleetReadiness_Click"/>
+                    <Button Content="{loc:Tr Dashboard_ניהול_גיבויים_מתוזמנים}" Style="{StaticResource NavButtonStyle}" Click="ScheduledBackupOverview_Click"/>
                     <Button Content="{loc:Tr Dashboard_אבחון_שרת}" Style="{StaticResource NavButtonStyle}" Click="ServerDiagnostics_Click"/>
                     <Button Content="{loc:Tr Dashboard_שירותי_מערכת}" Style="{StaticResource NavButtonStyle}" Click="SystemServices_Click"/>
                     <TextBlock Text="{loc:Tr Dashboard_כלים}" Foreground="#7789A8" FontSize="10" FontWeight="Bold" Margin="8,25,0,9"/>

@@ -775,6 +775,11 @@ public partial class MainWindow : Window
         new FleetReadinessWindow(_profiles.ToArray(), _sessionManager.Sessions) { Owner = this }.ShowDialog();
     }
 
+    private void ScheduledBackupOverview_Click(object sender, RoutedEventArgs e)
+    {
+        new ScheduledBackupOverviewWindow(_profiles.ToArray()) { Owner = this }.ShowDialog();
+    }
+
     private async void ServerDiagnostics_Click(object sender, RoutedEventArgs e)
     {
         var session = await GetSelectedSessionAsync();
