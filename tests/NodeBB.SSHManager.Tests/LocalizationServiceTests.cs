@@ -15,11 +15,26 @@ public sealed class LocalizationServiceTests
     [Fact]
     public void TranslationMarkupExtensionProvidesAUsableDependencyPropertyBinding()
     {
-        var target = new TextBlock();
-        var provider = new BindingTargetServiceProvider(target, TextBlock.TextProperty);
+        object? value = null;
+        Exception? failure = null;
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var target = new TextBlock();
+                var provider = new BindingTargetServiceProvider(target, TextBlock.TextProperty);
+                value = new TrExtension("Dashboard_לוח_בקרה").ProvideValue(provider);
+            }
+            catch (Exception ex)
+            {
+                failure = ex;
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        thread.Join();
 
-        var value = new TrExtension("Dashboard_לוח_בקרה").ProvideValue(provider);
-
+        if (failure is not null) throw new Xunit.Sdk.XunitException(failure.ToString());
         Assert.IsAssignableFrom<BindingExpressionBase>(value);
     }
 
